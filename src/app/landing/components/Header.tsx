@@ -2,6 +2,7 @@
 
 import { Box, Button, Flex, IconButton, Spacer, useColorMode } from '@chakra-ui/react';
 import { SunIcon, MoonIcon } from '@chakra-ui/icons';
+import Link from 'next/link';
 
 export default function Header() {
     const { colorMode, toggleColorMode } = useColorMode();
@@ -27,14 +28,18 @@ export default function Header() {
                     />
 
                     {/* Sign Up Button */}
-                    <Button variant="solid">
-                        Sign Up
-                    </Button>
+                    <Link href="/signup" passHref>
+                        <Button variant="solid">
+                            Sign Up
+                        </Button>
+                    </Link>
 
                     {/* Login Button */}
-                    <Button  variant="outline">
-                        Log In
-                    </Button>
+                    <Link href="/login" passHref>
+                        <Button variant="outline">
+                            Log In
+                        </Button>
+                    </Link>
                 </Flex>
             </Flex>
         </Box>
