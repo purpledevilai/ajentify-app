@@ -35,7 +35,7 @@ export default function Header() {
                     </Link>
 
                     {/* Login Button */}
-                    <Link href="/login" passHref>
+                    <Link href="/signin" passHref>
                         <Button variant="outline">
                             Log In
                         </Button>

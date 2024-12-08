@@ -15,7 +15,7 @@ const CreateOrganizationStep = observer(() => {
                 <FormLabel>Organization Name</FormLabel>
                 <Input value={signUpStore.organizationName} onChange={(e) => signUpStore.setField('organizationName', e.target.value)} />
             </FormControl>
-            <Button colorScheme="blue" isLoading={signUpStore.createOrgLoading} onClick={() => signUpStore.createOrganization()}>
+            <Button  isLoading={signUpStore.createOrgLoading} onClick={() => signUpStore.createOrganization()}>
                 Create Organization
             </Button>
         </Stack>

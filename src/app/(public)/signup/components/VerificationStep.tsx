@@ -15,7 +15,7 @@ const VerificationStep = observer(() => {
                 <FormLabel>Verification Code</FormLabel>
                 <Input value={signUpStore.confirmCode} onChange={(e) => signUpStore.setField('confirmCode', e.target.value)} />
             </FormControl>
-            <Button colorScheme="blue" isLoading={signUpStore.confirmSignInLoading} onClick={() => signUpStore.confirmSignInCode()}>
+            <Button  isLoading={signUpStore.confirmSignInLoading} onClick={() => signUpStore.confirmSignInCode()}>
                 Submit
             </Button>
         </Stack>
