@@ -69,6 +69,26 @@ const theme = extendTheme({
                 colorScheme: 'brand', // Default color scheme
             },
         },
+        Input: {
+            baseStyle: {
+                // Shared styles for all variants
+            },
+            sizes: {
+                // Custom sizes if needed
+            },
+            variants: {
+                filled: {
+                    field: {
+                        borderColor: 'gray.300',
+                        _hover: { borderColor: 'gray.400' }, // Hover state
+                        _focus: { borderColor: 'brand.500', boxShadow: '0 0 0 1px brand.500' }, // Focus state
+                    },
+                },
+            },
+            defaultProps: {
+                variant: 'filled', // Set the default variant for all Inputs
+            },
+        },
     },
     fonts: {
         heading: `'Inter', sans-serif`,

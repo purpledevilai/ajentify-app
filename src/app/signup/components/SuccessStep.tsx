@@ -13,7 +13,7 @@ const SuccessStep = () => {
                 Account Created Successfully!
             </Heading>
             <Text>Welcome to Ajentify! You’re all set to get started.</Text>
-            <Button colorScheme="blue" onClick={() => router.push('/')}>
+            <Button bg="green.500" _hover={{bg: "green.300"}} onClick={() => router.push('/')}>
                 Go to Home
             </Button>
         </Stack>
