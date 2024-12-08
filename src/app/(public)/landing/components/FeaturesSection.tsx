@@ -1,6 +1,6 @@
 import { Box, SimpleGrid, Heading, Text, Icon } from '@chakra-ui/react';
 import { FiCheckCircle } from 'react-icons/fi';
-import Card from '@/components/Card';
+import Card from '@/app/components/Card';
 
 export default function FeaturesSection() {
     const features = [

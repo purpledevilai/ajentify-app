@@ -9,7 +9,7 @@ import UserDetailsStep from './components/UserDetailsStep';
 import VerificationStep from './components/VerificationStep';
 import CreateOrganizationStep from './components/CreateOrganizationStep';
 import SuccessStep from './components/SuccessStep';
-import Alert from '@/components/Alert';
+import Alert from '@/app/components/Alert';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 

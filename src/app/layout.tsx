@@ -1,7 +1,7 @@
 'use client';
 
-import ChakraProviders from "@/components/ChakraProviders";
-import { AlertProvider } from "@/components/AlertProvider";
+import ChakraProviders from "@/app/components/ChakraProviders";
+import { AlertProvider } from "@/app/components/AlertProvider";
 import { Amplify } from 'aws-amplify';
 
 Amplify.configure({
