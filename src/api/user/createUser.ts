@@ -1,5 +1,5 @@
 import { User } from "@/types/user";
-import { getAuthToken } from "@/utils/api/getAuthToken";
+import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 
@@ -8,7 +8,7 @@ export async function createUser(): Promise<User> {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user`, {
         method: 'POST',
         headers: {
-            'Authorization': await getAuthToken(),
+            'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({})
