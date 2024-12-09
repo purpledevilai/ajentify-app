@@ -1,4 +1,4 @@
-import { Auth } from 'aws-amplify';
+import { signUp as awsSignUp } from "aws-amplify/auth";
 
 export interface SignUpPayload {
     firstName: string;
@@ -9,14 +9,16 @@ export interface SignUpPayload {
 
 export async function signUp(payload: SignUpPayload): Promise<unknown> {
     try {
-        return await Auth.signUp({
+        return await awsSignUp({
             username: payload.email,
             password: payload.password,
-            attributes: {
-                email: payload.email,
-                given_name: payload.firstName,
-                family_name: payload.lastName,
-            },
+            options: {
+                userAttributes: {
+                    email: payload.email,
+                    given_name: payload.firstName,
+                    family_name: payload.lastName,
+                },
+            }
         });
     } catch (error) {
         const errorMessage = (error as Error).message || 'An unknown error occurred durring sign up';

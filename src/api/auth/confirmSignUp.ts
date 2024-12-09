@@ -1,4 +1,5 @@
-import { Auth } from 'aws-amplify';
+// import { Auth } from 'aws-amplify';
+import { confirmSignUp as awsConfirmSignUp } from "aws-amplify/auth";
 
 export interface ConfirmSignUpPayload {
     email: string;
@@ -7,7 +8,10 @@ export interface ConfirmSignUpPayload {
 
 export async function confirmSignUp(payload: ConfirmSignUpPayload): Promise<void> {
     try {
-        await Auth.confirmSignUp(payload.email, payload.verificationCode);
+        await awsConfirmSignUp({
+            username: payload.email,
+            confirmationCode: payload.verificationCode,
+        });
     } catch (error) {
         const errorMessage = (error as Error).message || 'An unknown error occurred durring sign up';
         throw Error(errorMessage);

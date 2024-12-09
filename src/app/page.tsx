@@ -1,35 +1,23 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import { getAuthToken } from '@/utils/api/getAuthToken';
+import { authStore } from '@/store/AuthStore';
 
-export default function IndexPage() {
+const IndexPage = observer(() => {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = await getAuthToken();
-        if (token) {
-          router.push('/home');
-        } else {
-          router.push('/landing');
-        }
-      } catch (error) {
-        router.push('/landing');
-      }
-    };
-    checkAuth();
-    // if (!loading) {
-    //   if (user) {
-    //     router.push('/home'); // Redirect authenticated users
-    //   } else {
-    //     router.push('/landing'); // Redirect unauthenticated users
-    //   }
-    // }
-  }, []);
+    if (authStore.signedIn) {
+      router.push('/home');
+    } else {
+      router.push('/landing');
+    }
+  }, [authStore.signedIn, router]);
 
-  return <div>Loading...</div>; // Optional loading state
+  return <div>Loading...</div>;
 
-}
+});
+
+export default IndexPage;

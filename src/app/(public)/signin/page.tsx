@@ -3,17 +3,17 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Box, Flex, FormControl, FormLabel, Input, Button, Heading, Text, Stack } from '@chakra-ui/react';
-import { signInStore } from '@/store/SignInStore';
+import { authStore } from '@/store/AuthStore';
 import { useRouter } from 'next/navigation';
 
 const SignInPage = observer(() => {
     const router = useRouter();
 
     useEffect(() => {
-        if (signInStore.succesfullySignedIn) {
-            router.push('/');
+        if (authStore.signedIn) {
+            router.push('/home');
         }
-    }, [signInStore.succesfullySignedIn]);
+    }, [authStore.signedIn, router]);
 
     return (
         <Flex align="center" justify="center" height="100vh" bg="gray.50" _dark={{ bg: 'gray.900' }}>
@@ -36,8 +36,8 @@ const SignInPage = observer(() => {
                         <FormLabel>Email</FormLabel>
                         <Input
                             type="email"
-                            value={signInStore.email}
-                            onChange={(e) => signInStore.setField('email', e.target.value)}
+                            value={authStore.email}
+                            onChange={(e) => authStore.setField('email', e.target.value)}
                             placeholder="Enter your email"
                         />
                     </FormControl>
@@ -47,17 +47,16 @@ const SignInPage = observer(() => {
                         <FormLabel>Password</FormLabel>
                         <Input
                             type="password"
-                            value={signInStore.password}
-                            onChange={(e) => signInStore.setField('password', e.target.value)}
+                            value={authStore.password}
+                            onChange={(e) => authStore.setField('password', e.target.value)}
                             placeholder="Enter your password"
                         />
                     </FormControl>
 
                     {/* Sign In Button */}
                     <Button
-                        
-                        isLoading={signInStore.signInLoading}
-                        onClick={() => signInStore.submitSignIn()}
+                        isLoading={authStore.signInLoading}
+                        onClick={() => authStore.submitSignIn()}
                     >
                         Log In
                     </Button>
@@ -76,9 +75,9 @@ const SignInPage = observer(() => {
                 </Stack>
 
                 {/* Error Message */}
-                {signInStore.errorMessage && (
+                {authStore.signInError && (
                     <Text color="red.500" mt={4} textAlign="center">
-                        {signInStore.errorMessage}
+                        {authStore.signInError}
                     </Text>
                 )}
             </Box>

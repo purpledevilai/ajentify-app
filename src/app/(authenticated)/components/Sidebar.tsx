@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import {
     Box,
@@ -12,7 +14,6 @@ import {
     MenuList,
     MenuItem,
     MenuDivider,
-    HStack,
     useColorModeValue,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
@@ -21,6 +22,7 @@ import { BiDotsVerticalRounded } from 'react-icons/bi'; // More vertical icon
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation'
+import { authStore } from '@/store/AuthStore';
 
 interface SidebarProps {
     isMobile: boolean;
@@ -99,8 +101,14 @@ const Sidebar = ({ isMobile, isOpen, onClose }: SidebarProps) => {
                             display="flex"
                             alignItems="center"
                             gap={2}
-                            _hover={{ bg: useColorModeValue('gray.200', 'gray.700') }}
-                            bg={pathname === tab.route ? useColorModeValue('blue.100', 'blue.700') : 'transparent'}
+                            // _hover={{ bg: useColorModeValue('gray.200', 'gray.700') }}
+                            // bg={pathname === tab.route ? useColorModeValue('blue.100', 'blue.700') : 'transparent'}
+                            bg={pathname === tab.route ? 'blue.100' : 'transparent'}
+                            _hover={{ bg: 'gray.200'}}
+                            _dark={{
+                                bg: pathname === tab.route ? 'blue.700' : 'transparent',
+                                _hover: { bg: 'gray.700' }
+                            }}
                         >
                             <tab.icon />
                             <Text fontWeight="bold">{tab.title}</Text>
@@ -143,7 +151,7 @@ const Sidebar = ({ isMobile, isOpen, onClose }: SidebarProps) => {
                         <MenuList>
                             <MenuItem onClick={() => router.push('/profile')}>Profile</MenuItem>
                             <MenuDivider />
-                            <MenuItem onClick={() => console.log('Logout clicked')}>Logout</MenuItem>
+                            <MenuItem onClick={() => authStore.signOut()}>Logout</MenuItem>
                         </MenuList>
                     </Menu>
                 </Box>

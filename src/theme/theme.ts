@@ -49,14 +49,14 @@ const theme = extendTheme({
                 fontWeight: 'bold', // Applies to all buttons
             },
             variants: {
-                solid: (props: any) => ({
+                solid: (props: { colorMode: string; }) => ({
                     bg: props.colorMode === 'light' ? 'brand.500' : 'brand.500',
                     color: 'white',
                     _hover: {
                         bg: props.colorMode === 'light' ? 'brand.400' : 'brand.400',
                     },
                 }),
-                outline: (props: any) => ({
+                outline: (props: { colorMode: string; }) => ({
                     borderColor: props.colorMode === 'light' ? 'brand.500' : 'brand.300',
                     color: props.colorMode === 'light' ? 'brand.500' : 'brand.300',
                     _hover: {

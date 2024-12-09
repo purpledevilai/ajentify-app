@@ -1,13 +1,23 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { Flex, Box } from '@chakra-ui/react';
 import { useBreakpointValue } from '@chakra-ui/react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import { useRouter } from 'next/navigation';
+import { authStore } from '@/store/AuthStore';
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode }) => {
+    const router = useRouter();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        if (!authStore.signedIn) {
+            router.push('/signin');
+        }
+    }, [authStore.signedIn, router]);
 
     // Determine if the sidebar should always be visible based on screen size
     const isWideScreen = useBreakpointValue({ base: false, lg: true });
@@ -52,4 +62,6 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
             </Flex>
         </Flex>
     );
-}
+});
+
+export default AuthenticatedLayout;

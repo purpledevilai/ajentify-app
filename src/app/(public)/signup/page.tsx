@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Flex, Box, Button, IconButton } from '@chakra-ui/react';
+import { Flex, Box, Button } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { signUpStore } from '@/store/SignUpStore';
 import UserDetailsStep from './components/UserDetailsStep';

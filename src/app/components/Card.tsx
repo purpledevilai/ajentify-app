@@ -1,8 +1,6 @@
 import { Box, BoxProps } from '@chakra-ui/react';
 
-interface CardProps extends BoxProps {}
-
-export default function Card({ children, ...props }: CardProps) {
+export default function Card({ children, ...props }: BoxProps) {
   return (
     <Box
       bg="gray.50"
