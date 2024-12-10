@@ -13,7 +13,7 @@ export async function getUser(): Promise<User> {
     });
     return await checkResponseAndGetJson(response) as unknown as User;
   } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred creating the user';
+    const errorMessage = (error as Error).message || 'An unknown error occurred getting the user';
     throw Error(errorMessage);
   }
 }

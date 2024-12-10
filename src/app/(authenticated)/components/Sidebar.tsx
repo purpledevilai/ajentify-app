@@ -18,7 +18,8 @@ import {
     Spinner,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { AiFillHome } from 'react-icons/ai'; // Home icon
+//import { AiFillHome } from 'react-icons/ai'; // Home icon
+import { RiRobot3Fill } from "react-icons/ri";
 import { BiDotsVerticalRounded } from 'react-icons/bi'; // More vertical icon
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
@@ -39,8 +40,8 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
 
     // Tabs for the navigation
     const tabs = [
-        { icon: AiFillHome, title: 'Home', route: '/home' },
-        { icon: ChevronUpIcon, title: 'Create Agent', route: '/create-agent' }, // Placeholder icon for example
+        { icon: RiRobot3Fill, title: 'Agents', route: '/home' },
+        //{ icon: ChevronUpIcon, title: 'Create Agent', route: '/create-agent' }, // Placeholder icon for example
     ];
 
     useEffect(() => {
