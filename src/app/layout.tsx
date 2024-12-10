@@ -20,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const checkAuth = async () => {
         await authStore.checkAuth();
+        console.log("Auth Token: ", await authStore.getAccessToken());
     };
     checkAuth();
   }, []);

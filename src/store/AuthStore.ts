@@ -2,6 +2,8 @@ import { makeAutoObservable } from 'mobx';
 import { fetchAuthSession } from "aws-amplify/auth";
 import { signIn } from '@/api/auth/signIn'; 
 import { signOut } from '@/api/auth/signOut';
+import { User } from '@/types/user';
+import { getUser } from '@/api/user/getUser';
 
 
 class AuthStore {
@@ -10,6 +12,8 @@ class AuthStore {
     signInLoading = false;
     signInError = '';
     signedIn = false;
+    user: User | undefined = undefined;
+    userLoading = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -57,6 +61,27 @@ class AuthStore {
         } catch (error) {
             console.error('Failed to sign out', error);
         } 
+    }
+
+    async loadUser(force: boolean = false): Promise<void> {
+        if (!this.signedIn) {
+            this.user = undefined;
+            return;
+        }
+
+        if (!force && this.user) {
+            return;
+        }
+
+        this.userLoading = true;
+        try {
+            this.user = await getUser();
+        } catch (error) {
+            console.error('Failed to load user', error);
+            this.user = undefined;
+        } finally {
+            this.userLoading = false;
+        }
     }
 }
 

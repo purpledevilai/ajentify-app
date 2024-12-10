@@ -1,4 +1,9 @@
+import { SimpleOrganization } from "./simpleorganization";
+
 export interface User {
-    user_id: string;
-    organizations: string[];
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    organizations: SimpleOrganization[];
 }
