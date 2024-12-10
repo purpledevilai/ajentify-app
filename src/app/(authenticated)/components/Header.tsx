@@ -15,7 +15,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     <Flex
       as="header"
       bg="gray.100"
-      _dark={{ bg: 'gray.900' }}
+      _dark={{ bg: 'gray.700' }}
       px="6"
       py="4"
       alignItems="center"

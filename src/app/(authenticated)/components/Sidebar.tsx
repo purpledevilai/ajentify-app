@@ -118,10 +118,10 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                             display="flex"
                             alignItems="center"
                             gap={2}
-                            bg={pathname === tab.route ? 'blue.100' : 'transparent'}
+                            bg={pathname === tab.route ? 'brand.100' : 'transparent'}
                             _hover={{ bg: 'gray.200' }}
                             _dark={{
-                                bg: pathname === tab.route ? 'blue.700' : 'transparent',
+                                bg: pathname === tab.route ? 'brand.700' : 'transparent',
                                 _hover: { bg: 'gray.700' },
                             }}
                         >
