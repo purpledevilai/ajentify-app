@@ -40,7 +40,11 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
                 <Sidebar
                     isMobile={!isWideScreen}
                     isOpen={isSidebarOpen}
-                    onClose={() => setSidebarOpen(false)}
+                    onClose={() => {
+                        if (!isWideScreen) {
+                            setSidebarOpen(false); // Close sidebar on mobile
+                        }
+                    }}
                 />
 
                 {/* Main Content with click-to-close sidebar */}

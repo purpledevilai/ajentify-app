@@ -18,7 +18,6 @@ import {
     Spinner,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-//import { AiFillHome } from 'react-icons/ai'; // Home icon
 import { RiRobot3Fill } from "react-icons/ri";
 import { BiDotsVerticalRounded } from 'react-icons/bi'; // More vertical icon
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
@@ -104,8 +103,8 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                     align="stretch"
                     spacing={4}
                     mt={4}
-                    flex="1" // This makes the tabs section fill the remaining space
-                    overflowY="auto" // Adds scrolling if the content exceeds the height
+                    flex="1"
+                    overflowY="auto"
                 >
                     {tabs.map((tab, index) => (
                         <Link
