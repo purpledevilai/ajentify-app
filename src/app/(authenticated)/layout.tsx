@@ -51,7 +51,7 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
                 <Box
                     flex="1"
                     p={4}
-                    overflowY="auto"
+                    overflowY="hidden"
                     bg="gray.50"
                     _dark={{ bg: 'gray.900' }}
                     onClick={() => {
