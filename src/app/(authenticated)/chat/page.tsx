@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react';
 import { Flex, Heading } from '@chakra-ui/react';
 import { observer } from 'mobx-react-lite';
 import ChatBox from '@/app/components/chatbox/ChatBox';
 import { Context } from '@/types/context';
 import { createContext } from '@/api/context/createContext';
 import { useAlert } from '@/app/components/AlertProvider';
+import { useColorMode } from '@chakra-ui/react';
+import { defaultChatBoxStyle, defaultDarkChatBoxStyle } from '@/app/components/chatbox/ChatBox';
 
 const ChatPage = observer(() => {
 
     const hasInitiatedLoadRef = useRef<boolean>(false);
     const [context, setContext] = useState<Context | undefined>(undefined);
     const { showAlert } = useAlert();
+    const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
 
     useEffect(() => {
         if (hasInitiatedLoadRef.current) return;
@@ -39,7 +42,7 @@ const ChatPage = observer(() => {
                 </Flex>
                 <Flex height="100%" flex="1">
                     {context && (
-                        <ChatBox context={context}/>
+                        <ChatBox context={context} style={chatBoxStyle}/>
                     )}
                 </Flex>
             </Flex>

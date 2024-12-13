@@ -1,14 +1,16 @@
 import { Message } from "@/types/context"
 import { Flex } from "@chakra-ui/react";
+import { ChatBoxStyle } from "./ChatBox";
 
 interface MessageViewProps {
     message: Message,
+    style: ChatBoxStyle
 }
 
-export const MessageView = ({ message }: MessageViewProps) => {
+export const MessageView = ({ message, style }: MessageViewProps) => {
     const isAI = message.from === "ai"
-    const messageColor = isAI ? "gray.200" : "gray.500"
-    const messageTextColor = isAI ? "gray.900" : "gray.200"
+    const messageColor = isAI ? style.aiMessageBackgroundColor : style.userMessageBackgroundColor
+    const messageTextColor = isAI ? style.aiMessageTextColor : style.userMessageTextColor
     const maxWidth = "400px";
     return (
         <Flex

@@ -3,13 +3,15 @@ import { Box } from "@chakra-ui/react"
 import { MessageView } from "./MessageView"
 import { Message } from "@/types/context"
 import { TypingIndicator } from "./TypingIndicator"
+import { ChatBoxStyle } from "./ChatBox"
 
 interface MessageAreaProps {
     messages: Message[]
     responseLoading: boolean
+    style: ChatBoxStyle
 }
 
-export const MessagesArea = ({ messages, responseLoading }: MessageAreaProps) => {
+export const MessagesArea = ({ messages, responseLoading, style }: MessageAreaProps) => {
     const messagesRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -33,21 +35,21 @@ export const MessagesArea = ({ messages, responseLoading }: MessageAreaProps) =>
             bottom="0"
             width="100%"
             overflowY="auto"
-            bg="gray.900"
+            bg={style.backgroundColor}
             p={4}
             pb="160px"
             borderStyle="solid"
-            borderColor="white"
-            borderWidth={2}
-            borderRadius={15}
+            borderColor={style.borderColor}
+            borderWidth="2px"
+            borderRadius="15px"
         >
             {messages.map((message, idx) => (
                 <div key={idx}>
-                    <MessageView message={message} />
+                    <MessageView message={message} style={style}/>
                 </div>
             ))}
             {responseLoading && (
-                <TypingIndicator />
+                <TypingIndicator style={style} />
             )}
         </Box>
     )

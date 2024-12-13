@@ -1,11 +1,13 @@
 import { Button, Flex, Textarea } from "@chakra-ui/react"
 import { useEffect, useRef, useState } from "react";
+import { ChatBoxStyle } from "./ChatBox";
 
 interface UserInputProps {
     onMessage: (message: string) => void;
+    style: ChatBoxStyle;
 }
 
-export const UserInput = ({onMessage}: UserInputProps) => {
+export const UserInput = ({onMessage, style}: UserInputProps) => {
     const [inputValue, setInputValue] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -45,14 +47,13 @@ export const UserInput = ({onMessage}: UserInputProps) => {
     return (
         < Flex
             position="absolute"
-            bottom="2px"
-            right="2px"
-            left="2px"
-            bg="gray.400"
+            bottom="1.5px"
+            right="1.5px"
+            left="1.5px"
+            bg={style.userInputBackgroundColor}
             p={4}
             alignItems="center"
-            borderRadius={15}
-            borderBottomRadius={13}
+            borderRadius={12}
             boxShadow="0 -2px 5px rgba(0, 0, 0, 0.2)"
         >
             <Textarea
@@ -60,11 +61,13 @@ export const UserInput = ({onMessage}: UserInputProps) => {
                 value={inputValue}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
-                color="gray.900"
+                placeholder={style.userInputTextareaPlaceholderText}
+                _placeholder={{color: style.userInputTextareaPlaceholderColor}}
+                bg={style.userInputTextareaBackgroundColor}
+                color={style.userInputTextareaTextColor}
+                focusBorderColor={style.userInputTextareaFocusColor}
                 size="sm"
                 resize="none"
-                bg="white"
                 flex="1"
                 borderRadius={10}
                 minHeight="40px"
@@ -72,7 +75,9 @@ export const UserInput = ({onMessage}: UserInputProps) => {
             />
             <Button
                 onClick={handleSendClick}
-                colorScheme="blue"
+                bg={style.userInputSendButtonColor}
+                _hover={{bg: style.userInputSendButtonHoverColor}}
+                color={style.userInputSendButtonTextColor}
                 ml={2}
                 height="40px"
             >
