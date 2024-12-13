@@ -1,4 +1,4 @@
-import { Message } from "./ChatBox";
+import { Message } from "@/types/context"
 import { Flex } from "@chakra-ui/react";
 
 interface MessageViewProps {

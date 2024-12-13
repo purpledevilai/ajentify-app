@@ -1,122 +1,51 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Box, Flex, Textarea, Button } from "@chakra-ui/react";
-import { MessageView } from "./MessageView";
+import React, { useState } from "react";
+import { Box } from "@chakra-ui/react";
+import { MessagesArea } from "./MessagesArea";
+import { UserInput } from "./UserInput";
+import { Context, Message } from "@/types/context";
+import { chat } from "@/api/chat/chat";
+import { UIUpdate } from "@/types/chatresponse";
+import { useAlert } from "../AlertProvider";
 
-export interface Message {
-    from: "ai" | "user";
-    message: string;
-}
-
-export interface Context {
-    messages: Message[];
-}
 
 interface ChatBoxProps {
     context: Context;
+    onUIUpdates?: (uiUpdates: UIUpdate[]) => void
 }
 
-export const ChatBox = ({ context }: ChatBoxProps) => {
-    const [inputValue, setInputValue] = useState("");
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+export const ChatBox = ({ context, onUIUpdates }: ChatBoxProps) => {
 
-    useEffect(() => {
-        adjustTextareaHeight();
-    }, [])
+    const [responseLoading, setResponseLoading] = useState<boolean>(false);
+    const [messages, setMessages] = useState<Message[]>(context.messages)
+    const { showAlert } = useAlert();
 
-    const onSendMessage = (message: string) => {
-        console.log(message)
+    const sendMessage = async (message: string) => {
+        try {
+            addMessage(message, "user");
+            setResponseLoading(true);
+            const response = await chat({context_id: context.context_id, message});
+            addMessage(response.response, "ai");
+            if (response.ui_updates && onUIUpdates) {
+                onUIUpdates(response.ui_updates);
+            }
+        } catch(error) {
+            showAlert("Whoops", (error as Error).message)
+        } finally {
+            setResponseLoading(false);
+        }
     }
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            if (inputValue.trim()) {
-                onSendMessage(inputValue);
-                setInputValue(""); // Clear the input after sending
-            }
-        }
-    };
-
-    const handleSendClick = () => {
-        if (inputValue.trim()) {
-            onSendMessage(inputValue);
-            setInputValue(""); // Clear the input after sending
-        }
-    };
-
-    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setInputValue(e.target.value);
-        adjustTextareaHeight();
-    };
-
-    const adjustTextareaHeight = () => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "auto"; // Reset height to recalculate
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`; // Grow up to 5 lines
-        }
-    };
+    const addMessage = (message: string, from: "ai" | "user") => {
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { message, from }
+        ])
+    }
 
     return (
         <Box width="100%" height="100%" position="relative">
-            {/* Messages View */}
-            <Box
-                position="absolute"
-                top="0"
-                bottom="0"
-                width="100%"
-                overflowY="auto"
-                bg="gray.900"
-                p={4}
-                pb="160px"
-                borderStyle="solid"
-                borderColor="white"
-                borderWidth={2}
-                borderRadius={15}
-            >
-                {context.messages.map((message, idx) => (
-                    <div key={idx}>
-                        <MessageView message={message} />
-                    </div>
-                ))}
-            </Box>
-
-            {/* Input Section */}
-            <Flex
-                position="absolute"
-                bottom="2px"
-                right="2px"
-                left="2px"
-                bg="gray.400"
-                p={4}
-                alignItems="center"
-                borderRadius={15}
-                borderBottomRadius={13}
-                boxShadow="0 -2px 5px rgba(0, 0, 0, 0.2)"
-            >
-                <Textarea
-                    ref={textareaRef}
-                    value={inputValue}
-                    onChange={handleInput}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
-                    color="gray.900"
-                    size="sm"
-                    resize="none"
-                    bg="white"
-                    flex="1"
-                    borderRadius={10}
-                    minHeight="40px"
-                    maxHeight="120px"
-                />
-                <Button
-                    onClick={handleSendClick}
-                    colorScheme="blue"
-                    ml={2}
-                    height="40px"
-                >
-                    Send
-                </Button>
-            </Flex>
+            <MessagesArea messages={messages} responseLoading={responseLoading}/>
+            <UserInput onMessage={sendMessage}/>
         </Box>
     );
 };
