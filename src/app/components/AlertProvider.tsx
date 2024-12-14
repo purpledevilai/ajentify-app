@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import Alert, { AlertAction } from './Alert';
 
+interface ShowAlertParams {
+    title: string;
+    message: string;
+    actions?: AlertAction[];
+    onClose?: () => void;
+}
+
 interface AlertContextType {
-    showAlert: (
-        title: string,
-        message: string,
-        actions?: AlertAction[],
-        onClose?: () => void
-    ) => void;
+    showAlert: (params: ShowAlertParams) => void;
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
@@ -20,12 +22,8 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
         onClose?: () => void;
     } | null>(null);
 
-    const showAlert = (
-        title: string,
-        message: string,
-        actions: AlertAction[] = [{ label: 'Ok', handler: undefined }],
-        onClose?: () => void
-    ) => {
+    
+    const showAlert = ({ title, message, actions = [{ label: 'Ok', handler: undefined }], onClose }: ShowAlertParams) => {
         setAlert({ title, message, actions, onClose });
     };
 

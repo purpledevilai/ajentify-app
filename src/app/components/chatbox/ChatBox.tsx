@@ -90,7 +90,7 @@ export const ChatBox = ({ context, onUIUpdates, style = defaultChatBoxStyle }: C
                 onUIUpdates(response.ui_updates);
             }
         } catch(error) {
-            showAlert("Whoops", (error as Error).message)
+            showAlert({title: "Whoops", message: (error as Error).message})
         } finally {
             setResponseLoading(false);
         }
