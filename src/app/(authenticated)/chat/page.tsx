@@ -1,59 +1,47 @@
 'use client';
 
-import React, { useState, useEffect, useRef, use } from 'react';
+import React, { useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
+import ChatBox from '@/app/components/chatbox/ChatBox';
+import { useAlert } from '@/app/components/AlertProvider';
+import { defaultChatBoxStyle, defaultDarkChatBoxStyle } from '@/app/components/chatbox/ChatBox';
+import { chatPageStore } from '@/store/ChatPageStore';
+import { ChatSideBar } from './components/chatsidebar/ChatSideBar';
+import { ChatHeading } from './components/ChatHeading';
 import {
     Flex,
-    Heading,
-    IconButton,
     Drawer,
     DrawerBody,
-    DrawerHeader,
     DrawerOverlay,
     DrawerContent,
     DrawerCloseButton,
     useDisclosure,
     useColorMode,
     useBreakpointValue,
-    Menu,
-    MenuButton,
-    MenuList,
     Spinner,
-    Text,
-    MenuItem,
-    Divider,
     Box,
+    useColorModeValue,
 } from '@chakra-ui/react';
-import { observer } from 'mobx-react-lite';
-import ChatBox from '@/app/components/chatbox/ChatBox';
-import { Context } from '@/types/context';
-import { createContext } from '@/api/context/createContext';
-import { useAlert } from '@/app/components/AlertProvider';
-import { defaultChatBoxStyle, defaultDarkChatBoxStyle } from '@/app/components/chatbox/ChatBox';
-import { ChevronDownIcon, ChevronUpIcon, HamburgerIcon } from '@chakra-ui/icons';
-import { chatPageStore } from '@/store/ChatPageStore';
-import { formatTimestamp } from '@/utils/formattimestamp';
 
 
 const ChatPage = observer(() => {
 
     const isMobile = useBreakpointValue({ base: true, lg: false });
-    const { showAlert } = useAlert();
     const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
+    const mobileDrawerBgColor = useColorModeValue('gray.50', 'gray.800');
     const {
         isOpen: isMobileChatDrawerOpen,
         onOpen: onMobileChatDrawerOpen,
         onClose: onMobileChatDrawereClose
     } = useDisclosure();
-    const {
-        isOpen: isAgentMenuOpen,
-        onOpen: onOpenAgentMenu,
-        onClose: onCloseAgentMenu
-    } = useDisclosure();
+    const { showAlert } = useAlert();
 
+    // Initiate load
     useEffect(() => {
         chatPageStore.loadData();
     }, [])
 
+    // Show alerts
     useEffect(() => {
         if (chatPageStore.showAlert) {
             showAlert({
@@ -67,21 +55,8 @@ const ChatPage = observer(() => {
     return (
         <Flex direction="column" height="100%" p={2}>
             {/* Page Heading */}
-            <Flex mb={2}>
-                <Heading flex="1" as="h1" size="xl">
-                    Chat
-                </Heading>
-                {isMobile && (
-                    <IconButton
-                        aria-label={'Open Chat Menu'}
-                        icon={<HamburgerIcon />}
-                        variant="ghost"
-                        color="inherit"
-                        _hover={{ bg: 'gray.200', _dark: { bg: 'gray.700' } }}
-                        onClick={onMobileChatDrawerOpen}
-                    />
-                )}
-            </Flex>
+            <ChatHeading onMobileChatDrawerOpen={onMobileChatDrawerOpen} />
+
             {/* Body */}
             <Flex flex="1" direction="row" gap={4}>
                 {/* Chat Box */}
@@ -96,85 +71,26 @@ const ChatPage = observer(() => {
                         )
                     )}
                 </Flex>
-                {/* Chat History */}
-                {!isMobile && (
-                    <Flex direction="column" height="100%" bg="gray.800" width="300px" borderRadius="md" p={2}>
-                        {chatPageStore.currentContextLoading || !chatPageStore.currentAgentName || chatPageStore.agents === undefined ? (
-                            <Flex justify="center" align="center" height="40px">
-                                <Spinner size="sm" />
-                            </Flex>
-                        ) : (
-                            <Menu isOpen={isAgentMenuOpen} onClose={onCloseAgentMenu}>
-                                <MenuButton
-                                    width="100%"
-                                    p={2}
-                                    _hover={{ bg: 'gray.700' }}
-                                    borderRadius="md"
-                                    onClick={onOpenAgentMenu}
-                                >
-                                    <Flex justify="space-between" align="center">
-                                        <Text fontWeight="bold">{chatPageStore.currentAgentName}</Text>
-                                        {isAgentMenuOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                                    </Flex>
-                                </MenuButton>
-                                <MenuList>
-                                    {chatPageStore.agents.map((agent) => (
-                                        <MenuItem key={agent.agent_id} onClick={() => console.log(`Need to implement chatPageStore.createNewContext(agent.agent_id)`)}>
-                                            {agent.agent_name}
-                                        </MenuItem>
-                                    ))}
-                                </MenuList>
-                            </Menu>
-                        )}
-                        <Divider />
-                        {/* Chat History Content */}
-                        {chatPageStore.contextHistoryLoading ? (
-                            <Flex justify="center" align="center" flex="1">
-                                <Spinner size="sm" />
-                            </Flex>
-                        ) : (
-                            chatPageStore.contextHistory && (
-                                <Box width="100%" height="100%" position="relative">
-                                    <Box
-                                        position="absolute"
-                                        top="0"
-                                        bottom="0"
-                                        width="100%"
-                                        overflowY="auto"
-                                    >
-                                        {chatPageStore.contextHistory.map((contextHistory) => (
-                                            <div key={contextHistory.context_id}>
-                                                <Flex direction="column" p={2} _hover={{ bg: 'gray.700' }} borderRadius="md">
-                                                    <Flex direction="row" justify="space-between" align="center">
-                                                        <Text fontWeight="bold">{contextHistory.agent.agent_name}</Text>
-                                                        <Text fontSize="sm">{formatTimestamp(contextHistory.time_stamp)}</Text>
-                                                    </Flex>
-                                                    <Text fontSize="sm">{contextHistory.last_message}</Text>
-                                                </Flex>
-                                                <Divider />
-                                            </div>
-                                        ))}
-                                    </Box>
-                                </Box>
-                            )
-                        )}
 
-                    </Flex>
+                {/* Chat Side Bar */}
+                {!isMobile && (
+                    <Box width="300px">
+                        <ChatSideBar />
+                    </Box>
                 )}
             </Flex>
-            {/* Mobile Chat History */}
+
+            {/* Mobile Chat Drawer */}
             <Drawer
                 isOpen={isMobileChatDrawerOpen}
-                placement="right" // Slide in from the right
+                placement="right"
                 onClose={onMobileChatDrawereClose}
             >
                 <DrawerOverlay />
-                <DrawerContent bg="gray.800" color="white">
+                <DrawerContent bg={mobileDrawerBgColor}>
                     <DrawerCloseButton />
-                    <DrawerHeader>Chat History</DrawerHeader>
-                    <DrawerBody>
-                        {/* Content goes here */}
-                        Chat History Content
+                    <DrawerBody pt={14}>
+                        <ChatSideBar />
                     </DrawerBody>
                 </DrawerContent>
             </Drawer>
