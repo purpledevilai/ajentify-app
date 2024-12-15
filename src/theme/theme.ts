@@ -81,7 +81,7 @@ const theme = extendTheme({
                     field: {
                         borderColor: 'gray.300',
                         _hover: { borderColor: 'gray.400' }, // Hover state
-                        _focus: { borderColor: 'brand.500', boxShadow: '0 0 0 1px brand.500' }, // Focus state
+                        _focus: { borderColor: 'gray.500', boxShadow: '0 0 0 1px grey.500' }, // Focus state
                     },
                 },
             },

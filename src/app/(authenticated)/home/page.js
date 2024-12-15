@@ -51,7 +51,7 @@ const AgentsPage = observer(() => {
               borderColor="gray.300"
               cursor="pointer"
               _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
-              onClick={() => router.push('/create-agent')}
+              onClick={() => router.push('/agent-builder')}
               minHeight="150px" // Uniform height for all cards
             >
               <Text fontWeight="bold" color="blue.500">
