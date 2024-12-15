@@ -54,7 +54,7 @@ const AgentsPage = observer(() => {
               onClick={() => router.push('/agent-builder')}
               minHeight="150px" // Uniform height for all cards
             >
-              <Text fontWeight="bold" color="blue.500">
+              <Text fontWeight="bold" color="brand.500">
                 + Add Agent
               </Text>
             </Flex>
