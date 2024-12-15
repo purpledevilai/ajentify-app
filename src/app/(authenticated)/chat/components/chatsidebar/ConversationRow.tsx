@@ -1,3 +1,4 @@
+import { chatPageStore } from "@/store/ChatPageStore";
 import { ContextHistory } from "@/types/contexthistory";
 import { formatTimestamp } from "@/utils/formattimestamp";
 import { CloseIcon } from "@chakra-ui/icons";
@@ -18,12 +19,13 @@ export const ConversationRow = observer(({ contextHistory }: ConversationRowProp
     return (
         <Flex
             role="group"
-            _hover={{ bg: hoverBgColor }}
+            _hover={{ bg: hoverBgColor, cursor: "pointer" }}
             p={2}
             borderRadius="md"
             mb={4}
             align="center"
             justify="space-between"
+            onClick={() => chatPageStore.selectContext(contextHistory.context_id, contextHistory.agent.agent_name)}
         >
             <Box flex="1">
                 <Flex direction="row" justify="space-between" align="center" mb={1}>
@@ -55,7 +57,10 @@ export const ConversationRow = observer(({ contextHistory }: ConversationRowProp
                 opacity="0"
                 _groupHover={{ opacity: 1 }}
                 _hover={{ bg: "transparent", color: deleteButtonHoverColor }}
-                onClick={() => console.log(`Need to implement chatPageStore.deleteContext(contextHistory.context_id)`)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    chatPageStore.deleteContext(contextHistory.context_id);
+                }}
             />
         </Flex>
     )

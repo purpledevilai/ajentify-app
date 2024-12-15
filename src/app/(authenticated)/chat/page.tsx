@@ -62,7 +62,7 @@ const ChatPage = observer(() => {
                 {/* Chat Box */}
                 <Flex height="100%" flex="1">
                     {chatPageStore.currentContextLoading ? (
-                        <Flex justify="center" align="center" height="40px">
+                        <Flex justify="center" align="center" width="100%" height="100%">
                             <Spinner size="sm" />
                         </Flex>
                     ) : (

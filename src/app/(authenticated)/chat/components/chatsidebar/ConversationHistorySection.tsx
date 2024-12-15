@@ -38,6 +38,7 @@ export const ConversationHistorySection = observer(() => {
                         top="0"
                         bottom="0"
                         width="100%"
+                        pb="20px"
                         overflowY="auto"
                     >
                         {chatPageStore.contextHistory.map((contextHistory) => (

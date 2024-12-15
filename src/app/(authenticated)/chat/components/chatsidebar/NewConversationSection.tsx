@@ -54,7 +54,7 @@ export const NewConversationSection = observer(() => {
                         {chatPageStore.agents.map((agent) => (
                             <MenuItem
                                 key={agent.agent_id}
-                                onClick={() => console.log(`Need to implement chatPageStore.createNewContext(agent.agent_id)`)}
+                                onClick={() => chatPageStore.startNewConversation(agent)}
                             >
                                 {agent.agent_name}
                             </MenuItem>

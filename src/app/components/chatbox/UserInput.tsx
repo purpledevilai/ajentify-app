@@ -13,7 +13,7 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
 
     useEffect(() => {
         adjustTextareaHeight();
-    }, [])
+    }, [inputValue]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -34,7 +34,6 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setInputValue(e.target.value);
-        adjustTextareaHeight();
     };
 
     const adjustTextareaHeight = () => {
