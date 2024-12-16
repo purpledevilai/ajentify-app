@@ -20,7 +20,8 @@ import {
 import { motion } from 'framer-motion';
 import { RiRobot3Fill } from "react-icons/ri";
 import { MdChatBubble } from "react-icons/md";
-import { BiDotsVerticalRounded } from 'react-icons/bi'; // More vertical icon
+import { BiDotsVerticalRounded } from 'react-icons/bi';
+import { MdOutlineWebAsset } from "react-icons/md";
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -42,6 +43,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
     const tabs = [
         { icon: RiRobot3Fill, title: 'Agents', route: '/home' },
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
+        { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
     ];
 
     useEffect(() => {
