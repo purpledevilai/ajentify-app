@@ -25,6 +25,7 @@ export const MessageView = ({ message, style }: MessageViewProps) => {
                 justify="center"
                 borderRadius="md"
                 maxWidth={maxWidth}
+                fontSize="lg"
             >
                 {message.message}
             </Flex>

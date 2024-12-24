@@ -65,6 +65,7 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
                 bg={style.userInputTextareaBackgroundColor}
                 color={style.userInputTextareaTextColor}
                 focusBorderColor={style.userInputTextareaFocusColor}
+                fontSize="large"
                 size="sm"
                 resize="none"
                 flex="1"
