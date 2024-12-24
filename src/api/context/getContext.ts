@@ -1,6 +1,5 @@
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
-import { createUrlParams } from "@/utils/api/createURLParams";
 import { Context } from "@/types/context";
 
 export interface GetContextPayload {
@@ -9,8 +8,7 @@ export interface GetContextPayload {
 
 export async function getContext({context_id}: GetContextPayload): Promise<Context> {
   try {
-    const urlParams = createUrlParams({context_id})
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context${urlParams}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context/${context_id}`, {
         method: 'GET',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',

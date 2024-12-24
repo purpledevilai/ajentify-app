@@ -8,6 +8,7 @@ export interface ContextHistory {
     context_id: string;
     user_id: string;
     last_message: string;
-    time_stamp: number;
+    created_at: number;
+    updated_at: number;
     agent: ContextHistoryAgent;
 }

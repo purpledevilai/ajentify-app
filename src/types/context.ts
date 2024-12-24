@@ -1,5 +1,5 @@
 export interface Message {
-    from: "ai" | "user";
+    sender: "ai" | "human";
     message: string;
 }
 

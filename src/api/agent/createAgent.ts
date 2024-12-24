@@ -7,6 +7,7 @@ interface CreateAgentPayload {
     agent_description: string;
     is_public: boolean;
     prompt: string;
+    agent_speaks_first: boolean;
 }
 
 export async function createAgent(payload: CreateAgentPayload): Promise<Agent> {

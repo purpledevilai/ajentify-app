@@ -82,13 +82,13 @@ export const ChatBox = ({ context, onUIUpdates, style = defaultChatBoxStyle }: C
 
     const sendMessage = async (message: string) => {
         try {
-            addMessage(message, "user");
+            addMessage(message, "human");
             setResponseLoading(true);
             const response = await chat({context_id: context.context_id, message});
             addMessage(response.response, "ai");
-            if (response.ui_updates && onUIUpdates) {
+            if (response.events && onUIUpdates) {
                 console.log("Got UI updates!")
-                onUIUpdates(response.ui_updates);
+                onUIUpdates(response.events);
             }
         } catch(error) {
             showAlert({title: "Whoops", message: (error as Error).message})
@@ -97,10 +97,10 @@ export const ChatBox = ({ context, onUIUpdates, style = defaultChatBoxStyle }: C
         }
     }
 
-    const addMessage = (message: string, from: "ai" | "user") => {
+    const addMessage = (message: string, sender: "ai" | "human") => {
         setMessages((prevMessages) => [
             ...prevMessages,
-            { message, from }
+            { message, sender }
         ])
     }
 

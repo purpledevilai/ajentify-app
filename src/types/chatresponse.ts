@@ -5,5 +5,5 @@ export interface UIUpdate {
 
 export interface ChatResponse {
     response: string;
-    ui_updates?: UIUpdate[];
+    events?: UIUpdate[];
 }

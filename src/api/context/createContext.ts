@@ -10,13 +10,13 @@ export interface CreateContextPayload {
 
 export async function createContext({agent_id, invoke_agent_message = false}: CreateContextPayload): Promise<Context> {
   try {
-    const urlParams = createUrlParams({agent_id, invoke_agent_message: invoke_agent_message ? "True" : "False"})
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context${urlParams}`, {
-        method: 'GET',
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context`, {
+        method: 'POST',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'
         },
+        body: JSON.stringify({agent_id, invoke_agent_message}),
     });
     return await checkResponseAndGetJson(response) as unknown as Context;
   } catch (error) {

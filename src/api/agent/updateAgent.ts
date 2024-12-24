@@ -8,11 +8,12 @@ interface UpdateAgentPayload {
     agent_description: string;
     is_public: boolean;
     prompt: string;
+    agent_speaks_first: boolean;
 }
 
 export async function updateAgent(payload: UpdateAgentPayload): Promise<Agent> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agent`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agent/${payload.agent_id}`, {
         method: 'POST',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',

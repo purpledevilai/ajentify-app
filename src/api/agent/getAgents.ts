@@ -11,7 +11,8 @@ export async function getAgents(): Promise<Agent[]> {
             'Content-Type': 'application/json'
         },
     });
-    return await checkResponseAndGetJson(response) as unknown as Agent[];
+    const agentsObj = await checkResponseAndGetJson(response);
+    return agentsObj["agents"] as Agent[];
   } catch (error) {
     const errorMessage = (error as Error).message || 'An unknown error occurred getting the agents';
     throw Error(errorMessage);

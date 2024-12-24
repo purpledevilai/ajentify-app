@@ -96,6 +96,7 @@ class AgentBuilderStore {
                 agent_description: this.currentAgent.agent_description,
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
+                agent_speaks_first: this.currentAgent.agent_speaks_first,
             });
             this.currentAgent = agent;
         } catch (error) {
@@ -118,6 +119,7 @@ class AgentBuilderStore {
                 agent_description: this.currentAgent.agent_description,
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
+                agent_speaks_first: this.currentAgent.agent_speaks_first,
             });
             this.currentAgent = agent;
         } catch (error) {

@@ -8,7 +8,7 @@ interface MessageViewProps {
 }
 
 export const MessageView = ({ message, style }: MessageViewProps) => {
-    const isAI = message.from === "ai"
+    const isAI = message.sender === "ai"
     const messageColor = isAI ? style.aiMessageBackgroundColor : style.userMessageBackgroundColor
     const messageTextColor = isAI ? style.aiMessageTextColor : style.userMessageTextColor
     const maxWidth = "400px";

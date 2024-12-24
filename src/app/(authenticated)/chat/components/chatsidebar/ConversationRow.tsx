@@ -33,7 +33,7 @@ export const ConversationRow = observer(({ contextHistory }: ConversationRowProp
                         {contextHistory.agent.agent_name}
                     </Text>
                     <Text fontSize="xs" color={textColor}>
-                        {formatTimestamp(contextHistory.time_stamp)}
+                        {formatTimestamp(contextHistory.updated_at)}
                     </Text>
                 </Flex>
                 <Text
