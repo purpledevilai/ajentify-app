@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from "react";
-import { Flex, FormControl, Heading, IconButton, useColorMode, Input, Switch, Textarea, Button, Tooltip, useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/react";
+import { Flex, FormControl, Heading, IconButton, useColorMode, Input, Switch, Textarea, Button, Tooltip, useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";

@@ -1,6 +1,5 @@
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
-import { createUrlParams } from "@/utils/api/createURLParams";
 import { Context } from "@/types/context";
 
 export interface CreateContextPayload {
