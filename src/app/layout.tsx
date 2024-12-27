@@ -27,6 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en">
+      <head>
+        <title>Ajentify</title>
+      </head>
       <body>
         <ChakraProviders>
           <AlertProvider>
