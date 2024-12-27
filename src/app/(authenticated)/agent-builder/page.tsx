@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
+import { useNavigationGuard } from "next-navigation-guard";
 import {
     Flex, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, useBreakpointValue,
@@ -15,16 +16,46 @@ import { useAlert } from "@/app/components/AlertProvider";
 import { UIUpdate } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
 
+
 const AgentBuilderPage = observer(() => {
+    // Nav Guard to detect page navigation - Really dump NextJS limitiation
+    const navGuard = useNavigationGuard({});
+    const isShowingNavAlert = useRef(false);
+
     const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
     const { isOpen: isTestingAgentModalOpen, onOpen: onOpenTestingAgentModal, onClose: onCloseTesingAgentModal } = useDisclosure();
     const { showAlert } = useAlert();
-
     const isMobile = useBreakpointValue({ base: true, lg: false });
 
+    // Detect page navigation
     useEffect(() => {
-        agentBuilderStore.initiateNewAgentState();
-    }, []);
+        if (navGuard.active && !isShowingNavAlert.current) {
+            isShowingNavAlert.current = true;
+            const stayOnPage = () => {
+                isShowingNavAlert.current = false;
+                navGuard.reject();
+            }
+            const leavePage = () => {
+                agentBuilderStore.reset();
+                navGuard.accept();
+            }
+            if (agentBuilderStore.hasAnUpdate) {
+                // Unsaved changes alert
+                showAlert({
+                    title: "Unsaved Changes",
+                    message: "You have unsaved changes. Are you sure you want to leave?",
+                    actions: [
+                        { label: "Cancel", onClick: stayOnPage},
+                        { label: "Leave", onClick: leavePage }
+                    ]
+                })
+            } else {
+                leavePage();
+            }
+        }
+    }, [navGuard, showAlert]);
+
+    
 
     useEffect(() => {
         if (agentBuilderStore.showAlert) {
@@ -34,7 +65,7 @@ const AgentBuilderPage = observer(() => {
                 onClose: agentBuilderStore.closeAlert
             });
         }
-    }, [agentBuilderStore.showAlert]);
+    }, [agentBuilderStore.showAlert, showAlert]);
 
     const onUIUpdates = (uiUpdates: UIUpdate[]) => {
         console.log("Calling UIUpdate function");

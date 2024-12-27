@@ -50,7 +50,7 @@ const ChatPage = observer(() => {
                 onClose: chatPageStore.closeAlert
             });
         }
-    }, [chatPageStore.showAlert])
+    }, [chatPageStore.showAlert, showAlert])
 
     return (
         <Flex direction="column" height="100%" p={2}>

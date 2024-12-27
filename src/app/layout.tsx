@@ -5,6 +5,7 @@ import ChakraProviders from "@/app/components/ChakraProviders";
 import { AlertProvider } from "@/app/components/AlertProvider";
 import { Amplify } from 'aws-amplify';
 import { authStore } from '@/store/AuthStore';
+import { NavigationGuardProvider } from 'next-navigation-guard';
 
 Amplify.configure({
   Auth: {
@@ -19,8 +20,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const checkAuth = async () => {
-        await authStore.checkAuth();
-        console.log("Auth Token: ", await authStore.getAccessToken());
+      await authStore.checkAuth();
+      console.log("Auth Token: ", await authStore.getAccessToken());
     };
     checkAuth();
   }, []);
@@ -31,11 +32,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>Ajentify</title>
       </head>
       <body>
-        <ChakraProviders>
-          <AlertProvider>
-            {children}
-          </AlertProvider>
-        </ChakraProviders>
+        <NavigationGuardProvider>
+          <ChakraProviders>
+            <AlertProvider>
+              {children}
+            </AlertProvider>
+          </ChakraProviders>
+        </NavigationGuardProvider>
       </body>
     </html>
   );

@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
+import { agentsStore } from '@/store/AgentsStore';
+import { agentBuilderStore } from '@/store/AgentBuilderStore';
+import { Agent } from '@/types/agent';
 import {
   Box,
   Heading,
@@ -11,8 +15,6 @@ import {
   Text,
   Spinner,
 } from '@chakra-ui/react';
-import { agentsStore } from '@/store/AgentsStore';
-import { useRouter } from 'next/navigation';
 import Card from '@/app/components/Card';
 
 const AgentsPage = observer(() => {
@@ -22,7 +24,15 @@ const AgentsPage = observer(() => {
     agentsStore.loadAgents();
   }, []);
 
-  const { agents, agentsLoading } = agentsStore;
+  const handleAddAgentClick = () => {
+    agentBuilderStore.initiateNewAgentState();
+    router.push('/agent-builder');
+  };
+
+  const handleAgentClick = (agent: Agent) => {
+    agentBuilderStore.setCurrentAgent(agent);
+    router.push('/agent-builder');
+  };
 
   return (
     <Box p={6}>
@@ -32,7 +42,7 @@ const AgentsPage = observer(() => {
       </Heading>
 
       {/* Content Section */}
-      {agentsLoading ? (
+      {agentsStore.agentsLoading ? (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
@@ -51,7 +61,7 @@ const AgentsPage = observer(() => {
               borderColor="gray.300"
               cursor="pointer"
               _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
-              onClick={() => router.push('/agent-builder')}
+              onClick={handleAddAgentClick}
               minHeight="150px" // Uniform height for all cards
             >
               <Text fontWeight="bold" color="brand.500">
@@ -61,24 +71,28 @@ const AgentsPage = observer(() => {
           </GridItem>
 
           {/* Agent Cards */}
-          {agents.map((agent) => (
-            <GridItem key={agent.agent_id}>
-              <Card
-                shadow="md"
-                _hover={{ shadow: 'lg' }}
-                cursor="pointer"
-                onClick={() => router.push(`/agent/${agent.agent_id}`)}
-                minHeight="150px" // Uniform height for all cards
-              >
-                <Heading as="h3" size="md" mb={2} isTruncated>
-                  {agent.agent_name}
-                </Heading>
-                <Text fontSize="sm" color="gray.500" isTruncated>
-                  {agent.agent_description}
-                </Text>
-              </Card>
-            </GridItem>
-          ))}
+          {agentsStore.agents ? (
+            agentsStore.agents.map((agent) => (
+              <GridItem key={agent.agent_id}>
+                <Card
+                  shadow="md"
+                  _hover={{ shadow: 'lg' }}
+                  cursor="pointer"
+                  onClick={() => handleAgentClick(agent)}
+                  minHeight="150px" // Uniform height for all cards
+                >
+                  <Heading as="h3" size="md" mb={2} isTruncated>
+                    {agent.agent_name}
+                  </Heading>
+                  <Text fontSize="sm" color="gray.500" isTruncated>
+                    {agent.agent_description}
+                  </Text>
+                </Card>
+              </GridItem>
+            ))
+          ) : (
+            <Text>No agents found</Text>
+          )}
         </Grid>
       )}
     </Box>

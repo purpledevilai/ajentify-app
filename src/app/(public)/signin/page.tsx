@@ -11,7 +11,7 @@ const SignInPage = observer(() => {
 
     useEffect(() => {
         if (authStore.signedIn) {
-            router.push('/home');
+            router.push('/agents');
         }
     }, [authStore.signedIn, router]);
 

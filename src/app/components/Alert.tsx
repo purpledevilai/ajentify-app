@@ -11,7 +11,7 @@ import {
 
 export interface AlertAction {
     label: string;
-    handler?: () => void;
+    onClick?: () => void;
 }
 
 export interface AlertProps {
@@ -24,7 +24,7 @@ export interface AlertProps {
 const Alert: React.FC<AlertProps> = ({
     title,
     message,
-    actions = [{ label: 'Ok', handler: undefined }],
+    actions = [{ label: 'Ok', onClick: undefined }],
     onClose,
 }) => {
     // Close alert on Escape key press
@@ -90,7 +90,7 @@ const Alert: React.FC<AlertProps> = ({
                         {actions.map((action, index) => (
                             <Button
                                 key={index}
-                                onClick={() => handleActionClick(action.handler)}
+                                onClick={() => handleActionClick(action.onClick)}
                             >
                                 {action.label}
                             </Button>

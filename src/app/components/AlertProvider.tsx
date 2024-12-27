@@ -23,7 +23,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
     } | null>(null);
 
     
-    const showAlert = ({ title, message, actions = [{ label: 'Ok', handler: undefined }], onClose }: ShowAlertParams) => {
+    const showAlert = ({ title, message, actions = [{ label: 'Ok', onClick: undefined }], onClose }: ShowAlertParams) => {
         setAlert({ title, message, actions, onClose });
     };
 

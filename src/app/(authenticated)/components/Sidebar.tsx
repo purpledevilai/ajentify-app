@@ -41,7 +41,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
 
     // Tabs for the navigation
     const tabs = [
-        { icon: RiRobot3Fill, title: 'Agents', route: '/home' },
+        { icon: RiRobot3Fill, title: 'Agents', route: '/agents' },
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
     ];

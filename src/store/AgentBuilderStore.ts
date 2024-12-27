@@ -30,13 +30,13 @@ class AgentBuilderStore {
         prompt: '',
     };
     hasAnUpdate = false;
-    agentLoading = true;
+    agentLoading = false;
 
     promptEngineerContext: Context | undefined = undefined;
-    promptEngineerContextLoading = true;
+    promptEngineerContextLoading = false;
 
     agentContext: Context | undefined = undefined;
-    agentContextLoading = true;
+    agentContextLoading = false;
 
 
     showAlert: boolean = false;
@@ -59,6 +59,11 @@ class AgentBuilderStore {
         this.alertMessage = '';
     }
 
+    setCurrentAgent(agent: Agent) {
+        this.currentAgent = agent;
+        this.hasAnUpdate = false
+    }
+
     initiateNewAgentState() {
         if (this.hasInitiatedLoad) return;
         this.hasInitiatedLoad = true;
@@ -72,6 +77,24 @@ class AgentBuilderStore {
         };
         this.hasAnUpdate = false;
         this.createPromptEngineerContext();
+    }
+
+    reset = () => {
+        this.hasInitiatedLoad = false;
+        this.currentAgent = {
+            agent_id: '',
+            agent_name: '',
+            agent_description: '',
+            is_public: false,
+            agent_speaks_first: false,
+            prompt: '',
+        };
+        this.hasAnUpdate = false;
+        this.agentLoading = false;
+        this.promptEngineerContext = undefined;
+        this.promptEngineerContextLoading = false;
+        this.agentContext = undefined;
+        this.agentContextLoading = false;
     }
 
     setStringField(field: keyof AgentStringFields, value: string) {

@@ -10,7 +10,7 @@ const IndexPage = observer(() => {
 
   useEffect(() => {
     if (authStore.signedIn) {
-      router.push('/home');
+      router.push('/agents');
     } else {
       router.push('/landing');
     }
