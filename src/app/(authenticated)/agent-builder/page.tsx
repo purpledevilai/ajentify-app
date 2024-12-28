@@ -237,6 +237,7 @@ const AgentBuilderPage = observer(() => {
                         focusBorderColor="gray.500"
                         value={agentBuilderStore.currentAgent.prompt}
                         onChange={(e) => agentBuilderStore.setStringField("prompt", e.target.value)}
+                        h="50vh"
                     />
                 </FormControl>
                 {/* Save Button */}
