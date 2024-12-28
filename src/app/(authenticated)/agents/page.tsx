@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { agentsStore } from '@/store/AgentsStore';
@@ -14,11 +14,25 @@ import {
   Flex,
   Text,
   Spinner,
+  Button,
+  Spacer,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
+import { CodeSnippet } from '@/app/components/CodeSnipet';
+import { generateStartConversationSnippet } from '@/utils/codesnippets/StartConversation';
 
 const AgentsPage = observer(() => {
   const router = useRouter();
+  const { isOpen: isCodeModalOpen, onOpen: onCodeModalOpen, onClose: onCodeModalClose } = useDisclosure();
+  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [currentAgentId, setCurrentAgentId] = useState<string | null>(null);
 
   useEffect(() => {
     agentsStore.loadAgents();
@@ -32,6 +46,12 @@ const AgentsPage = observer(() => {
   const handleAgentClick = (agent: Agent) => {
     agentBuilderStore.setCurrentAgent(agent);
     router.push('/agent-builder');
+  };
+
+  const handleShowCodeClick = (e: React.MouseEvent, agent: Agent) => {
+    e.stopPropagation();
+    setCurrentAgentId(agent.agent_id);
+    onCodeModalOpen();
   };
 
   return (
@@ -81,12 +101,21 @@ const AgentsPage = observer(() => {
                   onClick={() => handleAgentClick(agent)}
                   minHeight="150px" // Uniform height for all cards
                 >
-                  <Heading as="h3" size="md" mb={2} isTruncated>
-                    {agent.agent_name}
-                  </Heading>
-                  <Text fontSize="sm" color="gray.500" isTruncated>
-                    {agent.agent_description}
-                  </Text>
+                  <Flex h="100%" direction="column">
+                    <Heading as="h3" size="md" mb={2} isTruncated>
+                      {agent.agent_name}
+                    </Heading>
+                    <Text fontSize="sm" color="gray.500" isTruncated>
+                      {agent.agent_description}
+                    </Text>
+                    <Spacer />
+                    <Button
+                      size="sm"
+                      onClick={(e) => handleShowCodeClick(e, agent)}
+                    >
+                      Show Code
+                    </Button>
+                  </Flex>
                 </Card>
               </GridItem>
             ))
@@ -95,6 +124,34 @@ const AgentsPage = observer(() => {
           )}
         </Grid>
       )}
+
+      {/* Code Modal */}
+      <Modal isOpen={isCodeModalOpen} onClose={onCodeModalClose} size="2xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Code</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Flex gap={4} mb={4}>
+              <Button
+                size="sm"
+                variant={selectedLanguage === 'javascript' ? 'solid' : 'outline'}
+                onClick={() => setSelectedLanguage('javascript')}
+              >
+                JavaScript
+              </Button>
+              <Button
+                size="sm"
+                variant={selectedLanguage === 'python' ? 'solid' : 'outline'}
+                onClick={() => setSelectedLanguage('python')}
+              >
+                Python
+              </Button>
+            </Flex>
+            {currentAgentId && <CodeSnippet code={generateStartConversationSnippet(currentAgentId, selectedLanguage)} language={selectedLanguage} />}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 });
