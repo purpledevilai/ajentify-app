@@ -87,9 +87,27 @@ const AgentBuilderPage = observer(() => {
 
     const onSaveAgent = async () => {
         await agentBuilderStore.onSaveAgentClick();
-        await agentsStore.loadAgents(true);
+        agentsStore.loadAgents(true);
         // Navigate back
         window.history.back();
+    }
+
+    const onDeleteAgentClick = async () => {
+        showAlert({
+            title: "Delete Agent",
+            message: "Are you sure you want to delete this agent?",
+            actions: [
+                { label: "Cancel", onClick: () => { } },
+                {
+                    label: "Delete", onClick: async () => {
+                        await agentBuilderStore.deleteAgent();
+                        agentsStore.loadAgents(true);
+                        // Navigate back
+                        window.history.back();
+                    }
+                }
+            ]
+        })
     }
 
     return (
@@ -210,7 +228,15 @@ const AgentBuilderPage = observer(() => {
                         isLoading={agentBuilderStore.agentLoading || agentsStore.agentsLoading}
                     >Save</Button>
                 </Tooltip>
-
+                {/* Delete Button */}
+                {agentBuilderStore.showDeleteButton && (
+                    <Button
+                        onClick={onDeleteAgentClick}
+                        variant="outline"
+                        size="lg"
+                        isLoading={agentBuilderStore.agentDeleteLoading}
+                    >Delete Agent</Button>
+                )}
             </Flex>
 
             {/* Prompt engineer modal */}

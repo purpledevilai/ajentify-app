@@ -3,6 +3,7 @@ import { Context } from "@/types/context";
 import { makeAutoObservable } from "mobx";
 import { createContext } from "@/api/context/createContext";
 import { createAgent } from "@/api/agent/createAgent";
+import { deleteAgent } from "@/api/agent/deleteAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 
@@ -34,12 +35,15 @@ class AgentBuilderStore {
     };
     hasUpdates = false;
     agentLoading = false;
+    agentDeleteLoading = false;
 
     promptEngineerContext: Context | undefined = undefined;
     promptEngineerContextLoading = false;
 
     agentContext: Context | undefined = undefined;
     agentContextLoading = false;
+
+    showDeleteButton = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -51,7 +55,8 @@ class AgentBuilderStore {
 
     setCurrentAgent(agent: Agent) {
         this.currentAgent = agent;
-        this.hasUpdates = false
+        this.hasUpdates = false;
+        this.showDeleteButton = true;
     }
 
     reset = () => {
@@ -70,6 +75,8 @@ class AgentBuilderStore {
         this.promptEngineerContextLoading = false;
         this.agentContext = undefined;
         this.agentContextLoading = false;
+        this.showDeleteButton = false;
+        this.agentDeleteLoading = false;
     }
 
     setStringField(field: keyof AgentStringFields, value: string) {
@@ -138,6 +145,28 @@ class AgentBuilderStore {
             })
         } finally {
             this.agentLoading = false;
+        }
+    }
+
+    async deleteAgent() {
+        if (!this.currentAgent.agent_id) {
+            this.showAlert({
+                title: 'Error',
+                message: 'Agent does not exist. Please create the agent first.',
+            })
+            return;
+        }
+        try {
+            this.agentDeleteLoading = true;
+            await deleteAgent(this.currentAgent.agent_id);
+            this.reset();
+        } catch (error) {
+            this.showAlert({
+                title: 'Error',
+                message: (error as Error).message,
+            })
+        } finally {
+            this.agentDeleteLoading = false;
         }
     }
 
