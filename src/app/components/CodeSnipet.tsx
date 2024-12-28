@@ -10,7 +10,6 @@ interface CodeSnippetProps {
 
 export const CodeSnippet = ({ code, language = "javascript" }: CodeSnippetProps) => {
   const { hasCopied, onCopy } = useClipboard(code);
-  const bgColor = useColorModeValue('gray.100', 'gray.800');
   const syntaxStyle = useColorModeValue(oneLight, oneDark);
 
   return (

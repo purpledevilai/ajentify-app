@@ -1,4 +1,3 @@
-import { Agent } from "@/types/agent";
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
