@@ -2,6 +2,7 @@ import { Agent } from "@/types/agent";
 import { Context } from "@/types/context";
 import { makeAutoObservable } from "mobx";
 import { createContext } from "@/api/context/createContext";
+import { deleteContext } from "@/api/context/deleteContext";
 import { createAgent } from "@/api/agent/createAgent";
 import { deleteAgent } from "@/api/agent/deleteAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
@@ -23,8 +24,7 @@ class AgentBuilderStore {
 
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
 
-    hasInitiatedLoad = false;
-
+    isNewAgent = false;
     currentAgent: Agent = {
         agent_id: '',
         agent_name: '',
@@ -53,6 +53,10 @@ class AgentBuilderStore {
         this.showAlert = showAlert;
     }
 
+    setIsNewAgent(isNewAgent: boolean) {
+        this.isNewAgent = isNewAgent;
+    }
+
     setCurrentAgent(agent: Agent) {
         this.currentAgent = agent;
         this.hasUpdates = false;
@@ -60,7 +64,7 @@ class AgentBuilderStore {
     }
 
     reset = () => {
-        this.hasInitiatedLoad = false;
+        this.isNewAgent = false;
         this.currentAgent = {
             agent_id: '',
             agent_name: '',
@@ -159,7 +163,6 @@ class AgentBuilderStore {
         try {
             this.agentDeleteLoading = true;
             await deleteAgent(this.currentAgent.agent_id);
-            this.reset();
         } catch (error) {
             this.showAlert({
                 title: 'Error',
@@ -167,6 +170,34 @@ class AgentBuilderStore {
             })
         } finally {
             this.agentDeleteLoading = false;
+        }
+    }
+
+    async deletePromptEngineerContext() {
+        if (this.promptEngineerContext) {
+            try {
+                await deleteContext({context_id: this.promptEngineerContext.context_id});
+                this.promptEngineerContext = undefined;
+            } catch (error) {
+                this.showAlert({
+                    title: 'Error',
+                    message: (error as Error).message,
+                })
+            }
+        }
+    }
+
+    async deleteAgentContext() {
+        if (this.agentContext) {
+            try {
+                await deleteContext({context_id: this.agentContext.context_id});
+                this.agentContext = undefined;
+            } catch (error) {
+                this.showAlert({
+                    title: 'Error',
+                    message: (error as Error).message,
+                })
+            }
         }
     }
 
@@ -189,6 +220,7 @@ class AgentBuilderStore {
         } else {
             await this.createAgent();
         }
+        this.isNewAgent = false; // Keeps new agent from deleting after saving
     }
 
     async createPromptEngineerContext() {

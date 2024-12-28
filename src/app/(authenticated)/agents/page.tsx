@@ -25,6 +25,7 @@ const AgentsPage = observer(() => {
   }, []);
 
   const handleAddAgentClick = () => {
+    agentBuilderStore.setIsNewAgent(true);
     router.push('/agent-builder');
   };
 

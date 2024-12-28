@@ -36,7 +36,20 @@ const AgentBuilderPage = observer(() => {
                 isShowingNavAlert.current = false;
                 navGuard.reject();
             }
-            const leavePage = () => {
+            const leavePage = async () => {
+                if (agentBuilderStore.isNewAgent && agentBuilderStore.currentAgent.agent_id) {
+                    // Delete the agent if it's new and not saved
+                    await agentBuilderStore.deleteAgent();
+                    agentsStore.loadAgents(true);
+                }
+                if (agentBuilderStore.agentContext) {
+                    // Delete the agent context if it exists
+                    await agentBuilderStore.deleteAgentContext();
+                }
+                if (agentBuilderStore.promptEngineerContext) {
+                    // Delete the prompt engineer context if it exists
+                    await agentBuilderStore.deletePromptEngineerContext();
+                }
                 agentBuilderStore.reset();
                 navGuard.accept();
             }
@@ -101,6 +114,7 @@ const AgentBuilderPage = observer(() => {
                 {
                     label: "Delete", onClick: async () => {
                         await agentBuilderStore.deleteAgent();
+                        agentBuilderStore.reset();
                         agentsStore.loadAgents(true);
                         // Navigate back
                         window.history.back();
@@ -109,6 +123,17 @@ const AgentBuilderPage = observer(() => {
             ]
         })
     }
+
+    const beforeCloseTestAgentModal = () => {
+        agentBuilderStore.deleteAgentContext();
+        onCloseTesingAgentModal();
+    }
+
+    const beforeClosePromptEngineerModal = () => {
+        agentBuilderStore.deletePromptEngineerContext();
+        onClosePromptEngineerModal();
+    }
+
 
     return (
         <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
@@ -240,7 +265,7 @@ const AgentBuilderPage = observer(() => {
             </Flex>
 
             {/* Prompt engineer modal */}
-            <Modal isOpen={isPromptEngineerModalOpen} onClose={onClosePromptEngineerModal} size="2xl">
+            <Modal isOpen={isPromptEngineerModalOpen} onClose={beforeClosePromptEngineerModal} size="2xl">
                 <ModalOverlay />
                 <ModalContent>
                     <ModalHeader>Prompt Engineer</ModalHeader>
@@ -263,7 +288,7 @@ const AgentBuilderPage = observer(() => {
 
 
             {/* Test modal */}
-            <Modal isOpen={isTestingAgentModalOpen} onClose={onCloseTesingAgentModal} size="2xl">
+            <Modal isOpen={isTestingAgentModalOpen} onClose={beforeCloseTestAgentModal} size="2xl">
                 <ModalOverlay />
                 <ModalContent>
                     <ModalHeader>Test Agent</ModalHeader>

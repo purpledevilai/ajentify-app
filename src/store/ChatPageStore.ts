@@ -54,6 +54,13 @@ class ChatPageStore {
         try {
             this.agentsLoading = true;
             this.agents = await getAgents();
+            if (this.currentAgentName === undefined) {
+                if (this.agents.length > 0) {
+                    this.currentAgentName = this.agents[0].agent_name;
+                } else {
+                    this.currentAgentName = 'No agents available';
+                }
+            }
         } catch (error) {
             this.showAlertMessage('Failed to load agents', (error as Error).message);
         } finally {
