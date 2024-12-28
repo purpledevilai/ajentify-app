@@ -4,7 +4,7 @@ import { MessagesArea } from "./MessagesArea";
 import { UserInput } from "./UserInput";
 import { Context, Message } from "@/types/context";
 import { chat } from "@/api/chat/chat";
-import { UIUpdate } from "@/types/chatresponse";
+import { ChatEvent } from "@/types/chatresponse";
 import { useAlert } from "../AlertProvider";
 
 
@@ -70,11 +70,11 @@ export const defaultDarkChatBoxStyle: ChatBoxStyle = {
 
 interface ChatBoxProps {
     context: Context;
-    onUIUpdates?: (uiUpdates: UIUpdate[]) => void
+    onEvents?: (chatEvents: ChatEvent[]) => void
     style?: ChatBoxStyle;
 }
 
-export const ChatBox = ({ context, onUIUpdates, style = defaultChatBoxStyle }: ChatBoxProps) => {
+export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle }: ChatBoxProps) => {
 
     const [responseLoading, setResponseLoading] = useState<boolean>(false);
     const [messages, setMessages] = useState<Message[]>(context.messages)
@@ -86,9 +86,9 @@ export const ChatBox = ({ context, onUIUpdates, style = defaultChatBoxStyle }: C
             setResponseLoading(true);
             const response = await chat({context_id: context.context_id, message});
             addMessage(response.response, "ai");
-            if (response.events && onUIUpdates) {
+            if (response.events && onEvents) {
                 console.log("Got UI updates!")
-                onUIUpdates(response.events);
+                onEvents(response.events);
             }
         } catch(error) {
             showAlert({title: "Whoops", message: (error as Error).message})

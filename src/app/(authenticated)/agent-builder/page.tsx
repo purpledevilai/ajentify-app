@@ -4,16 +4,17 @@ import React, { useEffect, useRef } from "react";
 import { useNavigationGuard } from "next-navigation-guard";
 import {
     Flex, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
-    useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, useBreakpointValue,
+    useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     useColorMode
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { agentsStore } from "@/store/AgentsStore";
 import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
 import { useAlert } from "@/app/components/AlertProvider";
-import { UIUpdate } from "@/types/chatresponse";
+import { ChatEvent } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
 
 
@@ -24,8 +25,8 @@ const AgentBuilderPage = observer(() => {
 
     const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
     const { isOpen: isTestingAgentModalOpen, onOpen: onOpenTestingAgentModal, onClose: onCloseTesingAgentModal } = useDisclosure();
+    const { isOpen: isPromptEngineerModalOpen, onOpen: onOpenPromptEngineerModal, onClose: onClosePromptEngineerModal } = useDisclosure();
     const { showAlert } = useAlert();
-    const isMobile = useBreakpointValue({ base: true, lg: false });
 
     // Detect page navigation
     useEffect(() => {
@@ -39,13 +40,13 @@ const AgentBuilderPage = observer(() => {
                 agentBuilderStore.reset();
                 navGuard.accept();
             }
-            if (agentBuilderStore.hasAnUpdate) {
+            if (agentBuilderStore.hasUpdates) {
                 // Unsaved changes alert
                 showAlert({
                     title: "Unsaved Changes",
                     message: "You have unsaved changes. Are you sure you want to leave?",
                     actions: [
-                        { label: "Cancel", onClick: stayOnPage},
+                        { label: "Cancel", onClick: stayOnPage },
                         { label: "Leave", onClick: leavePage }
                     ]
                 })
@@ -55,50 +56,44 @@ const AgentBuilderPage = observer(() => {
         }
     }, [navGuard, showAlert]);
 
-    
-
     useEffect(() => {
-        if (agentBuilderStore.showAlert) {
-            showAlert({
-                title: agentBuilderStore.alertTitle,
-                message: agentBuilderStore.alertMessage,
-                onClose: agentBuilderStore.closeAlert
-            });
-        }
-    }, [agentBuilderStore.showAlert, showAlert]);
+        agentBuilderStore.setShowAlert(showAlert);
+    }, [showAlert]);
 
-    const onUIUpdates = (uiUpdates: UIUpdate[]) => {
+    const onOpenPromptEngineerClick = () => {
+        agentBuilderStore.createPromptEngineerContext();
+        onOpenPromptEngineerModal();
+    }
+
+    const onChatEvents = (chatEvents: ChatEvent[]) => {
         console.log("Calling UIUpdate function");
-        uiUpdates.forEach(uiUpdate => {
-            if (uiUpdate.type === 'set_prompt') {
-                const promptUpdate = uiUpdate as unknown as { prompt: string }
-                agentBuilderStore.setStringField("prompt", promptUpdate.prompt)
+        chatEvents.forEach(chatEvent => {
+            if (chatEvent.type === 'set_name') {
+                agentBuilderStore.setStringField("agent_name", chatEvent.data);
+            }
+            if (chatEvent.type === 'set_description') {
+                agentBuilderStore.setStringField("agent_description", chatEvent.data);
+            }
+            if (chatEvent.type === 'set_prompt') {
+                agentBuilderStore.setStringField("prompt", chatEvent.data);
             }
         });
     };
 
     const onTestAgent = async () => {
         onOpenTestingAgentModal();
-        if (agentBuilderStore.currentAgent.agent_id) {
-            await agentBuilderStore.updateAgent();
-        } else {
-            await agentBuilderStore.createAgent();
-        }
-        agentBuilderStore.createAgentContext();
+        agentBuilderStore.onTestAgentClick();
     };
 
     const onSaveAgent = async () => {
-        if (agentBuilderStore.currentAgent.agent_id) {
-            await agentBuilderStore.updateAgent();
-        } else {
-            await agentBuilderStore.createAgent();
-        }
+        await agentBuilderStore.onSaveAgentClick();
+        await agentsStore.loadAgents(true);
         // Navigate back
         window.history.back();
     }
 
     return (
-        <Flex p={4} direction="column" h="100%" w="100%">
+        <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             {/* Header Section */}
             <Flex direction="row" w="100%" mb={4} gap={4} align="center">
                 <IconButton
@@ -124,110 +119,124 @@ const AgentBuilderPage = observer(() => {
                 </Tooltip>
             </Flex>
 
-            {/* Main Content Section */}
-            <Flex
-                direction={isMobile ? "column" : "row"}
-                h="100%"
-                w="100%"
-                gap={8}
-            >
-                {/* Chatbox */}
-                <Flex direction="column" w={isMobile ? "100%" : "50vw"} h={isMobile ? "70vh" : "100%"}>
-                    <ContentOrSpinner showSpinner={agentBuilderStore.promptEngineerContextLoading}>
-                        {agentBuilderStore.promptEngineerContext &&
-                            <ChatBox
-                                context={agentBuilderStore.promptEngineerContext}
-                                style={chatBoxStyle}
-                                onUIUpdates={onUIUpdates}
-                            />
-                        }
-                    </ContentOrSpinner>
+            {/* Agent Form */}
+            <Flex direction="column" w="100%" h="100%" maxW={800} gap={8}>
+                {/* Agent Name */}
+                <FormControl>
+                    <FormLabelToolTip
+                        label="Agent Name"
+                        tooltip="The name the agent will refer itself to"
+                    />
+                    <Input
+                        mt={2}
+                        placeholder="Domingo"
+                        value={agentBuilderStore.currentAgent.agent_name}
+                        onChange={(e) => agentBuilderStore.setStringField("agent_name", e.target.value)}
+                    />
+                </FormControl>
+                {/* Agent Description */}
+                <FormControl>
+                    <FormLabelToolTip
+                        label="Agent Description"
+                        tooltip="Short description for your reference. Not public."
+                    />
+                    <Input
+                        mt={2}
+                        placeholder="A friendly agent that helps you with your daily tasks."
+                        value={agentBuilderStore.currentAgent.agent_description}
+                        onChange={(e) => agentBuilderStore.setStringField("agent_description", e.target.value)}
+                    />
+                </FormControl>
+                {/* Toggles */}
+                <Flex direction="row" w="100%" justifyContent="flex-start" align="center" gap={12}>
+                    <FormControl width="auto">
+                        <FormLabelToolTip
+                            label="Public Agent"
+                            tooltip="If not public, only you and your organization can talk to this agent"
+                        />
+                        <Switch
+                            mt={2}
+                            colorScheme="purple"
+                            size="lg"
+                            isChecked={agentBuilderStore.currentAgent.is_public}
+                            onChange={(e) => agentBuilderStore.setBooleanField("is_public", e.target.checked)}
+                        />
+                    </FormControl>
+                    <FormControl width="auto">
+                        <FormLabelToolTip
+                            label="Agent Speaks First"
+                            tooltip="When a new context with this agent is created, the agent will generate the first message."
+                        />
+                        <Switch
+                            mt={2}
+                            colorScheme="purple"
+                            size="lg"
+                            isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
+                            onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
+                        />
+                    </FormControl>
                 </Flex>
-
-                {/* Agent Form */}
-                <Flex direction="column" w="100%" h="100%" gap={8}>
-                    {/* Agent Name */}
-                    <FormControl>
-                        <FormLabelToolTip
-                            label="Agent Name"
-                            tooltip="The name the agent will refer itself to"
-                        />
-                        <Input
-                            mt={2}
-                            placeholder="Domingo"
-                            value={agentBuilderStore.currentAgent.agent_name}
-                            onChange={(e) => agentBuilderStore.setStringField("agent_name", e.target.value)}
-                        />
-                    </FormControl>
-                    {/* Agent Description */}
-                    <FormControl>
-                        <FormLabelToolTip
-                            label="Agent Description"
-                            tooltip="Short description for your reference. Not public."
-                        />
-                        <Input
-                            mt={2}
-                            placeholder="A friendly agent that helps you with your daily tasks."
-                            value={agentBuilderStore.currentAgent.agent_description}
-                            onChange={(e) => agentBuilderStore.setStringField("agent_description", e.target.value)}
-                        />
-                    </FormControl>
-                    {/* Toggles */}
-                    <Flex direction="row" w="100%" justifyContent="flex-start" align="center" gap={12}>
-                        <FormControl width="auto">
-                            <FormLabelToolTip
-                                label="Public Agent"
-                                tooltip="If not public, only you and your organization can talk to this agent"
-                            />
-                            <Switch
-                                mt={2}
-                                colorScheme="purple"
-                                size="lg"
-                                isChecked={agentBuilderStore.currentAgent.is_public}
-                                onChange={(e) => agentBuilderStore.setBooleanField("is_public", e.target.checked)}
-                            />
-                        </FormControl>
-                        <FormControl width="auto">
-                            <FormLabelToolTip
-                                label="Agent Speaks First"
-                                tooltip="When a new context with this agent is created, the agent will generate the first message."
-                            />
-                            <Switch
-                                mt={2}
-                                colorScheme="purple"
-                                size="lg"
-                                isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
-                                onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
-                            />
-                        </FormControl>
-                    </Flex>
-                    {/* Agent Prompt */}
-                    <FormControl>
+                {/* Agent Prompt */}
+                <FormControl>
+                    <Flex direction="row" justifyContent="space-between" w="100%">
                         <FormLabelToolTip
                             label="Agent Prompt"
                             tooltip="The prompt sets the Agent's behavior, tone, and expertise."
                         />
-                        <Textarea
-                            placeholder="You are an expert at..."
-                            mt={2}
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'gray.400' }}
-                            focusBorderColor="gray.500"
-                            value={agentBuilderStore.currentAgent.prompt}
-                            onChange={(e) => agentBuilderStore.setStringField("prompt", e.target.value)}
-                        />
-                    </FormControl>
-                    {/* Save Button */}
+                        <Button size="sm" onClick={onOpenPromptEngineerClick}>Open Promp Engineer</Button>
+                    </Flex>
+
+                    <Textarea
+                        placeholder="You are an expert at..."
+                        mt={2}
+                        borderColor="gray.300"
+                        _hover={{ borderColor: 'gray.400' }}
+                        focusBorderColor="gray.500"
+                        value={agentBuilderStore.currentAgent.prompt}
+                        onChange={(e) => agentBuilderStore.setStringField("prompt", e.target.value)}
+                    />
+                </FormControl>
+                {/* Save Button */}
+                <Tooltip
+                    isDisabled={!(!agentBuilderStore.currentAgent.agent_name || !agentBuilderStore.currentAgent.prompt)}
+                    label="You must set an agent name and prompt before saving"
+                    fontSize="md"
+                >
                     <Button
                         onClick={onSaveAgent}
                         colorScheme="purple"
                         size="lg"
-                        disabled={!agentBuilderStore.currentAgent.agent_id}
+                        disabled={!agentBuilderStore.currentAgent.agent_name || !agentBuilderStore.currentAgent.prompt}
+                        isLoading={agentBuilderStore.agentLoading || agentsStore.agentsLoading}
                     >Save</Button>
-                </Flex>
+                </Tooltip>
+
             </Flex>
 
-            {/* Modal */}
+            {/* Prompt engineer modal */}
+            <Modal isOpen={isPromptEngineerModalOpen} onClose={onClosePromptEngineerModal} size="2xl">
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Prompt Engineer</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Flex h="70vh" w="100%">
+                            <ContentOrSpinner showSpinner={agentBuilderStore.promptEngineerContextLoading}>
+                                {agentBuilderStore.promptEngineerContext &&
+                                    <ChatBox
+                                        context={agentBuilderStore.promptEngineerContext}
+                                        style={chatBoxStyle}
+                                        onEvents={onChatEvents}
+                                    />
+                                }
+                            </ContentOrSpinner>
+                        </Flex>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
+
+
+            {/* Test modal */}
             <Modal isOpen={isTestingAgentModalOpen} onClose={onCloseTesingAgentModal} size="2xl">
                 <ModalOverlay />
                 <ModalContent>
@@ -235,7 +244,7 @@ const AgentBuilderPage = observer(() => {
                     <ModalCloseButton />
                     <ModalBody>
                         <Flex h="70vh" w="100%">
-                            <ContentOrSpinner showSpinner={agentBuilderStore.agentLoading}>
+                            <ContentOrSpinner showSpinner={agentBuilderStore.agentLoading || agentBuilderStore.agentContextLoading}>
                                 {agentBuilderStore.agentContext && <ChatBox context={agentBuilderStore.agentContext} style={chatBoxStyle} />}
                             </ContentOrSpinner>
                         </Flex>

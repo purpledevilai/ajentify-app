@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import Alert, { AlertAction } from './Alert';
 
-interface ShowAlertParams {
+export interface ShowAlertParams {
     title: string;
     message: string;
     actions?: AlertAction[];

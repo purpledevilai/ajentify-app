@@ -1,9 +1,9 @@
-export interface UIUpdate {
+export interface ChatEvent {
     type: string;
-    [key: string]: unknown;
+    data: string;
 }
 
 export interface ChatResponse {
     response: string;
-    events?: UIUpdate[];
+    events?: ChatEvent[];
 }

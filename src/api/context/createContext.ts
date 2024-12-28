@@ -5,9 +5,10 @@ import { Context } from "@/types/context";
 export interface CreateContextPayload {
     agent_id: string;
     invoke_agent_message?: boolean
+    prompt_args?: Record<string, string>;
 }
 
-export async function createContext({agent_id, invoke_agent_message = false}: CreateContextPayload): Promise<Context> {
+export async function createContext({agent_id, invoke_agent_message = false, prompt_args = {}}: CreateContextPayload): Promise<Context> {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context`, {
         method: 'POST',
@@ -15,7 +16,7 @@ export async function createContext({agent_id, invoke_agent_message = false}: Cr
             'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({agent_id, invoke_agent_message}),
+        body: JSON.stringify({agent_id, invoke_agent_message, prompt_args}),
     });
     return await checkResponseAndGetJson(response) as unknown as Context;
   } catch (error) {

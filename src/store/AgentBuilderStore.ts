@@ -4,6 +4,7 @@ import { makeAutoObservable } from "mobx";
 import { createContext } from "@/api/context/createContext";
 import { createAgent } from "@/api/agent/createAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
+import { ShowAlertParams } from "@/app/components/AlertProvider";
 
 interface AgentStringFields {
     agent_name: string;
@@ -19,6 +20,8 @@ interface AgentBooleanFields {
 
 class AgentBuilderStore {
 
+    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+
     hasInitiatedLoad = false;
 
     currentAgent: Agent = {
@@ -29,7 +32,7 @@ class AgentBuilderStore {
         agent_speaks_first: false,
         prompt: '',
     };
-    hasAnUpdate = false;
+    hasUpdates = false;
     agentLoading = false;
 
     promptEngineerContext: Context | undefined = undefined;
@@ -38,45 +41,17 @@ class AgentBuilderStore {
     agentContext: Context | undefined = undefined;
     agentContextLoading = false;
 
-
-    showAlert: boolean = false;
-    alertTitle: string = '';
-    alertMessage: string = '';
-
     constructor() {
         makeAutoObservable(this);
     }
 
-    showAlertMessage(title: string, message: string) {
-        this.alertTitle = title;
-        this.alertMessage = message;
-        this.showAlert = true;
-    }
-
-    closeAlert() {
-        this.showAlert = false;
-        this.alertTitle = '';
-        this.alertMessage = '';
+    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
+        this.showAlert = showAlert;
     }
 
     setCurrentAgent(agent: Agent) {
         this.currentAgent = agent;
-        this.hasAnUpdate = false
-    }
-
-    initiateNewAgentState() {
-        if (this.hasInitiatedLoad) return;
-        this.hasInitiatedLoad = true;
-        this.currentAgent = {
-            agent_id: '',
-            agent_name: '',
-            agent_description: '',
-            is_public: false,
-            agent_speaks_first: false,
-            prompt: '',
-        };
-        this.hasAnUpdate = false;
-        this.createPromptEngineerContext();
+        this.hasUpdates = false
     }
 
     reset = () => {
@@ -89,7 +64,7 @@ class AgentBuilderStore {
             agent_speaks_first: false,
             prompt: '',
         };
-        this.hasAnUpdate = false;
+        this.hasUpdates = false;
         this.agentLoading = false;
         this.promptEngineerContext = undefined;
         this.promptEngineerContextLoading = false;
@@ -99,17 +74,20 @@ class AgentBuilderStore {
 
     setStringField(field: keyof AgentStringFields, value: string) {
         this.currentAgent[field] = value;
-        this.hasAnUpdate = true;
+        this.hasUpdates = true;
     }
 
     setBooleanField(field: keyof AgentBooleanFields, value: boolean) {
         this.currentAgent[field] = value;
-        this.hasAnUpdate = true;
+        this.hasUpdates = true;
     }
 
     async createAgent() {
         if (this.currentAgent.agent_id) {
-            this.showAlertMessage('Error', 'Agent already exists. Please update the agent instead.');
+            this.showAlert({
+                title: 'Error',
+                message: 'Agent already exists. Please update the agent instead.',
+            })
             return;
         }
         try {
@@ -122,8 +100,12 @@ class AgentBuilderStore {
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
             });
             this.currentAgent = agent;
+            this.hasUpdates = false;
         } catch (error) {
-            this.showAlertMessage('Error', (error as Error).message);
+            this.showAlert({
+                title: 'Error',
+                message: (error as Error).message,
+            })
         } finally {
             this.agentLoading = false;
         }
@@ -131,7 +113,10 @@ class AgentBuilderStore {
 
     async updateAgent() {
         if (!this.currentAgent.agent_id) {
-            this.showAlertMessage('Error', 'Agent does not exist. Please create the agent first.');
+            this.showAlert({
+                title: 'Error',
+                message: 'Agent does not exist. Please create the agent first.',
+            })
             return;
         }
         try {
@@ -145,10 +130,35 @@ class AgentBuilderStore {
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
             });
             this.currentAgent = agent;
+            this.hasUpdates = false;
         } catch (error) {
-            this.showAlertMessage('Error', (error as Error).message);
+            this.showAlert({
+                title: 'Error',
+                message: (error as Error).message,
+            })
         } finally {
             this.agentLoading = false;
+        }
+    }
+
+    async onTestAgentClick() {
+        if (this.currentAgent.agent_id) {
+            if (this.hasUpdates) {
+                await this.updateAgent();
+            }
+        } else {
+            await this.createAgent();
+        }
+        await this.createAgentContext();
+    }
+
+    async onSaveAgentClick() {
+        if (this.currentAgent.agent_id) {
+            if (this.hasUpdates) {
+                await this.updateAgent();
+            }
+        } else {
+            await this.createAgent();
         }
     }
 
@@ -156,12 +166,19 @@ class AgentBuilderStore {
         try {
             this.promptEngineerContextLoading = true;
             const context = await createContext({
-                agent_id: 'aj-prompt-engineer',
-                invoke_agent_message: true
+                agent_id: 'aj-prompt-engineer-latest',
+                prompt_args: {
+                    agent_name: this.currentAgent.agent_name,
+                    agent_description: this.currentAgent.agent_description,
+                    agent_prompt: this.currentAgent.prompt,
+                }
             });
             this.promptEngineerContext = context;
         } catch (error) {
-            this.showAlertMessage('Error', (error as Error).message);
+            this.showAlert({
+                title: 'Error',
+                message: (error as Error).message,
+            })
         } finally {
             this.promptEngineerContextLoading = false;
         }
@@ -176,7 +193,10 @@ class AgentBuilderStore {
             });
             this.agentContext = context;
         } catch (error) {
-            this.showAlertMessage('Error', (error as Error).message);
+            this.showAlert({
+                title: 'Error',
+                message: (error as Error).message,
+            })
         } finally {
             this.agentContextLoading = false;
         }
