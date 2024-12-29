@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from "react";
 import { Box } from "@chakra-ui/react";
 import { MessagesArea } from "./MessagesArea";
@@ -6,27 +8,7 @@ import { Context, Message } from "@/types/context";
 import { chat } from "@/api/chat/chat";
 import { ChatEvent } from "@/types/chatresponse";
 import { useAlert } from "../AlertProvider";
-
-
-export interface ChatBoxStyle {
-    backgroundColor: string;
-    borderColor: string;
-    aiMessageBackgroundColor: string;
-    aiMessageTextColor: string;
-    userMessageBackgroundColor: string;
-    userMessageTextColor: string;
-    userInputBackgroundColor: string;
-    userInputTextareaBackgroundColor: string;
-    userInputTextareaTextColor: string;
-    userInputTextareaFocusColor: string;
-    userInputTextareaPlaceholderText: string;
-    userInputTextareaPlaceholderColor: string;
-    userInputSendButtonColor: string;
-    userInputSendButtonHoverColor: string;
-    userInputSendButtonTextColor: string;
-    typingIndicatorBackgroundColor: string;
-    typingIndicatorDotColor: string;
-}
+import { ChatBoxStyle } from "@/types/chatboxstyle";
 
 export const defaultChatBoxStyle: ChatBoxStyle = {
     backgroundColor: "gray.50",
