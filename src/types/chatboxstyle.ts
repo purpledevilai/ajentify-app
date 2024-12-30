@@ -1,19 +1,19 @@
 export interface ChatBoxStyle {
-    backgroundColor: string;
-    borderColor: string;
-    aiMessageBackgroundColor: string;
-    aiMessageTextColor: string;
-    userMessageBackgroundColor: string;
-    userMessageTextColor: string;
-    userInputBackgroundColor: string;
-    userInputTextareaBackgroundColor: string;
-    userInputTextareaTextColor: string;
-    userInputTextareaFocusColor: string;
-    userInputTextareaPlaceholderText: string;
-    userInputTextareaPlaceholderColor: string;
-    userInputSendButtonColor: string;
-    userInputSendButtonHoverColor: string;
-    userInputSendButtonTextColor: string;
-    typingIndicatorBackgroundColor: string;
-    typingIndicatorDotColor: string;
+    background_color: string;
+    border_color: string;
+    ai_message_background_color: string;
+    ai_message_text_color: string;
+    user_message_background_color: string;
+    user_message_text_color: string;
+    user_input_background_color: string;
+    user_input_textarea_background_color: string;
+    user_input_textarea_text_color: string;
+    user_input_textarea_focus_color: string;
+    user_input_textarea_placeholder_text: string;
+    user_input_textarea_placeholder_color: string;
+    user_input_send_button_color: string;
+    user_input_send_button_hover_color: string;
+    user_input_send_button_text_color: string;
+    typing_indicator_background_color: string;
+    typing_indicator_dot_color: string;
 }

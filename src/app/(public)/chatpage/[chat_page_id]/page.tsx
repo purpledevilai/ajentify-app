@@ -1,21 +1,27 @@
 import ChatBox from '@/app/components/chatbox/ChatBox';
 import { Box, Button, Flex, Heading, HStack, Text } from '@chakra-ui/react';
-import { getChatPageData } from '@/api/chatpage/getChatPageData';
+import { getChatPage } from '@/api/chatpage/getChatPage';
+import { createContext } from '@/api/context/createContext';
 import { ChatPageData } from '@/types/chatpagedata';
+import { Context } from '@/types/context';
 
 export default async function ChatPage({ params }: { params: { chat_page_id: string } }) {
   let chatPageData: ChatPageData | undefined = undefined;
+  let context: Context | undefined = undefined;
   const chatPageId = params.chat_page_id;
   try {
     if (!chatPageId) {
       throw Error('Chat page ID is required');
     }
-    console.log('chatPageId:', chatPageId);
     if (typeof chatPageId !== 'string') {
       throw Error('Chat page ID must be a string');
     }
-    chatPageData = await getChatPageData(chatPageId);
+    chatPageData = await getChatPage(chatPageId);
+    context = await createContext({
+      agent_id: chatPageData.agent_id
+    })
   } catch (error) {
+    const errorMessage = (error as Error).message || 'An unknown error occurred getting chat page data';
     return (
       <Flex
         bg="gray.50"
@@ -27,30 +33,11 @@ export default async function ChatPage({ params }: { params: { chat_page_id: str
         alignItems="center"
       >
         <Text fontSize="lg" textAlign="center">
-          {(error as Error).message}
-        </Text>
-      </Flex>
-    )
-  }
-
-  if (!chatPageData) {
-    return (
-      <Flex
-        bg="gray.50"
-        color="gray.800"
-        minH="100vh"
-        p={6}
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-      >
-        <Text fontSize="lg" textAlign="center">
-          Chat page data not found
+          {errorMessage}
         </Text>
       </Flex>
     );
   }
-
 
   return (
     <Box
@@ -95,7 +82,7 @@ export default async function ChatPage({ params }: { params: { chat_page_id: str
         borderRadius="md"
         overflow="hidden"
       >
-        <ChatBox context={chatPageData.context} style={chatPageData.chatBoxStyle} />
+        <ChatBox context={context} style={chatPageData.chatBoxStyle} />
       </Box>
 
       {/* Buttons Section */}

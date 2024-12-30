@@ -1,6 +1,6 @@
 import { Box, Flex } from "@chakra-ui/react"
 import { keyframes } from "@emotion/react";
-import { ChatBoxStyle } from "./ChatBox";
+import { ChatBoxStyle } from "@/types/chatboxstyle";
 
 
 interface TypingIndicatorProps {
@@ -18,7 +18,7 @@ export const TypingIndicator = ({style}: TypingIndicatorProps) => {
             align="center"
             mt={4}
             ml={2} // Align to the left
-            bg={style.typingIndicatorBackgroundColor}
+            bg={style.typing_indicator_background_color}
             p={2}
             borderRadius="md"
             maxWidth="50px"
@@ -29,7 +29,7 @@ export const TypingIndicator = ({style}: TypingIndicatorProps) => {
                 display="inline-block"
                 width="8px"
                 height="8px"
-                bg={style.typingIndicatorDotColor}
+                bg={style.typing_indicator_dot_color}
                 borderRadius="full"
                 css={{
                     animation: `${bounce} 1.4s infinite`,
@@ -42,7 +42,7 @@ export const TypingIndicator = ({style}: TypingIndicatorProps) => {
                 display="inline-block"
                 width="8px"
                 height="8px"
-                bg={style.typingIndicatorDotColor}
+                bg={style.typing_indicator_dot_color}
                 borderRadius="full"
                 css={{
                     animation: `${bounce} 1.4s infinite`,
@@ -55,7 +55,7 @@ export const TypingIndicator = ({style}: TypingIndicatorProps) => {
                 display="inline-block"
                 width="8px"
                 height="8px"
-                bg={style.typingIndicatorDotColor}
+                bg={style.typing_indicator_dot_color}
                 borderRadius="full"
                 css={{
                     animation: `${bounce} 1.4s infinite`,
