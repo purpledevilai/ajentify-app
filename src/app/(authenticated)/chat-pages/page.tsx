@@ -26,8 +26,7 @@ const ChatPagesPage = observer(() => {
   }, []);
 
   const handleAddChatPageClick = () => {
-    // agentBuilderStore.setIsNewAgent(true);
-    // router.push('/agent-builder');
+    router.push('/chat-page-builder');
   };
 
   const handleChatPageClick = (chatPage: ChatPageData) => {
