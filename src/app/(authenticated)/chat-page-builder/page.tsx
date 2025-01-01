@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { agentsStore } from '@/store/AgentsStore';
 import {
   Box,
@@ -27,6 +28,7 @@ import {
   ModalBody,
 } from '@chakra-ui/react';
 import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
+import ChatPage from '@/app/components/chatpage/ChatPage';
 //import PreviewWindow from './components/PreviewWindow';
 
 interface ButtonConfig {
@@ -35,28 +37,21 @@ interface ButtonConfig {
 }
 
 const ChatPageBuilder = () => {
-  const [agentId, setAgentId] = useState('');
-  const [header, setHeader] = useState('Welcome to Ajentify Chat!');
-  const [description, setDescription] = useState('This is where conversations with your agent happen.');
-  const [backgroundColor, setBackgroundColor] = useState('#f9fafc');
-  const [textColor, setTextColor] = useState('#333333');
-  const [chatBoxMode, setChatBoxMode] = useState<'light' | 'dark'>('light');
-  const [buttons, setButtons] = useState<ButtonConfig[]>([{ label: 'Home', link: '#' }]);
 
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);
 
   const addButton = () => {
-    setButtons([...buttons, { label: '', link: '' }]);
+    //setButtons([...buttons, { label: '', link: '' }]);
   };
 
   const updateButton = (index: number, field: keyof ButtonConfig, value: string) => {
-    const newButtons = [...buttons];
-    newButtons[index][field] = value;
-    setButtons(newButtons);
+    // const newButtons = [...buttons];
+    // newButtons[index][field] = value;
+    // setButtons(newButtons);
   };
 
   const removeButton = (index: number) => {
-    setButtons(buttons.filter((_, i) => i !== index));
+    //setButtons(buttons.filter((_, i) => i !== index));
   };
 
   // Determine whether to show modal or inline preview
@@ -78,7 +73,7 @@ const ChatPageBuilder = () => {
           {/* Agent Selection */}
           <FormControl>
             <FormLabel>Agent</FormLabel>
-            <Select placeholder="Select an Agent" value={agentId} onChange={(e) => setAgentId(e.target.value)}>
+            <Select placeholder="Select an Agent" value={chatPageBuilderStore.chatPage.agent_id} onChange={(e) => chatPageBuilderStore.setAgentId(e.target.value)}>
               {agentsStore.agents && agentsStore.agents.map((agent) => (
                 <option key={agent.agent_id} value={agent.agent_id}>{agent.agent_name}</option>
               ))}
@@ -90,8 +85,8 @@ const ChatPageBuilder = () => {
             <FormLabel>Header</FormLabel>
             <Input
               placeholder="Welcome to Ajentify Chat!"
-              value={chatPageBuilderStore.chatPage?.heading}
-              onChange={(e) => chatPageBuilderStore.setStringValue("heading", e.target.value)}
+              value={chatPageBuilderStore.chatPage.heading}
+              onChange={(e) => chatPageBuilderStore.setHeading(e.target.value)}
             />
           </FormControl>
 
@@ -100,8 +95,8 @@ const ChatPageBuilder = () => {
             <FormLabel>Description</FormLabel>
             <Textarea
               placeholder="This is where conversations with your agent happen."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={chatPageBuilderStore.chatPage.description}
+              onChange={(e) => chatPageBuilderStore.setDescription(e.target.value)}
             />
           </FormControl>
 
@@ -110,8 +105,8 @@ const ChatPageBuilder = () => {
             <FormLabel>Background Color</FormLabel>
             <Input
               type="color"
-              value={backgroundColor}
-              onChange={(e) => setBackgroundColor(e.target.value)}
+              value={chatPageBuilderStore.chatPage.chat_page_style.background_color}
+              onChange={(e) => chatPageBuilderStore.setBackgroundColor(e.target.value)}
             />
           </FormControl>
 
@@ -119,8 +114,8 @@ const ChatPageBuilder = () => {
             <FormLabel>Text Color</FormLabel>
             <Input
               type="color"
-              value={textColor}
-              onChange={(e) => setTextColor(e.target.value)}
+              value={chatPageBuilderStore.chatPage.chat_page_style.heading_color}
+              onChange={(e) => chatPageBuilderStore.setTextColor(e.target.value)}
             />
           </FormControl>
 
@@ -128,17 +123,17 @@ const ChatPageBuilder = () => {
           <FormControl display="flex" alignItems="center">
             <FormLabel mb="0">ChatBox Mode</FormLabel>
             <Switch
-              isChecked={chatBoxMode === 'dark'}
-              onChange={(e) => setChatBoxMode(e.target.checked ? 'dark' : 'light')}
+              isChecked={chatPageBuilderStore.chatBoxMode === 'dark'}
+              onChange={(e) => chatPageBuilderStore.setChatBoxMode(e.target.checked ? 'dark' : 'light')}
             />
-            <Text ml={2}>{chatBoxMode === 'dark' ? 'Dark' : 'Light'}</Text>
+            <Text ml={2}>{chatPageBuilderStore.chatBoxMode === 'dark' ? 'Dark' : 'Light'}</Text>
           </FormControl>
 
           <Divider />
 
           {/* Buttons */}
           <Heading size="md" mt={4}>Buttons</Heading>
-          {buttons.map((button, index) => (
+          {chatPageBuilderStore.chatPage.buttons && chatPageBuilderStore.chatPage.buttons.map((button, index) => (
             <HStack key={index} spacing={2}>
               <Input
                 placeholder="Label"
@@ -178,14 +173,10 @@ const ChatPageBuilder = () => {
           overflowY="auto"
         >
           <Heading size="lg" mb={4}>Preview</Heading>
-          {/* <PreviewWindow
-            header={header}
-            description={description}
-            backgroundColor={backgroundColor}
-            textColor={textColor}
-            chatBoxMode={chatBoxMode}
-            buttons={buttons}
-          /> */}
+          <ChatPage
+            chatPageData={chatPageBuilderStore.chatPage}
+            context={chatPageBuilderStore.dummyContext}
+          />
         </Box>
       )}
 
@@ -196,14 +187,10 @@ const ChatPageBuilder = () => {
           <ModalHeader>Preview</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            {/* <PreviewWindow
-              header={header}
-              description={description}
-              backgroundColor={backgroundColor}
-              textColor={textColor}
-              chatBoxMode={chatBoxMode}
-              buttons={buttons}
-            /> */}
+            <ChatPage
+              chatPageData={chatPageBuilderStore.chatPage}
+              context={chatPageBuilderStore.dummyContext}
+            />
           </ModalBody>
         </ModalContent>
       </Modal>
@@ -211,4 +198,4 @@ const ChatPageBuilder = () => {
   );
 };
 
-export default ChatPageBuilder;
+export default observer(ChatPageBuilder);

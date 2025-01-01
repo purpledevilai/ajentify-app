@@ -17,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
 import { ChatPageData } from '@/types/chatpagedata';
+import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 
 const ChatPagesPage = observer(() => {
   const router = useRouter();
@@ -26,6 +27,7 @@ const ChatPagesPage = observer(() => {
   }, []);
 
   const handleAddChatPageClick = () => {
+    chatPageBuilderStore.initiateNew();
     router.push('/chat-page-builder');
   };
 

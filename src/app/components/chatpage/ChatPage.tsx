@@ -8,7 +8,7 @@ interface ChatPageProps {
     context: Context;
 }
 
-export default async function ChatPage({chatPageData, context}: ChatPageProps) {
+export default function ChatPage({chatPageData, context}: ChatPageProps) {
 
   return (
     <Box
