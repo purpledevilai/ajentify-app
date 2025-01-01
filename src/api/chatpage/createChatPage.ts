@@ -1,28 +1,8 @@
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
-import { ChatBoxStyle } from "@/types/chatboxstyle";
 import { ChatPageData } from "@/types/chatpagedata";
 
-interface CreateChatPagePayload {
-    agent_id: string;
-    org_id?: string;
-    heading: string;
-    description?: string;
-    chat_page_style: {
-        background_color: string;
-        text_color: string;
-        heading_color: string;
-        description_color: string;
-        button_background_color: string;
-        button_text_color: string;
-        button_hover_background_color: string;
-        button_hover_text_color: string;
-    };
-    chat_box_style: ChatBoxStyle;
-    buttons?: { label: string; link: string }[];
-}
-
-export async function createChatPage(payload: CreateChatPagePayload): Promise<ChatPageData> {
+export async function createChatPage(chatPage: ChatPageData): Promise<ChatPageData> {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/chat-page`, {
         method: 'POST',
@@ -30,7 +10,7 @@ export async function createChatPage(payload: CreateChatPagePayload): Promise<Ch
             'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(chatPage),
     });
     return await checkResponseAndGetJson(response) as unknown as ChatPageData;
   } catch (error) {

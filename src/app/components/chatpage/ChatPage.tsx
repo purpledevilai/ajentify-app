@@ -14,7 +14,8 @@ export default function ChatPage({chatPageData, context}: ChatPageProps) {
     <Box
       bg={chatPageData.chat_page_style.background_color}
       color={chatPageData.chat_page_style.heading_color}
-      minH="100vh"
+      h="100%"
+      w="100%"
       p={6}
       display="flex"
       flexDirection="column"
@@ -46,8 +47,8 @@ export default function ChatPage({chatPageData, context}: ChatPageProps) {
 
       {/* ChatBox Section */}
       <Box
-        width={['100%', '80%', '60%']}
-        h="70vh"
+        width={['100%', '100%', '100%']}
+        flex="1"
         mb={6}
         boxShadow="lg"
         borderRadius="md"

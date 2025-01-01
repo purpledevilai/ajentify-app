@@ -14,8 +14,8 @@ interface ChatPageProps {
 export default async function ChatPageWrapper({ params, searchParams }: ChatPageProps) {
   let chatPageData: ChatPageData | undefined = undefined;
   let context: Context | undefined = undefined;
-  const chatPageId = params.chat_page_id;
-  const contextId = searchParams.context_id;
+  const chatPageId = (await params).chat_page_id;
+  const contextId = (await searchParams).context_id;
 
   try {
     if (!chatPageId) {
@@ -60,6 +60,9 @@ export default async function ChatPageWrapper({ params, searchParams }: ChatPage
   }
 
   return (
-    <ChatPage chatPageData={chatPageData} context={context} />
+    <Flex h="100vh" w="100vw">
+      <ChatPage chatPageData={chatPageData} context={context} />
+    </Flex>
+    
   );
 }

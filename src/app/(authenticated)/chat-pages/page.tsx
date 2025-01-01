@@ -14,6 +14,8 @@ import {
   Flex,
   Text,
   Spinner,
+  Button,
+  Spacer,
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
 import { ChatPageData } from '@/types/chatpagedata';
@@ -21,6 +23,7 @@ import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 
 const ChatPagesPage = observer(() => {
   const router = useRouter();
+  const [selectectedChatPage, setSelectedChatPage] = useState<ChatPageData | null>(null);
 
   useEffect(() => {
     chatPagesStore.loadChatPages();
@@ -32,8 +35,14 @@ const ChatPagesPage = observer(() => {
   };
 
   const handleChatPageClick = (chatPage: ChatPageData) => {
-    // agentBuilderStore.setCurrentAgent(agent);
-    // router.push('/agent-builder');
+    chatPageBuilderStore.setChatPage(chatPage);
+    router.push('/chat-page-builder');
+  };
+
+  const handleGoToChatPageClick = (e: React.MouseEvent, chatPage: ChatPageData) => {
+    e.stopPropagation();
+    setSelectedChatPage(chatPage);
+    router.push(`/chat-page/${chatPage.chat_page_id}`);
   };
 
   return (
@@ -85,8 +94,16 @@ const ChatPagesPage = observer(() => {
                 >
                   <Flex h="100%" direction="column">
                     <Heading as="h3" size="md" mb={2} isTruncated>
-                      {chatPage.agent_id}
+                      {chatPage.heading}
                     </Heading>
+                    <Spacer />
+                    <Button
+                      size="sm"
+                      onClick={(e) => handleGoToChatPageClick(e, chatPage)}
+                      isLoading={selectectedChatPage === chatPage}
+                    >
+                      Chat Page
+                    </Button>
                   </Flex>
                 </Card>
               </GridItem>

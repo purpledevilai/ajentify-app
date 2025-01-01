@@ -5,6 +5,9 @@ import { authStore } from './AuthStore';
 import { agentsStore } from './AgentsStore';
 import {defaultChatBoxStyle, defaultDarkChatBoxStyle} from '@/app/components/chatbox/ChatBox'
 import { Context } from '@/types/context';
+import { createChatPage } from '@/api/chatpage/createChatPage';
+import { updateChatPage } from '@/api/chatpage/updateChatPage';
+import { deleteChatPage } from '@/api/chatpage/deleteChatPage';
 
 const defaultChatPage = {
     chat_page_id: '',
@@ -27,9 +30,11 @@ const defaultChatPage = {
 
 class ChatPageBuilderStore {
 
-    chatPage: ChatPageData;
-    chatBoxMode: 'light' | 'dark' = 'light';
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+    chatPage: ChatPageData;
+    chatPageSaving = false;
+    chatPageDeleting = false;
+    chatBoxMode: 'light' | 'dark' = 'light';
     dummyContext: Context = {
         context_id: '',
         agent_id: '',
@@ -54,6 +59,14 @@ class ChatPageBuilderStore {
             org_id: authStore.user?.organizations[0].id || '',
             agent_id: agentsStore.agents ? agentsStore.agents[0].agent_id : '',
         };
+    }
+
+    setChatPage = (chatPage: ChatPageData) => {
+        this.chatPage = chatPage;
+    }
+
+    get isUpdating() {
+        return this.chatPage.chat_page_id !== '';
     }
 
     setAgentId = (agentId: string) => {
@@ -82,7 +95,41 @@ class ChatPageBuilderStore {
         this.chatPage.chat_box_style = style === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
     }
 
+    saveChatPage = async (): Promise<boolean> => {
+        try {
+            this.chatPageSaving = true;
+            if (this.isUpdating) {
+                await updateChatPage(this.chatPage);
+            } else {
+                await createChatPage(this.chatPage);
+            }
+            return true;
+        } catch (error) {
+            this.showAlert({
+                title: 'Whoops',
+                message: (error as Error).message,
+            })
+            return false;
+        } finally {
+            this.chatPageSaving = false;
+        }
+    }
 
+    deleteChatPage = async (): Promise<boolean> => {
+        try {
+            this.chatPageDeleting = true;
+            await deleteChatPage(this.chatPage.chat_page_id);
+            return true;
+        } catch (error) {
+            this.showAlert({
+                title: 'Whoops',
+                message: (error as Error).message,
+            })
+            return false;
+        } finally {
+            this.chatPageDeleting = false;
+        }
+    }
     
 }
 
