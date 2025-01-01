@@ -4,8 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { chatPagesStore } from '@/store/ChatPagesStore';
-// import { agentBuilderStore } from '@/store/AgentBuilderStore';
-// import { Agent } from '@/types/agent';
 import {
   Box,
   Heading,
