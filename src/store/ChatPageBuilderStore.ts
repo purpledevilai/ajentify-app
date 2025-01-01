@@ -30,7 +30,7 @@ class ChatPageBuilderStore {
             agent_id: '',
             heading: '',
             description: '',
-            chatPageStyle: {
+            chat_page_style: {
                 background_color: '#ffffff',
                 heading_color: '#000000',
                 description_color: '#000000',
@@ -39,7 +39,7 @@ class ChatPageBuilderStore {
                 button_hover_background_color: '#000000',
                 button_hover_text_color: '#ffffff',
             },
-            chatBoxStyle: {
+            chat_box_style: {
                 background_color: '#ffffff',
                 border_color: '#000000',
                 ai_message_background_color: '#000000',

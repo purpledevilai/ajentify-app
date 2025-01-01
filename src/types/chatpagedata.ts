@@ -7,7 +7,7 @@ export interface ChatPageData {
     agent_id: string;
     heading: string;
     description?: string;
-    chatPageStyle: ChatPageStyle;
-    chatBoxStyle: ChatBoxStyle;
+    chat_page_style: ChatPageStyle;
+    chat_box_style: ChatBoxStyle;
     buttons?: { label: string; link: string }[];
 }
