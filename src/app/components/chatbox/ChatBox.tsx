@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from "react";
 import { Box } from "@chakra-ui/react";
 import { MessagesArea } from "./MessagesArea";
@@ -6,66 +8,46 @@ import { Context, Message } from "@/types/context";
 import { chat } from "@/api/chat/chat";
 import { ChatEvent } from "@/types/chatresponse";
 import { useAlert } from "../AlertProvider";
-
-
-export interface ChatBoxStyle {
-    backgroundColor: string;
-    borderColor: string;
-    aiMessageBackgroundColor: string;
-    aiMessageTextColor: string;
-    userMessageBackgroundColor: string;
-    userMessageTextColor: string;
-    userInputBackgroundColor: string;
-    userInputTextareaBackgroundColor: string;
-    userInputTextareaTextColor: string;
-    userInputTextareaFocusColor: string;
-    userInputTextareaPlaceholderText: string;
-    userInputTextareaPlaceholderColor: string;
-    userInputSendButtonColor: string;
-    userInputSendButtonHoverColor: string;
-    userInputSendButtonTextColor: string;
-    typingIndicatorBackgroundColor: string;
-    typingIndicatorDotColor: string;
-}
+import { ChatBoxStyle } from "@/types/chatboxstyle";
 
 export const defaultChatBoxStyle: ChatBoxStyle = {
-    backgroundColor: "gray.50",
-    borderColor: "gray.300",
-    aiMessageBackgroundColor: "gray.500",
-    aiMessageTextColor: "gray.50",
-    userMessageBackgroundColor: "gray.200",
-    userMessageTextColor: "gray.700",
-    userInputBackgroundColor: "gray.200",
-    userInputTextareaFocusColor: "gray.300",
-    userInputTextareaBackgroundColor: "gray.50",
-    userInputTextareaTextColor: "gray.800",
-    userInputTextareaPlaceholderText: "Type a message...",
-    userInputTextareaPlaceholderColor: "gray.500",
-    userInputSendButtonColor: "gray.500",
-    userInputSendButtonHoverColor: "gray.600",
-    userInputSendButtonTextColor: "gray.50",
-    typingIndicatorBackgroundColor: "gray.600",
-    typingIndicatorDotColor: "gray.50"
+    background_color: "gray.50",
+    border_color: "gray.300",
+    ai_message_background_color: "gray.500",
+    ai_message_text_color: "gray.50",
+    user_message_background_color: "gray.200",
+    user_message_text_color: "gray.700",
+    user_input_background_color: "gray.200",
+    user_input_textarea_focus_color: "gray.300",
+    user_input_textarea_background_color: "gray.50",
+    user_input_textarea_text_color: "gray.800",
+    user_input_textarea_placeholder_text: "Type a message...",
+    user_input_textarea_placeholder_color: "gray.500",
+    user_input_send_button_color: "gray.500",
+    user_input_send_button_hover_color: "gray.600",
+    user_input_send_button_text_color: "gray.50",
+    typing_indicator_background_color: "gray.600",
+    typing_indicator_dot_color: "gray.50"
 }
 
 export const defaultDarkChatBoxStyle: ChatBoxStyle = {
-    backgroundColor: "gray.800",
-    borderColor: "gray.500",
-    aiMessageBackgroundColor: "gray.700",
-    aiMessageTextColor: "gray.50",
-    userMessageBackgroundColor: "gray.600",
-    userMessageTextColor: "gray.50",
-    userInputBackgroundColor: "gray.600",
-    userInputTextareaFocusColor: "gray.500",
-    userInputTextareaBackgroundColor: "gray.700",
-    userInputTextareaTextColor: "gray.50",
-    userInputTextareaPlaceholderText: "Type a message...",
-    userInputTextareaPlaceholderColor: "gray.400",
-    userInputSendButtonColor: "gray.500",
-    userInputSendButtonHoverColor: "gray.400",
-    userInputSendButtonTextColor: "gray.50",
-    typingIndicatorBackgroundColor: "gray.700",
-    typingIndicatorDotColor: "gray.50"
+    background_color: "gray.800",
+    border_color: "gray.500",
+    ai_message_background_color: "gray.700",
+    ai_message_text_color: "gray.50",
+    user_message_background_color: "gray.600",
+    user_message_text_color: "gray.50",
+    user_input_background_color: "gray.600",
+    user_input_textarea_focus_color: "gray.500",
+    user_input_textarea_background_color: "gray.700",
+    user_input_textarea_text_color: "gray.50",
+    user_input_textarea_placeholder_text: "Type a message...",
+    user_input_textarea_placeholder_color: "gray.400",
+    user_input_send_button_color: "gray.500",
+    user_input_send_button_hover_color: "gray.400",
+    user_input_send_button_text_color: "gray.50",
+    typing_indicator_background_color: "gray.700",
+    typing_indicator_dot_color: "gray.50"
 }
 
 interface ChatBoxProps {

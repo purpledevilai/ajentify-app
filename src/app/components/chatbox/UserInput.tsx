@@ -1,6 +1,6 @@
 import { Button, Flex, Textarea } from "@chakra-ui/react"
 import { useEffect, useRef, useState } from "react";
-import { ChatBoxStyle } from "./ChatBox";
+import { ChatBoxStyle } from "@/types/chatboxstyle";
 
 interface UserInputProps {
     onMessage: (message: string) => void;
@@ -49,7 +49,7 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
             bottom="1.5px"
             right="1.5px"
             left="1.5px"
-            bg={style.userInputBackgroundColor}
+            bg={style.user_input_background_color}
             p={4}
             alignItems="center"
             borderRadius={12}
@@ -60,11 +60,11 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
                 value={inputValue}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
-                placeholder={style.userInputTextareaPlaceholderText}
-                _placeholder={{color: style.userInputTextareaPlaceholderColor}}
-                bg={style.userInputTextareaBackgroundColor}
-                color={style.userInputTextareaTextColor}
-                focusBorderColor={style.userInputTextareaFocusColor}
+                placeholder={style.user_input_textarea_placeholder_text}
+                _placeholder={{color: style.user_input_textarea_placeholder_color}}
+                bg={style.user_input_textarea_background_color}
+                color={style.user_input_textarea_text_color}
+                focusBorderColor={style.user_input_textarea_focus_color}
                 fontSize="large"
                 size="sm"
                 resize="none"
@@ -75,9 +75,9 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
             />
             <Button
                 onClick={handleSendClick}
-                bg={style.userInputSendButtonColor}
-                _hover={{bg: style.userInputSendButtonHoverColor}}
-                color={style.userInputSendButtonTextColor}
+                bg={style.user_input_send_button_color}
+                _hover={{bg: style.user_input_send_button_hover_color}}
+                color={style.user_input_send_button_text_color}
                 ml={2}
                 height="40px"
             >

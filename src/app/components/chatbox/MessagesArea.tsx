@@ -3,7 +3,7 @@ import { Box } from "@chakra-ui/react"
 import { MessageView } from "./MessageView"
 import { Message } from "@/types/context"
 import { TypingIndicator } from "./TypingIndicator"
-import { ChatBoxStyle } from "./ChatBox"
+import { ChatBoxStyle } from "@/types/chatboxstyle"
 
 interface MessageAreaProps {
     messages: Message[]
@@ -35,11 +35,11 @@ export const MessagesArea = ({ messages, responseLoading, style }: MessageAreaPr
             bottom="0"
             width="100%"
             overflowY="auto"
-            bg={style.backgroundColor}
+            bg={style.background_color}
             p={4}
             pb="160px"
             borderStyle="solid"
-            borderColor={style.borderColor}
+            borderColor={style.border_color}
             borderWidth="2px"
             borderRadius="15px"
         >
