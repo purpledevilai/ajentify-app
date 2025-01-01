@@ -6,32 +6,36 @@ import { ChatPageData } from '@/types/chatpagedata';
 import { Context } from '@/types/context';
 import ChatPage from '@/app/components/chatpage/ChatPage';
 
+type Params = Promise<{ chat_page_id: string[] }>;
+type SearchParams = Promise<{ context_id?: string }>;
+
 interface ChatPageProps {
-  params: { chat_page_id: string };
-  searchParams: { context_id?: string };
+  params: Params;
+  searchParams: SearchParams;
 }
 
 export default async function ChatPageWrapper({ params, searchParams }: ChatPageProps) {
   let chatPageData: ChatPageData | undefined = undefined;
   let context: Context | undefined = undefined;
-  const chatPageId = (await params).chat_page_id;
-  const contextId = (await searchParams).context_id;
+
+  const { chat_page_id } = await params;
+  const { context_id } = await searchParams;
 
   try {
-    if (!chatPageId) {
+    if (!chat_page_id) {
       throw Error('Chat page ID is required');
     }
 
-    if (typeof chatPageId !== 'string') {
+    if (typeof chat_page_id !== 'string') {
       throw Error('Chat page ID must be a string');
     }
 
     // Fetch chat page data
-    chatPageData = await getChatPage(chatPageId);
+    chatPageData = await getChatPage(chat_page_id);
 
     // If context_id exists, fetch context, otherwise create a new one
-    if (contextId) {
-      context = await getContext({context_id: contextId});
+    if (context_id) {
+      context = await getContext({ context_id });
       if (context.agent_id !== chatPageData.agent_id) {
         throw Error('Context agent_id does not match chat page agent_id');
       }
@@ -63,6 +67,5 @@ export default async function ChatPageWrapper({ params, searchParams }: ChatPage
     <Flex h="100vh" w="100vw">
       <ChatPage chatPageData={chatPageData} context={context} />
     </Flex>
-    
   );
 }
