@@ -226,7 +226,7 @@ const AgentBuilderPage = observer(() => {
                             label="Agent Prompt"
                             tooltip="The prompt sets the Agent's behavior, tone, and expertise."
                         />
-                        <Button size="sm" onClick={onOpenPromptEngineerClick}>Open Promp Engineer</Button>
+                        <Button size="sm" onClick={onOpenPromptEngineerClick}>Open Prompt Engineer</Button>
                     </Flex>
 
                     <Textarea
