@@ -27,7 +27,7 @@ import json
 context_response = requests.post(
     'https://api.ajentify.com/context',
     data=json.dumps({
-        'agent_id': '6539e2ad-5b2c-4b92-bb66-cd5cbd69c5b8'
+        'agent_id': '${agent_id}'
     })
 )
 context = context_response.json()
@@ -40,6 +40,10 @@ message_response = requests.post(
         'message': 'Hello, World!'
     })
 )`;
+    }
+
+    if (language === 'id') {
+        return `${agent_id}`;
     }
 
     return 'Language not supported';

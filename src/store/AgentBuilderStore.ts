@@ -44,6 +44,7 @@ class AgentBuilderStore {
     agentContextLoading = false;
 
     showDeleteButton = false;
+    showAgentId = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -61,6 +62,7 @@ class AgentBuilderStore {
         this.currentAgent = agent;
         this.hasUpdates = false;
         this.showDeleteButton = true;
+        this.showAgentId = true;
     }
 
     reset = () => {
@@ -81,6 +83,7 @@ class AgentBuilderStore {
         this.agentContextLoading = false;
         this.showDeleteButton = false;
         this.agentDeleteLoading = false;
+        this.showAgentId = false;
     }
 
     setStringField(field: keyof AgentStringFields, value: string) {

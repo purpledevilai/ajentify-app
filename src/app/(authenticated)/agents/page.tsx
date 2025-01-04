@@ -147,6 +147,13 @@ const AgentsPage = observer(() => {
               >
                 Python
               </Button>
+              <Button
+                size="sm"
+                variant={selectedLanguage === 'id' ? 'solid' : 'outline'}
+                onClick={() => setSelectedLanguage('id')}
+              >
+                ID
+              </Button>
             </Flex>
             {currentAgentId && <CodeSnippet code={generateStartConversationSnippet(currentAgentId, selectedLanguage)} language={selectedLanguage} />}
           </ModalBody>

@@ -3,11 +3,12 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigationGuard } from "next-navigation-guard";
 import {
-    Flex, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
+    Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
-    useColorMode
+    useColorMode,
+    useClipboard
 } from "@chakra-ui/react";
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { agentBuilderStore } from "@/store/AgentBuilderStore";
@@ -26,6 +27,7 @@ const AgentBuilderPage = observer(() => {
     const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
     const { isOpen: isTestingAgentModalOpen, onOpen: onOpenTestingAgentModal, onClose: onCloseTesingAgentModal } = useDisclosure();
     const { isOpen: isPromptEngineerModalOpen, onOpen: onOpenPromptEngineerModal, onClose: onClosePromptEngineerModal } = useDisclosure();
+    const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
     const { showAlert } = useAlert();
 
     // Detect page navigation
@@ -137,7 +139,7 @@ const AgentBuilderPage = observer(() => {
     return (
         <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             {/* Header Section */}
-            <Flex direction="row" w="100%" mb={4} gap={4} align="center">
+            <Flex direction="row" w="100%" mb={8} gap={4} align="center">
                 <IconButton
                     aria-label="Back"
                     icon={<ArrowBackIcon />}
@@ -163,6 +165,27 @@ const AgentBuilderPage = observer(() => {
 
             {/* Agent Form */}
             <Flex direction="column" w="100%" h="100%" maxW={800} gap={8}>
+                {/* Agent ID */}
+                {agentBuilderStore.showAgentId && (
+                    <FormControl>
+                        <FormLabelToolTip
+                            label="Agent ID"
+                            tooltip="The unique identifier for the agent"
+                        />
+                        <Flex direction="row" align="center" gap={4}>
+                            <Text>{agentBuilderStore.currentAgent.agent_id}</Text>
+                            <Button
+                                size="sm"
+                                onClick={onCopy}
+                                leftIcon={hasCopied ? <CheckIcon /> : <CopyIcon />}
+                                colorScheme={hasCopied ? 'green' : 'blue'}
+                                variant="ghost"
+                            >
+                                {hasCopied ? 'Copied' : 'Copy'}
+                            </Button>
+                        </Flex>
+                    </FormControl>
+                )}
                 {/* Agent Name */}
                 <FormControl>
                     <FormLabelToolTip
