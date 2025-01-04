@@ -79,7 +79,6 @@ const AgentBuilderPage = observer(() => {
     }
 
     const onChatEvents = (chatEvents: ChatEvent[]) => {
-        console.log("Calling UIUpdate function");
         chatEvents.forEach(chatEvent => {
             if (chatEvent.type === 'set_name') {
                 agentBuilderStore.setStringField("agent_name", chatEvent.data);

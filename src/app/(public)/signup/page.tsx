@@ -50,7 +50,6 @@ const SignUpPage = observer(() => {
                 left="4"
                 zIndex="10" // Ensure it's above other elements
                 onClick={() => {
-                    console.log('Back button clicked');
                     router.back();
                 }}
             >

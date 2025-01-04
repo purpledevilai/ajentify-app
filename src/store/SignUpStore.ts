@@ -38,7 +38,6 @@ class SignUpStore {
     alertActions: { label: string; handler?: () => void }[] = [];
 
     constructor() {
-        console.log('SignUpStore constructor');
         makeAutoObservable(this);
     }
 
@@ -85,28 +84,22 @@ class SignUpStore {
     async confirmSignInCode() {
         this.confirmSignInLoading = true;
         try {
-            console.log(`Sending Conf code: ${this.confirmCode} for email: ${this.email}`);
             // Confirm
             const confirmSignUpPayload: ConfirmSignUpPayload = {
                 email: this.email,
                 verificationCode: this.confirmCode
             };
             await confirmSignUp(confirmSignUpPayload);
-            console.log('confirmed!');
 
-            console.log(`Signing in with email: ${this.email} and password: ${this.password}`);
             // Sign In
             const signInPayload: SignInPayload = {
                 email: this.email,
                 password: this.password
             };
             await signIn(signInPayload);
-            console.log('signed in!');
 
             // Create User
-            console.log('Creating user');
             await createUser();
-            console.log('user created!');
 
             this.step = 'createOrganization';
         } catch (error) {

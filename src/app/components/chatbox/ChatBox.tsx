@@ -69,7 +69,6 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle }: Chat
             const response = await chat({context_id: context.context_id, message});
             addMessage(response.response, "ai");
             if (response.events && onEvents) {
-                console.log("Got UI updates!")
                 onEvents(response.events);
             }
         } catch(error) {
