@@ -7,6 +7,7 @@ import { deleteContext } from '@/api/context/deleteContext';
 import { Agent } from '@/types/agent';
 import { Context } from '@/types/context';
 import { ContextHistory } from '@/types/contexthistory';
+import { ShowAlertParams } from '@/app/components/AlertProvider';
 
 class ChatPageStore {
     hasInitiatedLoad: boolean = false;
@@ -18,24 +19,21 @@ class ChatPageStore {
     contextHistory: ContextHistory[] | undefined = undefined;
     contextHistoryLoading: boolean = false;
 
-    showAlert: boolean = false;
-    alertTitle: string = '';
-    alertMessage: string = '';
+    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
 
     constructor() {
         makeAutoObservable(this);
     }
 
-    showAlertMessage(title: string, message: string) {
-        this.alertTitle = title;
-        this.alertMessage = message;
-        this.showAlert = true;
+    setShowAlert(showAlert: (params: ShowAlertParams) => void) {
+        this.showAlert = showAlert;
     }
 
-    closeAlert() {
-        this.showAlert = false;
-        this.alertTitle = '';
-        this.alertMessage = '';
+    showAlertMessage(title: string, message: string) {
+        this.showAlert({ 
+            title,
+            message
+        });
     }
 
     async loadData(force = false) {

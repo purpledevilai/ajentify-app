@@ -5,15 +5,25 @@ import { observer } from 'mobx-react-lite';
 import { Box, Flex, FormControl, FormLabel, Input, Button, Heading, Text, Stack } from '@chakra-ui/react';
 import { authStore } from '@/store/AuthStore';
 import { useRouter } from 'next/navigation';
+import { reaction } from 'mobx';
 
 const SignInPage = observer(() => {
     const router = useRouter();
 
     useEffect(() => {
-        if (authStore.signedIn) {
-            router.push('/agents');
-        }
-    }, [authStore.signedIn, router]);
+        const disposer = reaction(
+            () => authStore.signedIn,
+            (signedIn) => {
+                if (signedIn) {
+                    router.push('/agents');
+                }
+            }
+        );
+
+        return () => {
+            disposer();
+        };
+    }, [router]);
 
     return (
         <Flex align="center" justify="center" height="100vh" bg="gray.50" _dark={{ bg: 'gray.900' }}>
@@ -66,7 +76,7 @@ const SignInPage = observer(() => {
                         Don’t have an account?{' '}
                         <Button
                             variant="link"
-                            
+
                             onClick={() => router.push('/signup')}
                         >
                             Sign Up

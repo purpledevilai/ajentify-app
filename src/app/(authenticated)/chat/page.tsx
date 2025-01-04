@@ -43,14 +43,8 @@ const ChatPage = observer(() => {
 
     // Show alerts
     useEffect(() => {
-        if (chatPageStore.showAlert) {
-            showAlert({
-                title: chatPageStore.alertTitle,
-                message: chatPageStore.alertMessage,
-                onClose: chatPageStore.closeAlert
-            });
-        }
-    }, [chatPageStore.showAlert, showAlert])
+        chatPageStore.setShowAlert(showAlert);
+    }, [showAlert])
 
     return (
         <Flex direction="column" height="100%" p={2}>

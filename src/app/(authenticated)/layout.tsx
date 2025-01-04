@@ -8,16 +8,26 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { authStore } from '@/store/AuthStore';
+import { reaction } from 'mobx';
 
 const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
-        if (!authStore.signedIn) {
-            router.push('/signin');
-        }
-    }, [authStore.signedIn, router]);
+        const disposer = reaction(
+          () => authStore.signedIn,
+          (signedIn) => {
+            if (!signedIn) {
+              router.push('/signin');
+            }
+          }
+        );
+    
+        return () => {
+          disposer();
+        };
+      }, [router]);
 
     // Determine if the sidebar should always be visible based on screen size
     const isWideScreen = useBreakpointValue({ base: false, lg: true });
