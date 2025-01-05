@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { chatPagesStore } from '@/store/ChatPagesStore';
@@ -12,10 +12,7 @@ import {
   Flex,
   Text,
   Spinner,
-  Button,
-  Spacer,
 } from '@chakra-ui/react';
-import Card from '@/app/components/Card';
 import { ChatPageData } from '@/types/chatpagedata';
 import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 import { ChatPageCard } from './components/ChatPageCard';
