@@ -18,10 +18,10 @@ import {
 import Card from '@/app/components/Card';
 import { ChatPageData } from '@/types/chatpagedata';
 import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
+import { ChatPageCard } from './components/ChatPageCard';
 
 const ChatPagesPage = observer(() => {
   const router = useRouter();
-  const [selectectedChatPage, setSelectedChatPage] = useState<ChatPageData | null>(null);
 
   useEffect(() => {
     chatPagesStore.loadChatPages();
@@ -35,12 +35,6 @@ const ChatPagesPage = observer(() => {
   const handleChatPageClick = (chatPage: ChatPageData) => {
     chatPageBuilderStore.setChatPage(chatPage);
     router.push('/chat-page-builder');
-  };
-
-  const handleGoToChatPageClick = (e: React.MouseEvent, chatPage: ChatPageData) => {
-    e.stopPropagation();
-    setSelectedChatPage(chatPage);
-    router.push(`/chat-page/${chatPage.chat_page_id}`);
   };
 
   return (
@@ -83,27 +77,7 @@ const ChatPagesPage = observer(() => {
           {chatPagesStore.chatPages ? (
             chatPagesStore.chatPages.map((chatPage) => (
               <GridItem key={chatPage.chat_page_id}>
-                <Card
-                  shadow="md"
-                  _hover={{ shadow: 'lg' }}
-                  cursor="pointer"
-                  onClick={() => handleChatPageClick(chatPage)}
-                  minHeight="150px" // Uniform height for all cards
-                >
-                  <Flex h="100%" direction="column">
-                    <Heading as="h3" size="md" mb={2} isTruncated>
-                      {chatPage.heading}
-                    </Heading>
-                    <Spacer />
-                    <Button
-                      size="sm"
-                      onClick={(e) => handleGoToChatPageClick(e, chatPage)}
-                      isLoading={selectectedChatPage === chatPage}
-                    >
-                      Chat Page
-                    </Button>
-                  </Flex>
-                </Card>
+                <ChatPageCard chatPage={chatPage} handleChatPageClick={handleChatPageClick} />
               </GridItem>
             ))
           ) : (
