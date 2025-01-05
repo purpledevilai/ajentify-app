@@ -32,19 +32,33 @@ import { ArrowBackIcon } from '@chakra-ui/icons';
 import { chatPagesStore } from '@/store/ChatPagesStore';
 import { useAlert } from "@/app/components/AlertProvider";
 
+type Params = Promise<{ chat_page_id: string[] }>;
 
+interface ChatBuilderPageProps {
+  params: Params;
+}
 
-const ChatPageBuilder = () => {
+const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
 
   const sectionBackground = useColorModeValue('gray.50', 'gray.800');
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
   const { showAlert } = useAlert();
-  
+
 
   useEffect(() => {
     chatPageBuilderStore.setShowAlert(showAlert);
-  }, [showAlert]);
+    const loadChatPageId = async () => {
+      const paramArray = (await params).chat_page_id ?? undefined;
+      const chat_page_id = paramArray ? paramArray[0] : undefined;
+      if (chat_page_id) {
+        if (chatPageBuilderStore.chatPage.chat_page_id !== chat_page_id) {
+          chatPageBuilderStore.setChatPageWithId(chat_page_id)
+        }
+      }
+    }
+    loadChatPageId();
+  }, [showAlert, params]);
 
   const onSaveButtonClick = async () => {
     if (await chatPageBuilderStore.saveChatPage()) {

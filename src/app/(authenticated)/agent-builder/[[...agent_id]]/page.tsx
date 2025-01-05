@@ -18,8 +18,16 @@ import { useAlert } from "@/app/components/AlertProvider";
 import { ChatEvent } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
 
+type Params = Promise<{ agent_id: string[] }>;
 
-const AgentBuilderPage = observer(() => {
+interface AgentBuilderPageProps {
+    params: Params;
+}
+
+
+
+const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
+
     // Nav Guard to detect page navigation - Really dump NextJS limitiation
     const navGuard = useNavigationGuard({});
     const isShowingNavAlert = useRef(false);
@@ -29,6 +37,22 @@ const AgentBuilderPage = observer(() => {
     const { isOpen: isPromptEngineerModalOpen, onOpen: onOpenPromptEngineerModal, onClose: onClosePromptEngineerModal } = useDisclosure();
     const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
     const { showAlert } = useAlert();
+
+    useEffect(() => {
+        agentBuilderStore.setShowAlert(showAlert);
+        const loadAgentId = async () => {
+            const paramArray = (await params).agent_id ?? undefined;
+            const agent_id = paramArray ? paramArray[0] : undefined;
+            if (agent_id) {
+                console.log('agent_id', agent_id);
+                if (agentBuilderStore.currentAgent.agent_id !== agent_id) {
+                    console.log("setting agent from id")
+                    agentBuilderStore.setCurrentAgentWithId(agent_id)
+                }
+            }
+        }
+        loadAgentId();
+    }, [showAlert, params]);
 
     // Detect page navigation
     useEffect(() => {
@@ -70,10 +94,6 @@ const AgentBuilderPage = observer(() => {
             }
         }
     }, [navGuard, showAlert]);
-
-    useEffect(() => {
-        agentBuilderStore.setShowAlert(showAlert);
-    }, [showAlert]);
 
     const onOpenPromptEngineerClick = () => {
         agentBuilderStore.createPromptEngineerContext();

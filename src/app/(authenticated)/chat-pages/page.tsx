@@ -31,7 +31,7 @@ const ChatPagesPage = observer(() => {
 
   const handleChatPageClick = (chatPage: ChatPageData) => {
     chatPageBuilderStore.setChatPage(chatPage);
-    router.push('/chat-page-builder');
+    router.push(`/chat-page-builder/${chatPage.chat_page_id}`);
   };
 
   return (

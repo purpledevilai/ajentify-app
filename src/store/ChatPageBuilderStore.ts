@@ -3,6 +3,7 @@ import { ChatPageData } from '@/types/chatpagedata';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
 import { agentsStore } from './AgentsStore';
+import { chatPagesStore } from './ChatPagesStore';
 import {defaultChatBoxStyle, defaultDarkChatBoxStyle} from '@/app/components/chatbox/ChatBox'
 import { Context } from '@/types/context';
 import { createChatPage } from '@/api/chatpage/createChatPage';
@@ -64,6 +65,27 @@ class ChatPageBuilderStore {
     setChatPage = (chatPage: ChatPageData) => {
         this.chatPage = chatPage;
     }
+
+    setChatPageWithId = async (chatPageId: string) => {
+        await chatPagesStore.loadChatPages();
+        if (!chatPagesStore.chatPages) {
+            this.showAlert({
+                title: 'Whoops',
+                message: 'There was a problem loading the chat pages',
+            });
+            return;
+        }
+        const chatPage = chatPagesStore.chatPages.find((c) => c.chat_page_id === chatPageId);
+        if (!chatPage) {
+            this.showAlert({
+                title: 'Whoops',
+                message: 'Could not find chat page',
+            });
+            return;
+        }
+        this.setChatPage(chatPage);
+    }
+
 
     get isUpdating() {
         return this.chatPage.chat_page_id !== '';

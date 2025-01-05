@@ -7,6 +7,7 @@ import { createAgent } from "@/api/agent/createAgent";
 import { deleteAgent } from "@/api/agent/deleteAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
+import { agentsStore } from "./AgentsStore";
 
 interface AgentStringFields {
     agent_name: string;
@@ -63,6 +64,26 @@ class AgentBuilderStore {
         this.hasUpdates = false;
         this.showDeleteButton = true;
         this.showAgentId = true;
+    }
+
+    async setCurrentAgentWithId(agentId: string) {
+        await agentsStore.loadAgents(); // not forced, will only load if data not available
+        if (!agentsStore.agents) {
+            this.showAlert({
+                title: "Whoops",
+                message: "There was a problem loading the agents"
+            })
+            return;
+        }
+        const agent = agentsStore.agents.find((a) => a.agent_id === agentId);
+        if (!agent) {
+            this.showAlert({
+                title: "Whoops",
+                message: "Could not find agent"
+            })
+            return;
+        }
+        this.setCurrentAgent(agent);
     }
 
     reset = () => {

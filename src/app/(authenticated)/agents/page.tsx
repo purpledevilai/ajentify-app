@@ -45,7 +45,7 @@ const AgentsPage = observer(() => {
 
   const handleAgentClick = (agent: Agent) => {
     agentBuilderStore.setCurrentAgent(agent);
-    router.push('/agent-builder');
+    router.push(`/agent-builder/${agent.agent_id}`);
   };
 
   const handleShowCodeClick = (e: React.MouseEvent, agent: Agent) => {
