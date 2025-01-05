@@ -16,13 +16,16 @@ import {
 import { ChatPageData } from '@/types/chatpagedata';
 import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 import { ChatPageCard } from './components/ChatPageCard';
+import { useAlert } from '@/app/components/AlertProvider';
 
 const ChatPagesPage = observer(() => {
   const router = useRouter();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
+    chatPagesStore.setShowAlert(showAlert);
     chatPagesStore.loadChatPages();
-  }, []);
+  }, [showAlert]);
 
   const handleAddChatPageClick = () => {
     chatPageBuilderStore.initiateNew();
@@ -30,7 +33,7 @@ const ChatPagesPage = observer(() => {
   };
 
   const handleChatPageClick = (chatPage: ChatPageData) => {
-    chatPageBuilderStore.setChatPage(chatPage);
+    chatPageBuilderStore.setChatPage({ ...chatPage });
     router.push(`/chat-page-builder/${chatPage.chat_page_id}`);
   };
 

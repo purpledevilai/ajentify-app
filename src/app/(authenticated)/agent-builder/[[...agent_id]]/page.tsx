@@ -24,8 +24,6 @@ interface AgentBuilderPageProps {
     params: Params;
 }
 
-
-
 const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
 
     // Nav Guard to detect page navigation - Really dump NextJS limitiation

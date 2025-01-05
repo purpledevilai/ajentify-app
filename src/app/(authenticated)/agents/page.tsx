@@ -27,16 +27,19 @@ import {
 import Card from '@/app/components/Card';
 import { CodeSnippet } from '@/app/components/CodeSnipet';
 import { generateStartConversationSnippet } from '@/utils/codesnippets/StartConversation';
+import { useAlert } from '@/app/components/AlertProvider';
 
 const AgentsPage = observer(() => {
   const router = useRouter();
   const { isOpen: isCodeModalOpen, onOpen: onCodeModalOpen, onClose: onCodeModalClose } = useDisclosure();
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const [currentAgentId, setCurrentAgentId] = useState<string | null>(null);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
+    agentsStore.setShowAlert(showAlert);
     agentsStore.loadAgents();
-  }, []);
+  }, [showAlert]);
 
   const handleAddAgentClick = () => {
     agentBuilderStore.setIsNewAgent(true);
@@ -44,7 +47,7 @@ const AgentsPage = observer(() => {
   };
 
   const handleAgentClick = (agent: Agent) => {
-    agentBuilderStore.setCurrentAgent(agent);
+    agentBuilderStore.setCurrentAgent({ ...agent });
     router.push(`/agent-builder/${agent.agent_id}`);
   };
 
