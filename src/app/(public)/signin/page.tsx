@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Box, Flex, FormControl, FormLabel, Input, Button, Heading, Text, Stack } from '@chakra-ui/react';
 import { authStore } from '@/store/AuthStore';
 import { useRouter } from 'next/navigation';
 import { reaction } from 'mobx';
+import ForgotPasswordModal from './components/ForgotPasswordModal';
 
 const SignInPage = observer(() => {
     const router = useRouter();
+    const [isForgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
     useEffect(() => {
         const disposer = reaction(
@@ -25,6 +27,11 @@ const SignInPage = observer(() => {
         };
     }, [router]);
 
+
+    const handleSignIn = () => {
+        authStore.submitSignIn()
+    }
+    
     return (
         <Flex align="center" justify="center" height="100vh" bg="gray.50" _dark={{ bg: 'gray.900' }}>
             <Box
@@ -63,10 +70,17 @@ const SignInPage = observer(() => {
                         />
                     </FormControl>
 
+                    {/* Forgot Password Link */}
+                    <Text textAlign="left" >
+                        <Button variant="link" size="sm" onClick={() => setForgotPasswordOpen(true)}>
+                            Forgot Password
+                        </Button>
+                    </Text>
+
                     {/* Sign In Button */}
                     <Button
                         isLoading={authStore.signInLoading}
-                        onClick={() => authStore.submitSignIn()}
+                        onClick={handleSignIn}
                     >
                         Log In
                     </Button>
@@ -90,6 +104,13 @@ const SignInPage = observer(() => {
                         {authStore.signInError}
                     </Text>
                 )}
+
+
+                {/* Forgot Password Modal */}
+                <ForgotPasswordModal
+                    isOpen={isForgotPasswordOpen}
+                    onClose={() => setForgotPasswordOpen(false)}
+                />
             </Box>
         </Flex>
     );

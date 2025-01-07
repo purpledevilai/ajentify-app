@@ -2,6 +2,8 @@ import { makeAutoObservable } from 'mobx';
 import { fetchAuthSession } from "aws-amplify/auth";
 import { signIn } from '@/api/auth/signIn'; 
 import { signOut } from '@/api/auth/signOut';
+import { forgotPassword } from '@/api/auth/forgotPassword';
+import { resetPassword } from '@/api/auth/resetPassword';
 import { User } from '@/types/user';
 import { getUser } from '@/api/user/getUser';
 
@@ -15,11 +17,18 @@ class AuthStore {
     user: User | undefined = undefined;
     userLoading = false;
 
+    // Forgot Password State
+    forgotPasswordLoading = false;
+    forgotPasswordStep: 'email' | 'code' | 'completed' = 'email';
+    forgotPasswordError = '';
+    resetPasswordCode = '';
+    newPassword = '';
+
     constructor() {
         makeAutoObservable(this);
     }
 
-    setField(field: 'email' | 'password', value: string) {
+    setField(field: 'email' | 'password' | 'resetPasswordCode' | 'newPassword', value: string) {
         this[field] = value;
     }
 
@@ -82,6 +91,45 @@ class AuthStore {
         } finally {
             this.userLoading = false;
         }
+    }
+
+    async submitForgotPassword(): Promise<void> {
+        this.forgotPasswordLoading = true;
+        this.forgotPasswordError = '';
+
+        try {
+            await forgotPassword(this.email);
+            this.forgotPasswordStep = 'code';
+        } catch (error) {
+            this.forgotPasswordError = (error as Error).message || 'Failed to send reset code.';
+        } finally {
+            this.forgotPasswordLoading = false;
+        }
+    }
+
+    async submitResetPassword(): Promise<void> {
+        this.forgotPasswordLoading = true;
+        this.forgotPasswordError = '';
+
+        try {
+            await resetPassword({
+                email: this.email,
+                code: this.resetPasswordCode,
+                newPassword: this.newPassword,
+            });
+            this.forgotPasswordStep = 'completed';
+        } catch (error) {
+            this.forgotPasswordError = (error as Error).message || 'Failed to reset password.';
+        } finally {
+            this.forgotPasswordLoading = false;
+        }
+    }
+
+    resetForgotPasswordFlow() {
+        this.forgotPasswordStep = 'email';
+        this.resetPasswordCode = '';
+        this.newPassword = '';
+        this.forgotPasswordError = '';
     }
 }
 
