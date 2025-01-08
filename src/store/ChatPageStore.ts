@@ -25,6 +25,17 @@ class ChatPageStore {
         makeAutoObservable(this);
     }
 
+    reset = () => {
+        this.hasInitiatedLoad = false;
+        this.agents = undefined;
+        this.agentsLoading = true;
+        this.currentContext = undefined;
+        this.currentAgentName = undefined;
+        this.currentContextLoading = false;
+        this.contextHistory = undefined;
+        this.contextHistoryLoading = false;
+    }
+
     setShowAlert(showAlert: (params: ShowAlertParams) => void) {
         this.showAlert = showAlert;
     }

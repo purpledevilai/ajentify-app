@@ -2,10 +2,16 @@ import { makeAutoObservable } from 'mobx';
 import { fetchAuthSession } from "aws-amplify/auth";
 import { signIn } from '@/api/auth/signIn'; 
 import { signOut } from '@/api/auth/signOut';
+import { updateUser } from '@/api/user/updateUser';
 import { forgotPassword } from '@/api/auth/forgotPassword';
 import { resetPassword } from '@/api/auth/resetPassword';
 import { User } from '@/types/user';
 import { getUser } from '@/api/user/getUser';
+import { agentsStore } from './AgentsStore';
+import { agentBuilderStore } from './AgentBuilderStore';
+import { chatPageBuilderStore } from './ChatPageBuilderStore';
+import { chatPagesStore } from './ChatPagesStore';
+import { chatPageStore } from './ChatPageStore';
 
 
 class AuthStore {
@@ -66,19 +72,20 @@ class AuthStore {
     async signOut(): Promise<void> {
         try {
             await signOut();
+            agentBuilderStore.reset();
+            agentsStore.reset();
+            chatPageBuilderStore.reset();
+            chatPagesStore.reset();
+            chatPageStore.reset();
             this.signedIn = false;
         } catch (error) {
             console.error('Failed to sign out', error);
         } 
     }
 
-    async loadUser(force: boolean = false): Promise<void> {
+    async loadUser(): Promise<void> {
         if (!this.signedIn) {
             this.user = undefined;
-            return;
-        }
-
-        if (!force && this.user) {
             return;
         }
 
@@ -130,6 +137,41 @@ class AuthStore {
         this.resetPasswordCode = '';
         this.newPassword = '';
         this.forgotPasswordError = '';
+    }
+
+    async updateUserDetails(updatedUser: User): Promise<void> {
+        if (!this.user) {
+            console.error('User not loaded');
+            return;
+        }
+        try {
+            await updateUser({
+                first_name: updatedUser.first_name,
+                last_name: updatedUser.last_name,
+            });
+    
+            // Update local user state
+            this.user.first_name = updatedUser.first_name;
+            this.user.last_name = updatedUser.last_name;
+        } catch (error) {
+            console.error('Failed to update user:', error);
+            throw error;
+        }
+    }
+
+    reset = () => {
+        this.email = '';
+        this.password = '';
+        this.signInLoading = false;
+        this.signInError = '';
+        this.user = undefined;
+        this.userLoading = false;
+        this.forgotPasswordLoading = false;
+        this.forgotPasswordStep = 'email';
+        this.forgotPasswordError = '';
+        this.resetPasswordCode = '';
+        this.newPassword = '';
+        this.signedIn = false;
     }
 }
 

@@ -33,6 +33,10 @@ class AgentsStore {
             this.agentsLoading = false;
         }
     }
+
+    reset = () => {
+        this.agents = undefined;
+    }
 }
 
 export const agentsStore = new AgentsStore();

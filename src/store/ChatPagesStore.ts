@@ -13,6 +13,10 @@ class ChatPagesStore {
         makeAutoObservable(this);
     }
 
+    reset = () => {
+        this.chatPages = undefined;
+    }
+
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
         this.showAlert = showAlert;
     }

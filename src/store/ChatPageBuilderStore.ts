@@ -50,6 +50,10 @@ class ChatPageBuilderStore {
         makeAutoObservable(this);
     }
 
+    reset = () => {
+        this.chatPage = defaultChatPage;
+    }
+
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
         this.showAlert = showAlert;
     }
