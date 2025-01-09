@@ -6,6 +6,8 @@ import { AlertProvider } from "@/app/components/AlertProvider";
 import { Amplify } from 'aws-amplify';
 import { authStore } from '@/store/AuthStore';
 import { NavigationGuardProvider } from 'next-navigation-guard';
+import { observer } from 'mobx-react-lite';
+import { Flex, Spinner } from '@chakra-ui/react';
 
 Amplify.configure({
   Auth: {
@@ -16,14 +18,11 @@ Amplify.configure({
   },
 })
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+const RootLayout = observer(({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
-    const checkAuth = async () => {
-      await authStore.checkAuth();
-      console.log("Auth Token: ", await authStore.getAccessToken());
-    };
-    checkAuth();
+    console.log("Checking auth");
+    authStore.checkAuth();
   }, []);
 
   return (
@@ -35,11 +34,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NavigationGuardProvider>
           <ChakraProviders>
             <AlertProvider>
-              {children}
+              {authStore.isDeterminingAuth ? (
+                <Flex justify="center" align="center" width="100vw" height="100vh">
+                  <Spinner size="lg" />
+                </Flex>
+              ) : (
+                children
+              )}
             </AlertProvider>
           </ChakraProviders>
         </NavigationGuardProvider>
       </body>
     </html>
   );
-}
+});
+
+export default RootLayout;

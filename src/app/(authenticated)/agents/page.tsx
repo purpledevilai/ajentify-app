@@ -37,9 +37,13 @@ const AgentsPage = observer(() => {
   const { showAlert } = useAlert();
 
   useEffect(() => {
-    agentsStore.setShowAlert(showAlert);
+    setShowAlertOnStore();
     agentsStore.loadAgents();
-  }, [showAlert]);
+  }, []);
+
+  const setShowAlertOnStore = () => {
+    agentsStore.setShowAlert(showAlert);
+  }
 
   const handleAddAgentClick = () => {
     agentBuilderStore.setIsNewAgent(true);

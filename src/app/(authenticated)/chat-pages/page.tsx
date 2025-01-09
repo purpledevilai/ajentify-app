@@ -23,9 +23,13 @@ const ChatPagesPage = observer(() => {
   const { showAlert } = useAlert();
 
   useEffect(() => {
-    chatPagesStore.setShowAlert(showAlert);
+    setAlertOnStore();
     chatPagesStore.loadChatPages();
-  }, [showAlert]);
+  }, []);
+
+  const setAlertOnStore = () => {
+    chatPagesStore.setShowAlert(showAlert);
+  };
 
   const handleAddChatPageClick = () => {
     chatPageBuilderStore.initiateNew();

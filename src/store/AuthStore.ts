@@ -19,6 +19,7 @@ class AuthStore {
     password = '';
     signInLoading = false;
     signInError = '';
+    isDeterminingAuth = true;
     signedIn = false;
     user: User | undefined = undefined;
     userLoading = false;
@@ -32,6 +33,20 @@ class AuthStore {
 
     constructor() {
         makeAutoObservable(this);
+    }
+
+    reset = () => {
+        this.email = '';
+        this.password = '';
+        this.signInLoading = false;
+        this.signInError = '';
+        this.user = undefined;
+        this.userLoading = false;
+        this.forgotPasswordLoading = false;
+        this.forgotPasswordStep = 'email';
+        this.forgotPasswordError = '';
+        this.resetPasswordCode = '';
+        this.newPassword = '';
     }
 
     setField(field: 'email' | 'password' | 'resetPasswordCode' | 'newPassword', value: string) {
@@ -50,8 +65,11 @@ class AuthStore {
     }
 
     checkAuth = async () => {
+        this.isDeterminingAuth = true;
         const token = await this.getAccessToken();
+        console.log('Token:', token);
         this.signedIn = token !== undefined;
+        this.isDeterminingAuth = false;
     }
 
     async submitSignIn(): Promise<void> {
@@ -77,18 +95,15 @@ class AuthStore {
             chatPageBuilderStore.reset();
             chatPagesStore.reset();
             chatPageStore.reset();
+            this.reset();
             this.signedIn = false;
+            //this.isDeterminingAuth = true;
         } catch (error) {
             console.error('Failed to sign out', error);
         } 
     }
 
     async loadUser(): Promise<void> {
-        if (!this.signedIn) {
-            this.user = undefined;
-            return;
-        }
-
         this.userLoading = true;
         try {
             this.user = await getUser();
@@ -157,21 +172,6 @@ class AuthStore {
             console.error('Failed to update user:', error);
             throw error;
         }
-    }
-
-    reset = () => {
-        this.email = '';
-        this.password = '';
-        this.signInLoading = false;
-        this.signInError = '';
-        this.user = undefined;
-        this.userLoading = false;
-        this.forgotPasswordLoading = false;
-        this.forgotPasswordStep = 'email';
-        this.forgotPasswordError = '';
-        this.resetPasswordCode = '';
-        this.newPassword = '';
-        this.signedIn = false;
     }
 }
 

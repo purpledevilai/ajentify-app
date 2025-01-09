@@ -12,20 +12,28 @@ const SignInPage = observer(() => {
     const router = useRouter();
     const [isForgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
+    const routeBasedOnAuth = (signedIn: boolean) => {
+        if (signedIn) {
+            router.push('/agents');
+        }
+    }
+
     useEffect(() => {
         const disposer = reaction(
             () => authStore.signedIn,
             (signedIn) => {
-                if (signedIn) {
-                    router.push('/agents');
-                }
+                console.log('Auth changed in signin:', signedIn);
+                routeBasedOnAuth(signedIn);
             }
         );
+
+        console.log("Routing base on auth: signin")
+        routeBasedOnAuth(authStore.signedIn);
 
         return () => {
             disposer();
         };
-    }, [router]);
+    }, []);
 
 
     const handleSignIn = () => {

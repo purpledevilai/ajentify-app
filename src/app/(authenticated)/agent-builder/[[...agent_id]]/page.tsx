@@ -37,20 +37,25 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const { showAlert } = useAlert();
 
     useEffect(() => {
+        setShowAlertOnStore();
+        loadAgentId();
+    }, []);
+
+    const setShowAlertOnStore = () => {
         agentBuilderStore.setShowAlert(showAlert);
-        const loadAgentId = async () => {
-            const paramArray = (await params).agent_id ?? undefined;
-            const agent_id = paramArray ? paramArray[0] : undefined;
-            if (agent_id) {
-                console.log('agent_id', agent_id);
-                if (agentBuilderStore.currentAgent.agent_id !== agent_id) {
-                    console.log("setting agent from id")
-                    agentBuilderStore.setCurrentAgentWithId(agent_id)
-                }
+    }
+
+    const loadAgentId = async () => {
+        const paramArray = (await params).agent_id ?? undefined;
+        const agent_id = paramArray ? paramArray[0] : undefined;
+        if (agent_id) {
+            console.log('agent_id', agent_id);
+            if (agentBuilderStore.currentAgent.agent_id !== agent_id) {
+                console.log("setting agent from id")
+                agentBuilderStore.setCurrentAgentWithId(agent_id)
             }
         }
-        loadAgentId();
-    }, [showAlert, params]);
+    }
 
     // Detect page navigation
     useEffect(() => {

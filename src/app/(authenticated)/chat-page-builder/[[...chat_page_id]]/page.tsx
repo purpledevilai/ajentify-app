@@ -47,18 +47,23 @@ const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
 
 
   useEffect(() => {
+    setAlertOnStore();
+    loadChatPageId();
+  }, []);
+
+  const setAlertOnStore = () => {
     chatPageBuilderStore.setShowAlert(showAlert);
-    const loadChatPageId = async () => {
-      const paramArray = (await params).chat_page_id ?? undefined;
-      const chat_page_id = paramArray ? paramArray[0] : undefined;
-      if (chat_page_id) {
-        if (chatPageBuilderStore.chatPage.chat_page_id !== chat_page_id) {
-          chatPageBuilderStore.setChatPageWithId(chat_page_id)
-        }
+  }
+
+  const loadChatPageId = async () => {
+    const paramArray = (await params).chat_page_id ?? undefined;
+    const chat_page_id = paramArray ? paramArray[0] : undefined;
+    if (chat_page_id) {
+      if (chatPageBuilderStore.chatPage.chat_page_id !== chat_page_id) {
+        chatPageBuilderStore.setChatPageWithId(chat_page_id)
       }
     }
-    loadChatPageId();
-  }, [showAlert, params]);
+  }
 
   const onSaveButtonClick = async () => {
     if (await chatPageBuilderStore.saveChatPage()) {

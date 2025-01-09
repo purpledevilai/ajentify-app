@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Flex,
@@ -38,6 +38,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
     const router = useRouter();
     const pathname = usePathname();
     const [orgMenuOpen, setOrgMenuOpen] = useState(false);
+    const hoverColor = useColorModeValue('gray.200', 'gray.700');
 
     // Tabs for the navigation
     const tabs = [
@@ -45,13 +46,6 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
     ];
-
-    useEffect(() => {
-        authStore.loadUser();
-    }, []);
-
-    const user = authStore.user;
-    const userLoading = authStore.userLoading;
 
     return (
         <motion.div
@@ -69,7 +63,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
             <Box as="nav" bg="gray.100" _dark={{ bg: 'gray.800' }} height="100%" shadow="md" p={4} display="flex" flexDirection="column">
                 {/* Organization Selector */}
                 <Box mb={4}>
-                    {userLoading ? (
+                    {authStore.userLoading ? (
                         <Flex justify="center" align="center" height="40px">
                             <Spinner size="sm" />
                         </Flex>
@@ -78,18 +72,18 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                             <MenuButton
                                 width="100%" // Ensures the button spans the full width
                                 p={2}
-                                _hover={{ bg: useColorModeValue('gray.200', 'gray.700') }}
+                                _hover={{ bg: hoverColor }}
                                 borderRadius="md"
                                 onClick={() => setOrgMenuOpen(!orgMenuOpen)}
                             >
                                 {/* Use Flex for space-between alignment */}
                                 <Flex justify="space-between" align="center">
-                                    <Text fontWeight="bold">{user?.organizations[0]?.name || 'No Organization'}</Text>
+                                    <Text fontWeight="bold">{authStore.user?.organizations[0]?.name || 'No Organization'}</Text>
                                     {orgMenuOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
                                 </Flex>
                             </MenuButton>
                             <MenuList>
-                                {user?.organizations.map((org) => (
+                                {authStore.user?.organizations.map((org) => (
                                     <MenuItem key={org.id} onClick={() => console.log(`Switch to ${org.name}`)}>
                                         {org.name}
                                     </MenuItem>
@@ -138,7 +132,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
 
                 {/* User Cell */}
                 <Box mt={4}>
-                    {userLoading ? (
+                    {authStore.userLoading ? (
                         <Flex justify="center" align="center" height="40px">
                             <Spinner size="sm" />
                         </Flex>
@@ -147,21 +141,21 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                             <MenuButton
                                 width="100%" // Ensure the entire user cell spans the sidebar width
                                 p={2}
-                                _hover={{ bg: useColorModeValue('gray.200', 'gray.700') }}
+                                _hover={{ bg: hoverColor }}
                                 borderRadius="md"
                             >
                                 {/* Use Flex for row alignment */}
                                 <Flex justify="space-between" align="center">
                                     {/* Avatar on the left */}
-                                    <Avatar name={`${user?.first_name} ${user?.last_name}`} size="sm" />
+                                    <Avatar name={`${authStore.user?.first_name} ${authStore.user?.last_name}`} size="sm" />
 
                                     {/* User Details in the middle */}
                                     <Box flex="1" ml={2} textAlign="left">
                                         <Text fontWeight="bold" fontSize="sm" isTruncated>
-                                            {`${user?.first_name} ${user?.last_name}`}
+                                            {`${authStore.user?.first_name} ${authStore.user?.last_name}`}
                                         </Text>
                                         <Text fontSize="small" color="gray.500" isTruncated>
-                                            {user?.email}
+                                            {authStore.user?.email}
                                         </Text>
                                     </Box>
 

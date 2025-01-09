@@ -5,28 +5,41 @@ import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { authStore } from '@/store/AuthStore';
 import { reaction } from 'mobx';
+import { Flex, Spinner } from '@chakra-ui/react';
 
 const IndexPage = observer(() => {
   const router = useRouter();
 
+  const routeBasedOnAuth = (isSignedIn: boolean) => {
+    if (isSignedIn) {
+      router.push('/agents');
+    } else {
+      router.push('/landing');
+    }
+  }
+
   useEffect(() => {
     const disposer = reaction(
       () => authStore.signedIn,
-      (signedIn) => {
-        if (signedIn) {
-          router.push('/agents');
-        } else {
-          router.push('/landing');
-        }
+      (isSignedIn) => {
+        console.log('Auth changed in index:', isSignedIn);
+        routeBasedOnAuth(isSignedIn);
       }
     );
+
+    console.log("Routing base on auth: index")
+    routeBasedOnAuth(authStore.signedIn);
 
     return () => {
       disposer();
     };
-  }, [router]);
+  }, []);
 
-  return <div>Loading...</div>;
+  return (
+    <Flex justify="center" align="center" width="100vw" height="100vh">
+      <Spinner size="lg" />
+    </Flex>
+  );
 
 });
 
