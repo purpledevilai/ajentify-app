@@ -54,7 +54,7 @@ const ProfilePage = observer(() => {
     };
 
     return (
-        (!authStore.user || !editedUser) ? (
+        (!authStore.user) ? (
             <Flex justify="center" align="center" h="100vh">
                 <Text>Loading...</Text>
             </Flex>
@@ -109,7 +109,7 @@ const ProfilePage = observer(() => {
                         <FormLabel>First Name:</FormLabel>
                         {isEditing ? (
                             <Input
-                                value={editedUser.first_name}
+                                value={editedUser?.first_name || ''}
                                 onChange={(e) => handleChange('first_name', e.target.value)}
                             />
                         ) : (
@@ -122,7 +122,7 @@ const ProfilePage = observer(() => {
                         <FormLabel>Last Name:</FormLabel>
                         {isEditing ? (
                             <Input
-                                value={editedUser.last_name}
+                                value={editedUser?.last_name || ''}
                                 onChange={(e) => handleChange('last_name', e.target.value)}
                             />
                         ) : (

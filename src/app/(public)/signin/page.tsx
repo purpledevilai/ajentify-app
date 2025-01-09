@@ -22,18 +22,16 @@ const SignInPage = observer(() => {
         const disposer = reaction(
             () => authStore.signedIn,
             (signedIn) => {
-                console.log('Auth changed in signin:', signedIn);
                 routeBasedOnAuth(signedIn);
             }
         );
 
-        console.log("Routing base on auth: signin")
         routeBasedOnAuth(authStore.signedIn);
 
         return () => {
             disposer();
         };
-    }, []);
+    });
 
 
     const handleSignIn = () => {

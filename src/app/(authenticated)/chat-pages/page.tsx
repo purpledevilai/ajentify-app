@@ -25,7 +25,7 @@ const ChatPagesPage = observer(() => {
   useEffect(() => {
     setAlertOnStore();
     chatPagesStore.loadChatPages();
-  }, []);
+  });
 
   const setAlertOnStore = () => {
     chatPagesStore.setShowAlert(showAlert);

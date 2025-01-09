@@ -44,7 +44,7 @@ const ChatPage = observer(() => {
     // Show alerts
     useEffect(() => {
         setAlertOnStore();
-    }, [])
+    })
 
     const setAlertOnStore = () => {
         chatPageStore.setShowAlert(showAlert);

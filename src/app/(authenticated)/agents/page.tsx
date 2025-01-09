@@ -39,7 +39,7 @@ const AgentsPage = observer(() => {
   useEffect(() => {
     setShowAlertOnStore();
     agentsStore.loadAgents();
-  }, []);
+  });
 
   const setShowAlertOnStore = () => {
     agentsStore.setShowAlert(showAlert);

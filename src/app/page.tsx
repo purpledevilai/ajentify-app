@@ -22,18 +22,16 @@ const IndexPage = observer(() => {
     const disposer = reaction(
       () => authStore.signedIn,
       (isSignedIn) => {
-        console.log('Auth changed in index:', isSignedIn);
         routeBasedOnAuth(isSignedIn);
       }
     );
 
-    console.log("Routing base on auth: index")
     routeBasedOnAuth(authStore.signedIn);
 
     return () => {
       disposer();
     };
-  }, []);
+  });
 
   return (
     <Flex justify="center" align="center" width="100vw" height="100vh">

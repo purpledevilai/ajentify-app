@@ -49,7 +49,7 @@ const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
   useEffect(() => {
     setAlertOnStore();
     loadChatPageId();
-  }, []);
+  });
 
   const setAlertOnStore = () => {
     chatPageBuilderStore.setShowAlert(showAlert);

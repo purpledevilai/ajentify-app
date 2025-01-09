@@ -16,11 +16,9 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
 
     const routeBasedOnAuth = (isSignedIn: boolean) => {
         if (!isSignedIn) {
-            console.log("authenticated: Routing to signin page")
             router.push('/signin');
             return;
         }
-        console.log("authenticated: Routing to requested page")
         if (!authStore.user) {
             authStore.loadUser();
         }
@@ -30,18 +28,16 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
         const disposer = reaction(
             () => authStore.signedIn,
             (isSignedIn) => {
-                console.log('Auth changed in authenticated:', isSignedIn);
                 routeBasedOnAuth(isSignedIn);
             }
         );
 
-        console.log("Routing base on auth: authenticated")
         routeBasedOnAuth(authStore.signedIn);
 
         return () => {
             disposer();
         };
-    }, []);
+    });
 
     // Determine if the sidebar should always be visible based on screen size
     const isWideScreen = useBreakpointValue({ base: false, lg: true });
