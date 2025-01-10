@@ -19,11 +19,13 @@ import {
 } from '@chakra-ui/react';
 import { EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 import { User } from '@/types/user';
+import { useAlert } from '@/app/components/AlertProvider';
 
 const ProfilePage = observer(() => {
 
     const [isEditing, setIsEditing] = useState(false);
     const [editedUser, setEditedUser] = useState<User | undefined>(authStore.user);
+    const { showAlert } = useAlert();
 
     const handleEdit = () => {
         if (!authStore.user) return;
@@ -52,6 +54,36 @@ const ProfilePage = observer(() => {
             return { ...prev, [field]: value }
         });
     };
+
+    const handleDeleteAccount = () => {
+        showAlert({
+            title: "Delete Account",
+            message: "Are you sure you want to delete your account? This action is irreversible.",
+            actions: [
+                {
+                    label: "Cancel",
+                    onClick: () => { },
+                },
+                {
+                    label: "Delete Account",
+                    onClick: handleConfirmDeleteAccount,
+                }
+            ]
+        });
+    }
+
+    const handleConfirmDeleteAccount = async () => {
+        if (!authStore.user) return;
+        try {
+            await authStore.deleteAccount();
+        } catch (error) {
+            console.error('Failed to delete account:', error);
+            showAlert({
+                title: "Whoops",
+                message: "There was an error deleting your account. Please try again later.",
+            })
+        }
+    }
 
     return (
         (!authStore.user) ? (
@@ -144,7 +176,7 @@ const ProfilePage = observer(() => {
                 </Stack>
 
                 {/* Save and Cancel Buttons for Mobile */}
-                {isEditing && (
+                {isEditing ? (
                     <Flex mt={6} justify="flex-end">
                         <Button colorScheme="green" mr={2} onClick={handleSave}>
                             Save
@@ -153,6 +185,17 @@ const ProfilePage = observer(() => {
                             Cancel
                         </Button>
                     </Flex>
+                ) : (
+                    <Button 
+                        mt={6}
+                        variant="outline"
+                        color="red.300"
+                        borderColor="red.300"
+                        _hover={{bg: "red.300", color: "white"}}
+                        onClick={handleDeleteAccount}
+                    >
+                        Delete Account
+                    </Button>
                 )}
             </Flex>
         )

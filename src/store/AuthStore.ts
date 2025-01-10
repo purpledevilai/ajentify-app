@@ -5,6 +5,7 @@ import { signOut } from '@/api/auth/signOut';
 import { updateUser } from '@/api/user/updateUser';
 import { forgotPassword } from '@/api/auth/forgotPassword';
 import { resetPassword } from '@/api/auth/resetPassword';
+import { deleteUser } from '@/api/user/deleteUser';
 import { User } from '@/types/user';
 import { getUser } from '@/api/user/getUser';
 import { agentsStore } from './AgentsStore';
@@ -97,7 +98,6 @@ class AuthStore {
             chatPageStore.reset();
             this.reset();
             this.signedIn = false;
-            //this.isDeterminingAuth = true;
         } catch (error) {
             console.error('Failed to sign out', error);
         } 
@@ -170,6 +170,20 @@ class AuthStore {
             this.user.last_name = updatedUser.last_name;
         } catch (error) {
             console.error('Failed to update user:', error);
+            throw error;
+        }
+    }
+
+    async deleteAccount(): Promise<void> {
+        if (!this.user) {
+            console.error('User not loaded');
+            return;
+        }
+        try {
+            await deleteUser();
+            await this.signOut();
+        } catch (error) {
+            console.error('Failed to delete account:', error);
             throw error;
         }
     }

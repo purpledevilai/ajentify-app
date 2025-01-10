@@ -28,6 +28,7 @@ import Card from '@/app/components/Card';
 import { CodeSnippet } from '@/app/components/CodeSnipet';
 import { generateStartConversationSnippet } from '@/utils/codesnippets/StartConversation';
 import { useAlert } from '@/app/components/AlertProvider';
+import { authStore } from '@/store/AuthStore';
 
 const AgentsPage = observer(() => {
   const router = useRouter();
@@ -37,6 +38,7 @@ const AgentsPage = observer(() => {
   const { showAlert } = useAlert();
 
   useEffect(() => {
+    if (!authStore.signedIn) return;
     setShowAlertOnStore();
     agentsStore.loadAgents();
   });
