@@ -1,6 +1,21 @@
 import { extendTheme } from '@chakra-ui/react';
 
 const theme = extendTheme({
+    styles: {
+        global: {
+          'html, body': {
+            bg: '#080429', // Set global background color
+            color: 'white', // Set global text color
+            fontFamily: 'Montserrat',
+            minHeight: '100vh',
+            margin: 0, // Remove any default margin
+            padding: 0,
+          },
+          '#root': {
+            bg: '#080429', // Ensure the root container has the background color
+          },
+        },
+      },
     colors: {
         brand: {
             50: '#f3e9fd',
