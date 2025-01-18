@@ -63,6 +63,10 @@ const AgentsPage = observer(() => {
     onCodeModalOpen();
   };
 
+  const handleCreateTeamClick = () => {
+    router.push('/create-team');
+  }
+
   return (
     <Box p={6}>
       {/* Page Heading */}
@@ -76,62 +80,77 @@ const AgentsPage = observer(() => {
           <Spinner size="xl" />
         </Flex>
       ) : (
-        <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
-          {/* Add Agent Button */}
-          <GridItem>
-            <Flex
-              align="center"
-              justify="center"
-              bg="gray.100"
-              _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-              p={6}
-              borderRadius="md"
-              border="1px dashed"
-              borderColor="gray.300"
-              cursor="pointer"
-              _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
-              onClick={handleAddAgentClick}
-              minHeight="150px" // Uniform height for all cards
-            >
-              <Text fontWeight="bold" color="brand.500">
-                + Add Agent
-              </Text>
-            </Flex>
-          </GridItem>
+        <Box>
+          <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
+            {/* Add Agent Button */}
+            <GridItem>
+              <Flex
+                align="center"
+                justify="center"
+                bg="gray.100"
+                _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+                p={6}
+                borderRadius="md"
+                border="1px dashed"
+                borderColor="gray.300"
+                cursor="pointer"
+                _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
+                onClick={handleAddAgentClick}
+                minHeight="150px" // Uniform height for all cards
+              >
+                <Text fontWeight="bold" color="brand.500">
+                  + Add Agent
+                </Text>
+              </Flex>
+            </GridItem>
 
-          {/* Agent Cards */}
-          {agentsStore.agents ? (
-            agentsStore.agents.map((agent) => (
-              <GridItem key={agent.agent_id}>
-                <Card
-                  shadow="md"
-                  _hover={{ shadow: 'lg' }}
-                  cursor="pointer"
-                  onClick={() => handleAgentClick(agent)}
-                  minHeight="150px" // Uniform height for all cards
-                >
-                  <Flex h="100%" direction="column">
-                    <Heading as="h3" size="md" mb={2} isTruncated>
-                      {agent.agent_name}
-                    </Heading>
-                    <Text fontSize="sm" color="gray.500" isTruncated>
-                      {agent.agent_description}
-                    </Text>
-                    <Spacer />
-                    <Button
-                      size="sm"
-                      onClick={(e) => handleShowCodeClick(e, agent)}
-                    >
-                      Show Code
-                    </Button>
-                  </Flex>
-                </Card>
-              </GridItem>
-            ))
-          ) : (
-            <Text>No agents found</Text>
-          )}
-        </Grid>
+            {/* Agent Cards */}
+            {agentsStore.agents ? (
+              agentsStore.agents.map((agent) => (
+                <GridItem key={agent.agent_id}>
+                  <Card
+                    shadow="md"
+                    _hover={{ shadow: 'lg' }}
+                    cursor="pointer"
+                    onClick={() => handleAgentClick(agent)}
+                    minHeight="150px" // Uniform height for all cards
+                  >
+                    <Flex h="100%" direction="column">
+                      <Heading as="h3" size="md" mb={2} isTruncated>
+                        {agent.agent_name}
+                      </Heading>
+                      <Text fontSize="sm" color="gray.500" isTruncated>
+                        {agent.agent_description}
+                      </Text>
+                      <Spacer />
+                      <Button
+                        size="sm"
+                        onClick={(e) => handleShowCodeClick(e, agent)}
+                      >
+                        Show Code
+                      </Button>
+                    </Flex>
+                  </Card>
+                </GridItem>
+              ))
+            ) : (
+              <Text>No agents found</Text>
+            )}
+          </Grid>
+          <Heading as="h1" size="xl" mb={2} mt={8}>
+            Create Team
+          </Heading>
+          <Text fontSize="md" color="gray.500" isTruncated>
+            Tell us about your business and we'll create a team of agents for you.
+          </Text>
+          <Button
+            size="md"
+            onClick={handleCreateTeamClick}
+            mt={4}
+          >
+            Create Team
+          </Button>
+        </Box>
       )}
 
       {/* Code Modal */}
