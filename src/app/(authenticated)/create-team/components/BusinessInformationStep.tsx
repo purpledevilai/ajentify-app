@@ -31,6 +31,9 @@ export const BusinessInformationStep = observer(() => {
         <Stack
             spacing={4}
             overflow="scroll"
+            width="100%" // Ensure full width
+            maxWidth="600px" // Prevent restricting width
+            px={4} // Add padding for better spacing
         >
             <Heading as="h1" size="lg">
                 Business Information
@@ -72,6 +75,7 @@ export const BusinessInformationStep = observer(() => {
                         value={link.link}
                         onChange={(e) => createTeamStore.setLink(index, e.target.value)}
                         minH="40px"
+                        width="100%" // Ensure the input respects the available width
                     />
                     {link.link && (
                         <CloseIcon
@@ -89,6 +93,7 @@ export const BusinessInformationStep = observer(() => {
                 onClick={() => createTeamStore.addLink()}
                 minH="40px"
                 mb={6}
+                width="100%" // Button stretches to container width
             >
                 Add Link
             </Button>
@@ -98,6 +103,7 @@ export const BusinessInformationStep = observer(() => {
                 _hover={{ bg: "brand.300" }}
                 onClick={handleNext}
                 minH="40px"
+                width="100%" // Button stretches to container width
             >
                 Next
             </Button>

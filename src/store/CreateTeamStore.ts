@@ -39,8 +39,8 @@ class CreateTeamStore {
     selectedMembers: string[] = [];
     
     // UI State
-    steps = ['busines-information', 'select-members', 'creating-agents', 'success'];
-    step: 'busines-information' | 'select-members' | 'creating-agents' | 'success' = 'busines-information';
+    steps = ['business-information', 'select-members', 'creating-agents', 'success'];
+    step: 'business-information' | 'select-members' | 'creating-agents' | 'success' = 'business-information';
     createingTeamLoading = false;
     gettingLinkData = false;
 
@@ -63,7 +63,7 @@ class CreateTeamStore {
             { link: '', data: '', placeholder: 'https://yourbusiness.com/faqs' },
         ];
         this.selectedMembers = [];
-        this.step = 'busines-information';
+        this.step = 'business-information';
         this.createingTeamLoading = false;
         this.gettingLinkData = false;
         this.jobId = '';
@@ -73,21 +73,17 @@ class CreateTeamStore {
         this.showAlert = showAlert;
     }
 
-    setStep(value: 'busines-information' | 'select-members' | 'creating-agents' | 'success') {
-        this.step = value;
-    }
-
     stepForward() {
         const currentIndex = this.steps.indexOf(this.step);
         if (currentIndex < this.steps.length - 1) {
-            this.step = this.steps[currentIndex + 1] as 'busines-information' | 'select-members' | 'creating-agents' | 'success';
+            this.step = this.steps[currentIndex + 1] as 'business-information' | 'select-members' | 'creating-agents' | 'success';
         }
     }
 
     stepBack() {
         const currentIndex = this.steps.indexOf(this.step);
         if (currentIndex > 0) {
-            this.step = this.steps[currentIndex - 1] as 'busines-information' | 'select-members' | 'creating-agents' | 'success';
+            this.step = this.steps[currentIndex - 1] as 'business-information' | 'select-members' | 'creating-agents' | 'success';
         }
     }
 

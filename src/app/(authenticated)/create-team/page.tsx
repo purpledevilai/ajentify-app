@@ -1,18 +1,16 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import { createTeamStore }  from '@/store/CreateTeamStore';
-import { Flex, Box, Button, Text } from '@chakra-ui/react';
-import { ArrowBackIcon } from '@chakra-ui/icons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { createTeamStore } from '@/store/CreateTeamStore';
+import { Flex, Box, Text } from '@chakra-ui/react';
 import { useAlert } from '@/app/components/AlertProvider';
 import { BusinessInformationStep } from './components/BusinessInformationStep';
-
+import { SelectMembersStep } from './components/SelectMembersStep';
 
 const CreateTeamPage = observer(() => {
-
     const { showAlert } = useAlert();
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         createTeamStore.setShowAlert(showAlert);
@@ -22,20 +20,44 @@ const CreateTeamPage = observer(() => {
         };
     }, []);
 
-    const getCurrentStepComponent = () => {
-        switch (createTeamStore.step) {
-            case 'busines-information':
-                return <BusinessInformationStep />;
-            case 'select-members':
-                return <Text>Members</Text>;
-            case 'creating-agents':
-                return <Text>Creating Agents</Text>;
-            case 'success':
-                return <Text>Success</Text>;
-            default:
-                return null;
+    useEffect(() => {
+        if (containerRef.current) {
+            const currentIndex = createTeamStore.steps.indexOf(createTeamStore.step);
+            const containerWidth = containerRef.current.offsetWidth;
+
+            // Scroll to the desired position with a custom scroll speed
+            customScrollTo(containerRef.current, currentIndex * containerWidth, 150); // Adjust duration here
         }
+    }, [createTeamStore.step]);
+
+    const customScrollTo = (element: HTMLElement, target: number, duration: number) => {
+        const start = element.scrollLeft;
+        const change = target - start;
+        const startTime = performance.now();
+
+        const scroll = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1); // Clamp progress to [0, 1]
+            const easeInOutQuad = progress < 0.5 
+                ? 2 * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-in-out effect
+
+            element.scrollLeft = start + change * easeInOutQuad;
+
+            if (elapsed < duration) {
+                requestAnimationFrame(scroll);
+            }
+        };
+
+        requestAnimationFrame(scroll);
     };
+
+    const getAllSteps = () => [
+        <BusinessInformationStep key="business-information" />,
+        <SelectMembersStep key="select-members" />,
+        <Text key="creating-agents">Creating Agents</Text>,
+        <Text key="success">Success</Text>,
+    ];
 
     return (
         <Flex
@@ -44,38 +66,28 @@ const CreateTeamPage = observer(() => {
             height="100%"
             bg="gray.50"
             _dark={{ bg: 'gray.900' }}
-            overflow-y="auto"
+            overflow="hidden"
         >
-
             <Box
-                width="full"
-                maxWidth="lg"
-                position="relative"
-                overflow="hidden"
+                ref={containerRef}
+                display="flex"
+                width="100%"
                 height="100%"
+                overflow="hidden"
             >
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={createTeamStore.step} // Unique key for each step
-                        initial={{ x: '100%', opacity: 0 }} // Start offscreen to the right
-                        animate={{ x: 0, opacity: 1 }} // Slide in
-                        exit={{ x: '-100%', opacity: 0 }} // Slide out to the left
-                        transition={{ duration: 0.25 }} // Animation duration
-                        style={{
-                            position: 'absolute',
-                            width: '100%',
-                            height: '100%',
-                            top: 0,
-                            left: 0,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
+                {getAllSteps().map((step, index) => (
+                    <Box
+                        key={index}
+                        flex="none"
+                        width="100%"
+                        height="100%"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
                     >
-                        {getCurrentStepComponent()} {/* Render the current step dynamically */}
-                    </motion.div>
-                </AnimatePresence>
+                        {step}
+                    </Box>
+                ))}
             </Box>
         </Flex>
     );
