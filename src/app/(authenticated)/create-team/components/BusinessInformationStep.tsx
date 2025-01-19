@@ -9,12 +9,6 @@ export const BusinessInformationStep = observer(() => {
 
     const { showAlert } = useAlert();
 
-    const linkPlaceholders = [
-        'https://example.com/landing-page',
-        'https://example.com/about-us',
-        'https://example.com/faqs',
-    ];
-
     const handleNext = () => {
         // Check if the business name and description are not empty
         if (!createTeamStore.businessName || !createTeamStore.businessDescription) {
@@ -26,7 +20,7 @@ export const BusinessInformationStep = observer(() => {
         }
 
         // Get links data if any
-        if (!createTeamStore.linkData) {
+        if (createTeamStore.linkData.some((link) => link.link)) {
             createTeamStore.getLinkData();
         }
 
