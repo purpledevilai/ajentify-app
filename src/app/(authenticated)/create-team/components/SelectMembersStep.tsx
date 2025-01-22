@@ -12,6 +12,14 @@ export const SelectMembersStep = observer(() => {
     const { showAlert } = useAlert();
 
     const handleNext = () => {
+
+        if (createTeamStore.gettingLinkData) {
+            showAlert({
+                title: 'Whoops!',
+                message: 'Still fetching data for the links you provided. Should be just a moment!',
+            });
+            return;
+        }
         if (createTeamStore.selectedMembers.length === 0) {
             showAlert({
                 title: 'Error',
@@ -20,6 +28,7 @@ export const SelectMembersStep = observer(() => {
             return;
         }
 
+        createTeamStore.submitCreateTeam()
         createTeamStore.stepForward();
     };
 

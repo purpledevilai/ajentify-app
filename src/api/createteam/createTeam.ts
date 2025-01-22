@@ -1,4 +1,5 @@
 import { authStore } from "@/store/AuthStore";
+import { Job } from "@/types/job";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 export interface CreateTeamPayload {
@@ -8,13 +9,9 @@ export interface CreateTeamPayload {
     selected_members: string[];
 }
 
-export interface CreateTeamResponse {
-    job_id: string;
-}
-
-export async function createTeam(payload: CreateTeamPayload): Promise<CreateTeamResponse> {
+export async function createTeam(payload: CreateTeamPayload): Promise<Job> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/organization`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-team`, {
         method: 'POST',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
@@ -22,7 +19,7 @@ export async function createTeam(payload: CreateTeamPayload): Promise<CreateTeam
         },
         body: JSON.stringify(payload)
     });
-    return await checkResponseAndGetJson(response) as unknown as CreateTeamResponse;
+    return await checkResponseAndGetJson(response) as unknown as Job;
   } catch (error) {
     const errorMessage = (error as Error).message || 'An unknown error occurred creating the team';
     throw Error(errorMessage);

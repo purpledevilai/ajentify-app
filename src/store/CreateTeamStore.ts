@@ -1,8 +1,9 @@
-import { makeAutoObservable, set } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { scrapePage } from '@/api/scrapepage/scrapePage';
 import { createTeam } from '@/api/createteam/createTeam';
 import { getJob } from '@/api/job/getJob';
+import { agentsStore } from './AgentsStore';
 
 
 export const teamMemberTemplates = [
@@ -19,7 +20,7 @@ export const teamMemberTemplates = [
         name: "Digital Marketing",
     },
     {
-        id: "developer",
+        id: "engineering-and-development",
         name: "Developer",
     },
 ];
@@ -149,8 +150,8 @@ class CreateTeamStore {
                 selected_members: this.selectedMembers,
             });
             this.jobId = job.job_id;
-            this.step = 'creating-agents';
             setTimeout(() => {
+                console.log("Polling job status");
                 this.pollJobStatus();
             }, this.pollingTime);
         } catch (error) {
@@ -168,15 +169,26 @@ class CreateTeamStore {
         this.createingTeamLoading = true;
         try {
             const job = await getJob(this.jobId);
+            console.log("Job:", job);
             if (job.status === 'completed') {
-                this.step = 'success';
+                agentsStore.loadAgents(true);
+                this.stepForward();
             } else if (job.status === 'error') {
                 this.showAlert({
                     title: 'Error Creating Team',
                     message: job.message,
+                    actions: [
+                        {
+                            label: 'Go back and try again',
+                            onClick: () => {
+                                this.stepBack();
+                            }
+                        }
+                    ]
                 });
             } else {
                 setTimeout(() => {
+                    console.log("Polling job status repeate");
                     this.pollJobStatus();
                 }, this.pollingTime);
             }

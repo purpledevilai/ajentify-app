@@ -39,10 +39,10 @@ export const BusinessInformationStep = observer(() => {
                 Business Information
             </Heading>
             <Text>
-                Let's get started by entering your business information.
+                {"Let's get started by entering your business information."}
             </Text>
             <Text>
-                What's your business's name?
+                {"What's your business's name?"}
             </Text>
             <Input
                 placeholder="Business Name"

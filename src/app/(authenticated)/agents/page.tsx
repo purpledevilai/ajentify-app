@@ -141,7 +141,7 @@ const AgentsPage = observer(() => {
             Create Team
           </Heading>
           <Text fontSize="md" color="gray.500" isTruncated>
-            Tell us about your business and we'll create a team of agents for you.
+            {"Tell us about your business and we'll create a team of agents for you."}
           </Text>
           <Button
             size="md"

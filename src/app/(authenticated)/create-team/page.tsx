@@ -3,10 +3,13 @@
 import React, { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { createTeamStore } from '@/store/CreateTeamStore';
-import { Flex, Box, Text } from '@chakra-ui/react';
+import { Flex, Box } from '@chakra-ui/react';
 import { useAlert } from '@/app/components/AlertProvider';
 import { BusinessInformationStep } from './components/BusinessInformationStep';
 import { SelectMembersStep } from './components/SelectMembersStep';
+import { CreatingTeamLoadingStep } from './components/CreateingTeamLoadingStep';
+import { SuccessStep } from './components/SuccessStep';
+import { reaction } from 'mobx';
 
 const CreateTeamPage = observer(() => {
     const { showAlert } = useAlert();
@@ -18,17 +21,26 @@ const CreateTeamPage = observer(() => {
         return () => {
             createTeamStore.reset();
         };
-    }, []);
+    });
 
     useEffect(() => {
-        if (containerRef.current) {
-            const currentIndex = createTeamStore.steps.indexOf(createTeamStore.step);
-            const containerWidth = containerRef.current.offsetWidth;
+        const disposer = reaction(
+            () => createTeamStore.step,
+            (step) => {
+                if (containerRef.current) {
+                    const currentIndex = createTeamStore.steps.indexOf(step);
+                    const containerWidth = containerRef.current.offsetWidth;
 
-            // Scroll to the desired position with a custom scroll speed
-            customScrollTo(containerRef.current, currentIndex * containerWidth, 150); // Adjust duration here
-        }
-    }, [createTeamStore.step]);
+                    // Scroll to the desired position with a custom scroll speed
+                    customScrollTo(containerRef.current, currentIndex * containerWidth, 150); // Adjust duration here
+                }
+            }
+        );
+
+        return () => {
+            disposer();
+        };
+    });
 
     const customScrollTo = (element: HTMLElement, target: number, duration: number) => {
         const start = element.scrollLeft;
@@ -38,8 +50,8 @@ const CreateTeamPage = observer(() => {
         const scroll = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1); // Clamp progress to [0, 1]
-            const easeInOutQuad = progress < 0.5 
-                ? 2 * progress * progress 
+            const easeInOutQuad = progress < 0.5
+                ? 2 * progress * progress
                 : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-in-out effect
 
             element.scrollLeft = start + change * easeInOutQuad;
@@ -55,8 +67,8 @@ const CreateTeamPage = observer(() => {
     const getAllSteps = () => [
         <BusinessInformationStep key="business-information" />,
         <SelectMembersStep key="select-members" />,
-        <Text key="creating-agents">Creating Agents</Text>,
-        <Text key="success">Success</Text>,
+        <CreatingTeamLoadingStep key="creating-agents" />,
+        <SuccessStep key="success" />,
     ];
 
     return (
