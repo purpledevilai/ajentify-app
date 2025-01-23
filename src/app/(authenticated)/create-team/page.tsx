@@ -13,15 +13,14 @@ import { reaction } from 'mobx';
 
 const CreateTeamPage = observer(() => {
     const { showAlert } = useAlert();
+    createTeamStore.setShowAlert(showAlert);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        createTeamStore.setShowAlert(showAlert);
-
         return () => {
             createTeamStore.reset();
         };
-    });
+    }, []);
 
     useEffect(() => {
         const disposer = reaction(

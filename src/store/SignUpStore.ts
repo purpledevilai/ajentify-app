@@ -41,6 +41,24 @@ class SignUpStore {
         makeAutoObservable(this);
     }
 
+    reset() {
+        this.firstName = '';
+        this.lastName = '';
+        this.email = '';
+        this.password = '';
+        this.confirmCode = '';
+        this.confirmPassword = '';
+        this.organizationName = '';
+        this.step = 'userDetails';
+        this.signUpLoading = false;
+        this.confirmSignInLoading = false;
+        this.createOrgLoading = false;
+        this.showAlertFlag = false;
+        this.alertTitle = '';
+        this.alertMessage = '';
+        this.alertActions = [];
+    }
+
     setField(field: keyof SignUpStoreSetFields, value: string) {
         this[field] = value;
     }
