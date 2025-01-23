@@ -4,6 +4,7 @@ import { scrapePage } from '@/api/scrapepage/scrapePage';
 import { createTeam } from '@/api/createteam/createTeam';
 import { getJob } from '@/api/job/getJob';
 import { agentsStore } from './AgentsStore';
+import { authStore } from './AuthStore';
 
 
 export const teamMemberTemplates = [
@@ -28,7 +29,7 @@ export const teamMemberTemplates = [
 class CreateTeamStore {
     
     // Business information
-    businessName: string = '';
+    businessName: string = authStore.user?.organizations[0].name || '';
     businessDescription: string = '';
     linkData: { link: string, data: string, placeholder: string }[] = [
         { link: '', data: '', placeholder: 'https://yourbusiness.com/landing-page' },
@@ -56,7 +57,7 @@ class CreateTeamStore {
     }
 
     reset = () => {
-        this.businessName = '';
+        this.businessName = authStore.user?.organizations[0].name || '';
         this.businessDescription = '';
         this.linkData = [
             { link: '', data: '', placeholder: 'https://yourbusiness.com/landing-page' },
