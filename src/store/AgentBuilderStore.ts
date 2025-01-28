@@ -1,4 +1,4 @@
-import { Agent } from "@/types/agent";
+import { Agent, AgentToolInstance } from "@/types/agent";
 import { Context } from "@/types/context";
 import { makeAutoObservable } from "mobx";
 import { createContext } from "@/api/context/createContext";
@@ -33,6 +33,7 @@ class AgentBuilderStore {
         is_public: false,
         agent_speaks_first: false,
         prompt: '',
+        tools: [],
     };
     hasUpdates = false;
     agentLoading = false;
@@ -47,8 +48,38 @@ class AgentBuilderStore {
     showDeleteButton = false;
     showAgentId = false;
 
+
+    agentTools: string[] = [
+        'pass_event',
+        'api_call'
+    ]
+    presentedAgentTool: string = 'pass_event';
+
     constructor() {
         makeAutoObservable(this);
+    }
+
+    reset = () => {
+        this.isNewAgent = false;
+        this.currentAgent = {
+            agent_id: '',
+            agent_name: '',
+            agent_description: '',
+            is_public: false,
+            agent_speaks_first: false,
+            prompt: '',
+            tools: [],
+        };
+        this.hasUpdates = false;
+        this.agentLoading = false;
+        this.promptEngineerContext = undefined;
+        this.promptEngineerContextLoading = false;
+        this.agentContext = undefined;
+        this.agentContextLoading = false;
+        this.showDeleteButton = false;
+        this.agentDeleteLoading = false;
+        this.showAgentId = false;
+        this.presentedAgentTool = 'pass_event';
     }
 
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
@@ -86,27 +117,6 @@ class AgentBuilderStore {
         this.setCurrentAgent(agent);
     }
 
-    reset = () => {
-        this.isNewAgent = false;
-        this.currentAgent = {
-            agent_id: '',
-            agent_name: '',
-            agent_description: '',
-            is_public: false,
-            agent_speaks_first: false,
-            prompt: '',
-        };
-        this.hasUpdates = false;
-        this.agentLoading = false;
-        this.promptEngineerContext = undefined;
-        this.promptEngineerContextLoading = false;
-        this.agentContext = undefined;
-        this.agentContextLoading = false;
-        this.showDeleteButton = false;
-        this.agentDeleteLoading = false;
-        this.showAgentId = false;
-    }
-
     setStringField(field: keyof AgentStringFields, value: string) {
         this.currentAgent[field] = value;
         this.hasUpdates = true;
@@ -115,6 +125,16 @@ class AgentBuilderStore {
     setBooleanField(field: keyof AgentBooleanFields, value: boolean) {
         this.currentAgent[field] = value;
         this.hasUpdates = true;
+    }
+
+    addTool(agentTool: AgentToolInstance) {
+        if (!this.currentAgent.tools) return;
+        this.currentAgent.tools.push(agentTool);
+    }
+
+    removeTool(agentTool: AgentToolInstance) {
+        if (!this.currentAgent.tools) return;
+        this.currentAgent.tools = this.currentAgent.tools.filter((tool) => tool.name !== agentTool.name);
     }
 
     async createAgent() {
@@ -133,6 +153,7 @@ class AgentBuilderStore {
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
+                tools: this.currentAgent.tools,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -163,6 +184,7 @@ class AgentBuilderStore {
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
+                tools: this.currentAgent.tools
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -285,6 +307,10 @@ class AgentBuilderStore {
         } finally {
             this.agentContextLoading = false;
         }
+    }
+
+    setPresentedAgentTool(tool: string) {
+        this.presentedAgentTool = tool;
     }
 }
 export const agentBuilderStore = new AgentBuilderStore();

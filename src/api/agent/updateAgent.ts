@@ -1,4 +1,4 @@
-import { Agent } from "@/types/agent";
+import { Agent, AgentToolInstance } from "@/types/agent";
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
@@ -9,6 +9,7 @@ interface UpdateAgentPayload {
     is_public: boolean;
     prompt: string;
     agent_speaks_first: boolean;
+    tools?: AgentToolInstance[];
 }
 
 export async function updateAgent(payload: UpdateAgentPayload): Promise<Agent> {

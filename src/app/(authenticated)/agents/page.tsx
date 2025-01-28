@@ -25,7 +25,7 @@ import {
   ModalHeader,
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
-import { CodeSnippet } from '@/app/components/CodeSnipet';
+import { CodeSnippet } from '@/app/components/CodeSnippet';
 import { generateStartConversationSnippet } from '@/utils/codesnippets/StartConversation';
 import { useAlert } from '@/app/components/AlertProvider';
 import { authStore } from '@/store/AuthStore';

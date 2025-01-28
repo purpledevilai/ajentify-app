@@ -17,6 +17,8 @@ import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
 import { useAlert } from "@/app/components/AlertProvider";
 import { ChatEvent } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
+import { AgentToolInstance } from "@/types/agent";
+import { PassEventTool } from "./components/PassEventTool";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -33,13 +35,18 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
     const { isOpen: isTestingAgentModalOpen, onOpen: onOpenTestingAgentModal, onClose: onCloseTesingAgentModal } = useDisclosure();
     const { isOpen: isPromptEngineerModalOpen, onOpen: onOpenPromptEngineerModal, onClose: onClosePromptEngineerModal } = useDisclosure();
+    const { isOpen: isToolPickerModalOpen, onOpen: onOpenToolPickerModal, onClose: onCloseToolPickerModal } = useDisclosure();
     const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
     const { showAlert } = useAlert();
 
     useEffect(() => {
         setShowAlertOnStore();
         loadAgentId();
-    });
+
+        return () => {
+            agentBuilderStore.reset();
+        }
+    }, []);
 
     const setShowAlertOnStore = () => {
         agentBuilderStore.setShowAlert(showAlert);
@@ -77,7 +84,6 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     // Delete the prompt engineer context if it exists
                     await agentBuilderStore.deletePromptEngineerContext();
                 }
-                agentBuilderStore.reset();
                 navGuard.accept();
             }
             if (agentBuilderStore.hasUpdates) {
@@ -136,7 +142,6 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 {
                     label: "Delete", onClick: async () => {
                         await agentBuilderStore.deleteAgent();
-                        agentBuilderStore.reset();
                         agentsStore.loadAgents(true);
                         // Navigate back
                         window.history.back();
@@ -154,6 +159,19 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const beforeClosePromptEngineerModal = () => {
         agentBuilderStore.deletePromptEngineerContext();
         onClosePromptEngineerModal();
+    }
+
+    const onRemoveTool = (agentTool: AgentToolInstance) => {
+        agentBuilderStore.removeTool(agentTool)
+    }
+
+    const getViewForTool = (toolName: string) => {
+        switch (toolName) {
+            case 'pass_event':
+                return <PassEventTool />;
+            default:
+                return <Text>Tool not implemented yet</Text>;
+        }
     }
 
 
@@ -233,6 +251,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         onChange={(e) => agentBuilderStore.setStringField("agent_description", e.target.value)}
                     />
                 </FormControl>
+
                 {/* Toggles */}
                 <Flex direction="row" w="100%" justifyContent="flex-start" align="center" gap={12}>
                     <FormControl width="auto">
@@ -262,6 +281,30 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         />
                     </FormControl>
                 </Flex>
+
+                {/* Agent Tool Bar */}
+                <FormControl>
+                    <FormLabelToolTip
+                        label="Agent Tools"
+                        tooltip="Tools that the agent can use to help the user."
+                    />
+                    <Flex direction="row" wrap="wrap" gap={2} mt={2}>
+                        <Button size="sm" onClick={onOpenToolPickerModal}>Add Tool</Button>
+                        {agentBuilderStore.currentAgent.tools && (
+                            agentBuilderStore.currentAgent.tools.map((tool, index) => (
+                                <Button
+                                    key={index}
+                                    size="sm"
+                                    variant="outline"
+                                    colorScheme="purple"
+                                    onClick={() => onRemoveTool(tool)}
+                                >
+                                    {tool.name}
+                                </Button>
+                            ))
+                        )}
+                    </Flex>
+                </FormControl>
                 {/* Agent Prompt */}
                 <FormControl>
                     <Flex direction="row" justifyContent="space-between" w="100%">
@@ -307,6 +350,34 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     >Delete Agent</Button>
                 )}
             </Flex>
+
+            {/* Tool Picker modal */}
+            <Modal isOpen={isToolPickerModalOpen} onClose={onCloseToolPickerModal} size="2xl">
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>Tool Picker</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <Flex direction="column" gap={4}>
+                            {/* Tool tab menue */}
+                            <Flex direction="row" gap={4}>
+                                {agentBuilderStore.agentTools.map((toolName, index) => (
+                                    <Button
+                                        key={index}
+                                        variant={agentBuilderStore.presentedAgentTool === toolName ? 'solid' : 'outline'}
+                                        onClick={() => agentBuilderStore.setPresentedAgentTool(toolName)}
+
+                                    >
+                                        {toolName}
+                                    </Button>
+                                ))}
+                            </Flex>
+                            {/* Tool view */}
+                            {getViewForTool(agentBuilderStore.presentedAgentTool)}
+                        </Flex>
+                    </ModalBody>
+                </ModalContent>
+            </Modal>
 
             {/* Prompt engineer modal */}
             <Modal isOpen={isPromptEngineerModalOpen} onClose={beforeClosePromptEngineerModal} size="2xl">
