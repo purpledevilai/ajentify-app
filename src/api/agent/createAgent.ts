@@ -9,6 +9,7 @@ interface CreateAgentPayload {
     prompt: string;
     agent_speaks_first: boolean;
     tools?: AgentToolInstance[];
+    uses_prompt_args?: boolean;
 }
 
 export async function createAgent(payload: CreateAgentPayload): Promise<Agent> {

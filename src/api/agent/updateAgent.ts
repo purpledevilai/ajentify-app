@@ -10,6 +10,7 @@ interface UpdateAgentPayload {
     prompt: string;
     agent_speaks_first: boolean;
     tools?: AgentToolInstance[];
+    uses_prompt_args?: boolean;
 }
 
 export async function updateAgent(payload: UpdateAgentPayload): Promise<Agent> {

@@ -1,6 +1,6 @@
 import { Agent, AgentToolInstance } from "@/types/agent";
 import { Context } from "@/types/context";
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, computed } from "mobx";
 import { createContext } from "@/api/context/createContext";
 import { deleteContext } from "@/api/context/deleteContext";
 import { createAgent } from "@/api/agent/createAgent";
@@ -18,6 +18,7 @@ interface AgentStringFields {
 interface AgentBooleanFields {
     is_public: boolean;
     agent_speaks_first: boolean;
+    uses_prompt_args: boolean;
 }
 
 
@@ -32,6 +33,7 @@ class AgentBuilderStore {
         agent_description: '',
         is_public: false,
         agent_speaks_first: false,
+        uses_prompt_args: false,
         prompt: '',
         tools: [],
     };
@@ -48,15 +50,27 @@ class AgentBuilderStore {
     showDeleteButton = false;
     showAgentId = false;
 
-
     agentTools: string[] = [
         'pass_event',
         'api_call'
     ]
     presentedAgentTool: string = 'pass_event';
 
+    showPromptArgsInput: boolean = false;
+    promptArgsInput: Record<string, string> = {};
+
+    get promptArgs(): string[] {
+        if (!this.currentAgent.uses_prompt_args) {
+            return [];
+        }
+        const matches = this.currentAgent.prompt.match(/\{([^}]+)\}/g) || [];
+        return matches.map((match) => match.replace(/[{}]/g, ""));
+    }
+
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            promptArgs: computed,
+        });
     }
 
     reset = () => {
@@ -67,6 +81,7 @@ class AgentBuilderStore {
             agent_description: '',
             is_public: false,
             agent_speaks_first: false,
+            uses_prompt_args: false,
             prompt: '',
             tools: [],
         };
@@ -80,6 +95,8 @@ class AgentBuilderStore {
         this.agentDeleteLoading = false;
         this.showAgentId = false;
         this.presentedAgentTool = 'pass_event';
+        this.showPromptArgsInput = false;
+        this.promptArgsInput = {};
     }
 
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
@@ -154,6 +171,7 @@ class AgentBuilderStore {
                 prompt: this.currentAgent.prompt,
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
                 tools: this.currentAgent.tools,
+                uses_prompt_args: this.currentAgent.uses_prompt_args,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -184,7 +202,8 @@ class AgentBuilderStore {
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
-                tools: this.currentAgent.tools
+                tools: this.currentAgent.tools,
+                uses_prompt_args: this.currentAgent.uses_prompt_args,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -255,7 +274,27 @@ class AgentBuilderStore {
         } else {
             await this.createAgent();
         }
+        
+        this.showPromptArgsInput = (this.currentAgent.uses_prompt_args ?? false) && (this.promptArgs.length > 0)
+        if (this.showPromptArgsInput) {
+            // Filter out any prompt arg inputs that are not in prompt args
+            const filteredPromptArgInput: Record<string, string> = {};
+            for (const promptArg of this.promptArgs) {
+                filteredPromptArgInput[promptArg] = this.promptArgsInput[promptArg] ?? '';
+            }
+            this.promptArgsInput = filteredPromptArgInput;
+            return; // Don't create context if prompt args are needed
+        }
         await this.createAgentContext();
+    }
+
+    updatePromptArg(key: string, value: string) {
+        this.promptArgsInput[key] = value;
+    }
+
+    onPromptArgsSubmit() {
+        this.showPromptArgsInput = false;
+        this.createAgentContext(this.promptArgsInput);
     }
 
     async onSaveAgentClick() {
@@ -291,12 +330,13 @@ class AgentBuilderStore {
         }
     }
 
-    async createAgentContext() {
+    async createAgentContext(promptArgs?: Record<string, string>) {
         try {
             this.agentContextLoading = true;
             const context = await createContext({
                 agent_id: this.currentAgent.agent_id,
-                invoke_agent_message: this.currentAgent.agent_speaks_first
+                invoke_agent_message: this.currentAgent.agent_speaks_first,
+                prompt_args: promptArgs
             });
             this.agentContext = context;
         } catch (error) {

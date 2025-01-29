@@ -6,7 +6,8 @@ import {
     Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     useColorMode,
-    useClipboard
+    useClipboard,
+    FormLabel
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
@@ -305,6 +306,32 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         )}
                     </Flex>
                 </FormControl>
+
+                {/* Prompt Args Toggle */}
+                <FormControl>
+                    <FormLabelToolTip
+                        label="Uses Prompt Args"
+                        tooltip="If enabled, the agent will accept arguments, ie. variables placed in curlly brackets, in the prompt. Set these variables when you create the context."
+                    />
+                    <Switch
+                        mt={2}
+                        colorScheme="purple"
+                        size="lg"
+                        isChecked={agentBuilderStore.currentAgent.uses_prompt_args}
+                        onChange={(e) => agentBuilderStore.setBooleanField("uses_prompt_args", e.target.checked)}
+                    />
+                </FormControl>
+
+                {/* Prompt Args List */}
+                {agentBuilderStore.currentAgent.uses_prompt_args && (
+                    <Flex direction="column" w="100%" mt={2} gap={4}>
+                        <Heading size="sm">Prompt Args</Heading>
+                        {agentBuilderStore.promptArgs.map((arg, index) => (
+                            <Text key={index}>- {arg}</Text>
+                        ))}
+                    </Flex>
+                )}
+
                 {/* Agent Prompt */}
                 <FormControl>
                     <Flex direction="row" justifyContent="space-between" w="100%">
@@ -410,9 +437,28 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     <ModalCloseButton />
                     <ModalBody>
                         <Flex h="70vh" w="100%">
-                            <ContentOrSpinner showSpinner={agentBuilderStore.agentLoading || agentBuilderStore.agentContextLoading}>
-                                {agentBuilderStore.agentContext && <ChatBox context={agentBuilderStore.agentContext} style={chatBoxStyle} />}
-                            </ContentOrSpinner>
+                            {agentBuilderStore.showPromptArgsInput ? (
+                                <Flex w="100%" direction={"column"} gap={4} maxW={400}>
+                                    <Heading size="md">First enter prompt arguments</Heading>
+                                    {agentBuilderStore.promptArgs.map((arg, index) => (
+                                        <div key={index}>
+                                            <FormLabel>{arg}</FormLabel>
+                                            <Input
+                                                key={index}
+                                                placeholder="Value"
+                                                value={agentBuilderStore.promptArgsInput[arg] ?? ""}
+                                                onChange={(e) => agentBuilderStore.updatePromptArg(arg, e.target.value)}
+                                            />
+                                        </div>
+                                    ))}
+                                    <Button onClick={() => agentBuilderStore.onPromptArgsSubmit()}>Test</Button>
+                                </Flex>
+                            ) : (
+                                <ContentOrSpinner showSpinner={agentBuilderStore.agentLoading || agentBuilderStore.agentContextLoading}>
+                                    {agentBuilderStore.agentContext && <ChatBox context={agentBuilderStore.agentContext} style={chatBoxStyle} />}
+                                </ContentOrSpinner>
+                            )}
+
                         </Flex>
                     </ModalBody>
                 </ModalContent>
