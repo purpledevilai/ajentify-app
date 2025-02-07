@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Flex, Text, Spacer, IconButton, useColorMode } from '@chakra-ui/react';
+import { Flex, Text, Spacer, IconButton, useColorMode, Box } from '@chakra-ui/react';
 import { HamburgerIcon, SunIcon, MoonIcon } from '@chakra-ui/icons';
 
 interface HeaderProps {
@@ -14,7 +14,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   return (
     <Flex
       as="header"
-      bg="gray.100"
+      bg="#fff"
       _dark={{ bg: 'gray.700' }}
       px="6"
       py="4"
@@ -35,9 +35,11 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       />
 
       {/* Logo */}
-      <Text fontSize="xl" fontWeight="bold">
+      <Box display={'flex'} flexDirection={'row'}>
+      <Box backgroundImage='/Img/ajentifylogoicon.png' h='35px' w='35px' backgroundSize='cover' backgroundRepeat='no-repeat' backgroundPosition='center' ></Box>
+      <Text fontSize="xl" fontWeight="bold" color='gray.800' ml={5}>
         Ajentify
-      </Text>
+      </Text></Box>
 
       <Spacer />
 

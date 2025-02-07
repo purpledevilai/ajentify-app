@@ -72,7 +72,7 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
                     flex="1"
                     p={4}
                     overflowY="hidden"
-                    bg="gray.50"
+                    bg="#F3F2F5"
                     _dark={{ bg: 'gray.900' }}
                     onClick={() => {
                         if (!isWideScreen && isSidebarOpen) {

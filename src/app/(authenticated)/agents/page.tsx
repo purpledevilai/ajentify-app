@@ -29,6 +29,7 @@ import { CodeSnippet } from '@/app/components/CodeSnipet';
 import { generateStartConversationSnippet } from '@/utils/codesnippets/StartConversation';
 import { useAlert } from '@/app/components/AlertProvider';
 import { authStore } from '@/store/AuthStore';
+import  HeroSection  from '@/app/components/HeroSection';
 
 const AgentsPage = observer(() => {
   const router = useRouter();
@@ -65,11 +66,14 @@ const AgentsPage = observer(() => {
 
   return (
     <Box p={6}>
+      <HeroSection />
+
       {/* Page Heading */}
-      <Heading as="h1" size="xl" mb={6}>
+      <Heading as="h1" size="md" mb={6}  color="#000">
         Agents
       </Heading>
 
+      
       {/* Content Section */}
       {agentsStore.agentsLoading ? (
         <Flex justify="center" align="center" height="200px">
@@ -87,11 +91,11 @@ const AgentsPage = observer(() => {
               p={6}
               borderRadius="md"
               border="1px dashed"
-              borderColor="gray.300"
+              borderColor="gray.400"
               cursor="pointer"
               _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
               onClick={handleAddAgentClick}
-              minHeight="150px" // Uniform height for all cards
+              minHeight="150px" 
             >
               <Text fontWeight="bold" color="brand.500">
                 + Add Agent
@@ -111,10 +115,17 @@ const AgentsPage = observer(() => {
                   minHeight="150px" // Uniform height for all cards
                 >
                   <Flex h="100%" direction="column">
-                    <Heading as="h3" size="md" mb={2} isTruncated>
+                    <Box display={'flex'} flexDirection={'row'} mb={'2'}>
+                    <Box   bg='gray.200' p={'3px'} borderRadius={'full'} mr={'5px'}><Box backgroundImage='/Img/ajentifylogoicon.png' h='35px' w='35px' backgroundSize='cover' backgroundRepeat='no-repeat' backgroundPosition='center'></Box></Box>
+                    <Box><Heading as="h3" size="md" color="#000" isTruncated>
                       {agent.agent_name}
+                      
                     </Heading>
-                    <Text fontSize="sm" color="gray.500" isTruncated>
+                    <Text fontSize="xs" color="gray.500" isTruncated>
+                      {agent.is_public}
+                    </Text></Box>
+                    </Box>
+                    <Text fontSize="xs" color="gray.500" isTruncated>
                       {agent.agent_description}
                     </Text>
                     <Spacer />

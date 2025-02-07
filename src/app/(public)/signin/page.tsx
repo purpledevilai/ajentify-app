@@ -2,11 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Box, Flex, FormControl, FormLabel, Input, Button, Heading, Text, Stack } from '@chakra-ui/react';
+import {
+    Box,
+    Flex,
+    FormControl,
+    FormLabel,
+    Input,
+    Button,
+    Heading,
+    Text,
+    Stack,
+} from '@chakra-ui/react';
 import { authStore } from '@/store/AuthStore';
 import { useRouter } from 'next/navigation';
 import { reaction } from 'mobx';
 import ForgotPasswordModal from './components/ForgotPasswordModal';
+import Header from '../landing/components/Header';
 
 const SignInPage = observer(() => {
     const router = useRouter();
@@ -16,7 +27,7 @@ const SignInPage = observer(() => {
         if (signedIn) {
             router.push('/agents');
         }
-    }
+    };
 
     useEffect(() => {
         const disposer = reaction(
@@ -33,52 +44,84 @@ const SignInPage = observer(() => {
         };
     });
 
-
     const handleSignIn = () => {
-        authStore.submitSignIn()
-    }
-    
+        authStore.submitSignIn();
+    };
+
     return (
-        <Flex align="center" justify="center" height="100vh" bg="gray.50" _dark={{ bg: 'gray.900' }}>
+        <Flex
+            h="100vh"
+            w="100vw"
+            bg="#080429"
+            color="#ffffff"
+            fontFamily="Montserrat"
+            align="center"
+            justify="center"
+            backgroundImage="/Img/cyberbg.jpg"
+            backgroundSize="cover"
+            backgroundRepeat="no-repeat"
+            backgroundPosition="center"
+            flexDirection="column"
+        >
+            <Header/>
             <Box
-                bg="white"
-                _dark={{ bg: 'gray.800' }}
-                p={8}
-                borderRadius="md"
-                boxShadow="lg"
-                width="full"
-                maxWidth="sm"
+                backgroundImage="/Img/logofont.png"
+                h="150px"
+                w="320px"
+                backgroundSize="cover"
+                backgroundRepeat="no-repeat"
+                backgroundPosition="center"
+
+            ></Box>
+            <Box
+                bg="rgba(255, 255, 255, 0.1)"
+                backdropFilter="blur(8px)"
+                borderRadius="lg"
+                boxShadow="xl"
+                p={10}
+                width="100%"
+                maxWidth="400px"
             >
-                <Heading as="h1" size="lg" textAlign="center" mb={6}>
-                    Ajentify
+                <Heading as="h1" size="md" textAlign="center" mb={6} color="#ffffff">
+                    Welcome Back
                 </Heading>
 
                 <Stack spacing={4}>
                     {/* Email Input */}
                     <FormControl isRequired>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel color="#ffffff">Email</FormLabel>
                         <Input
                             type="email"
                             value={authStore.email}
                             onChange={(e) => authStore.setField('email', e.target.value)}
                             placeholder="Enter your email"
+                            bg="whiteAlpha.300"
+                            border="1px solid white"
+                            color="#ffffff"
+                            _placeholder={{ color: 'gray.300' }}
+                            _focus={{ borderColor: 'blue.500' }}
                         />
                     </FormControl>
 
                     {/* Password Input */}
                     <FormControl isRequired>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel color="#ffffff">Password</FormLabel>
                         <Input
                             type="password"
                             value={authStore.password}
                             onChange={(e) => authStore.setField('password', e.target.value)}
                             placeholder="Enter your password"
+                            bg="whiteAlpha.300"
+                            border="1px solid white"
+                            color="#ffffff"
+                            _placeholder={{ color: 'gray.300' }}
+                            _focus={{ borderColor: 'blue.500' }}
                         />
                     </FormControl>
 
                     {/* Forgot Password Link */}
-                    <Text textAlign="left" >
-                        <Button variant="link" size="sm" onClick={() => setForgotPasswordOpen(true)}>
+                    <Text textAlign="left" color="#ffffff">
+                        <Button variant="link" size="sm" onClick={() => setForgotPasswordOpen(true)} color="blue.300">
                             Forgot Password
                         </Button>
                     </Text>
@@ -87,17 +130,21 @@ const SignInPage = observer(() => {
                     <Button
                         isLoading={authStore.signInLoading}
                         onClick={handleSignIn}
+                        bg="blue.500"
+                        color="#ffffff"
+                        _hover={{ bg: 'blue.600' }}
+                        borderRadius="full"
                     >
                         Log In
                     </Button>
 
                     {/* Sign Up Link */}
-                    <Text textAlign="center" fontSize="sm">
+                    <Text textAlign="center" fontSize="sm" color="#ffffff">
                         Don’t have an account?{' '}
                         <Button
                             variant="link"
-
                             onClick={() => router.push('/signup')}
+                            color="blue.300"
                         >
                             Sign Up
                         </Button>
@@ -110,7 +157,6 @@ const SignInPage = observer(() => {
                         {authStore.signInError}
                     </Text>
                 )}
-
 
                 {/* Forgot Password Modal */}
                 <ForgotPasswordModal

@@ -9,6 +9,7 @@ import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import FeaturesSection from './components/FeaturesSection';
 import Footer from "./components/Footer";
+import Link from 'next/link';
 
 export default function LandingPage() {
     const aboutDr = useRef(null);
@@ -35,7 +36,7 @@ export default function LandingPage() {
                 textAlign="center"
                 display="flex"
                 w="100vw"
-                h="70vh"
+                h={{ base: "50vh", md: "50vh", lg:"40vh" }}
                 mt="0"
             >
                 <Box
@@ -52,13 +53,9 @@ export default function LandingPage() {
 
             <Box onLoad={toggleColorMode} display='flex' gap='100px' justifyContent='center' position='absolute' w='100vw' color='#ffffff' fontFamily='Montserrat' mt='20px'>
                 {/* <Box backgroundImage='/Img/logoELCSinc.png' h='75px' w='150px' m='20px' backgroundSize='cover' backgroundRepeat='no-repeat' backgroundPosition='center' ></Box> */}
-                <Box display={{ base: 'none', md: 'flex' }} gap='30px' justifyContent='center' textAlign='center' mt='30px'>
-                    <Text className='text1' mt='5px' cursor='pointer' >Home</Text>
-                    <Text className='text1' mt='5px' cursor='pointer' >Reserch</Text>
-                    <Text className='text1' mt='5px' cursor='pointer' >Our Services</Text>
-                    <Text className='text1' mt='5px' cursor='pointer' >Contact us</Text> </Box>
-                <Button borderRadius='30px' bg='#1252B8' size='xs' fontSize='12px' variant='solid' h='30px' mt='30px' w='80px' cursor='pointer' > Login </Button>
+
             </Box>
+            <Header/>
             <Box position='absolute' w='100vw' mt='420px' h='auto'>
                 <Box
                     justifyContent="center"
