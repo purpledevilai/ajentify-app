@@ -13,7 +13,7 @@ const context = await contextResponse.json()
 const messageResponse = await fetch('https://api.ajentify.com/chat', {
     method: 'POST',
     body: JSON.stringify({
-        context_id: context.id,
+        context_id: context.context_id,
         message: "Hello, World!"
     }),
 });`;
@@ -36,7 +36,7 @@ context = context_response.json()
 message_response = requests.post(
     'https://api.ajentify.com/chat',
     data=json.dumps({
-        'context_id': context['id'],
+        'context_id': context['context_id'],
         'message': 'Hello, World!'
     })
 )`;
