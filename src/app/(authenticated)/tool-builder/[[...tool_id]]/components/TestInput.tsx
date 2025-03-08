@@ -1,4 +1,5 @@
 import { toolBuilderStore } from "@/store/ToolBuilderStore"
+import { TestInput } from "@/types/tools";
 import { CloseIcon } from "@chakra-ui/icons";
 
 import { Flex, FormControl, IconButton, Select, Input, Heading, Button, Text } from "@chakra-ui/react"
@@ -6,11 +7,11 @@ import { observer } from "mobx-react-lite";
 
 interface TestInputProps {
     indexArray: number[];
-    testInput: any;
+    testInput: TestInput;
     showDelete?: boolean;
 }
 
-export const TestInput: React.FC<TestInputProps> = observer(({ indexArray, testInput, showDelete = false }) => {
+export const TestInputView: React.FC<TestInputProps> = observer(({ indexArray, testInput, showDelete = false }) => {
     return (
         <Flex
             border="1px solid"
@@ -55,7 +56,7 @@ export const TestInput: React.FC<TestInputProps> = observer(({ indexArray, testI
                     value={testInput.value as string}
                     onChange={(e) => toolBuilderStore.setTestInputValue(indexArray, e.target.value)}
                 >
-                    {testInput.options.map((option: any, enumIndex: number) => (
+                    {testInput.options?.map((option: string, enumIndex: number) => (
                         <option key={enumIndex} value={option}>{option}</option>
                     ))}
                 </Select>}
@@ -64,8 +65,8 @@ export const TestInput: React.FC<TestInputProps> = observer(({ indexArray, testI
                 {testInput.type === "object" && (
                     <Flex direction="column" w="100%" gap={6} pl={4}>
                         <Heading size="sm">Sub Parameters</Heading>
-                        {testInput.value.map((subTestInput: any, subIndex: number) => (
-                            <TestInput key={subIndex} indexArray={[...indexArray, subIndex]} testInput={subTestInput} />
+                        {(testInput.value as TestInput[]).map((subTestInput: TestInput, subIndex: number) => (
+                            <TestInputView key={subIndex} indexArray={[...indexArray, subIndex]} testInput={subTestInput} />
                         ))}
                     </Flex>
                 )}
@@ -74,18 +75,17 @@ export const TestInput: React.FC<TestInputProps> = observer(({ indexArray, testI
                 {testInput.type === "array" && (
                     <Flex direction="column" w="100%" gap={6} pl={4}>
                         <Heading size="sm">Array Items</Heading>
-                        {testInput.value.map((arrayTestInput: any, subIndex: number) => (
-                            <TestInput key={subIndex} indexArray={[...indexArray, subIndex]} testInput={arrayTestInput} showDelete={true} />
+                        {(testInput.value as TestInput[]).map((arrayTestInput: TestInput, subIndex: number) => (
+                            <TestInputView key={subIndex} indexArray={[...indexArray, subIndex]} testInput={arrayTestInput} showDelete={true} />
                         ))}
                         <Button
                             variant={"outline"}
                             onClick={() => toolBuilderStore.addTestArrayItem(indexArray)}
                         >
-                            Add {testInput.arrayTypeParameter.name}
+                            Add {testInput.arrayTypeParameter?.name}
                         </Button>
                     </Flex>
                 )}
-
             </FormControl>
         </Flex>
     )

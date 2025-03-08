@@ -16,6 +16,7 @@ import {
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
+import { Tool } from '@/types/tools';
 
 const ToolsPage = observer(() => {
   const router = useRouter();
@@ -27,6 +28,7 @@ const ToolsPage = observer(() => {
 //     toolsStore.loadTools();
 //   });
 
+  // eslint-disable-next-line
   const setShowAlertOnStore = () => {
     toolsStore.setShowAlert(showAlert);
   }
@@ -35,7 +37,7 @@ const ToolsPage = observer(() => {
     router.push('/tool-builder');
   };
 
-  const handleToolClick = (tool: Record<string, any>) => {
+  const handleToolClick = (tool: Tool) => {
     toolBuilderStore.setTool({ ...tool });
     router.push(`/tool-builder/${tool['tool_id']}`);
   };
@@ -91,10 +93,10 @@ const ToolsPage = observer(() => {
                   >
                     <Flex h="100%" direction="column">
                       <Heading as="h3" size="md" mb={2} isTruncated>
-                        {tool.agent_name}
+                        {tool.name}
                       </Heading>
                       <Text fontSize="sm" color="gray.500" isTruncated>
-                        {tool.agent_description}
+                        {tool.description}
                       </Text>
                     </Flex>
                   </Card>

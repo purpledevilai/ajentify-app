@@ -1,9 +1,10 @@
 import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from "@/app/components/AlertProvider";
+import { Tool } from '@/types/tools';
 
 class ToolsStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
-    tools: Record<string, any>[] | undefined = undefined;
+    tools: Tool[] | undefined = undefined;
     toolsLoading = false;
 
     constructor() {

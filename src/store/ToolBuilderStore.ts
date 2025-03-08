@@ -1,6 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
+import { Parameter, TestInput, Tool } from '@/types/tools';
 
 export const paramTypes = [
     'string',
@@ -18,10 +19,10 @@ const defaultTool = {
     description: '',
     parameters: [],
     code: 'def custom_function():\n    # YOUR CODE HERE\n    return "Function was called"',
-}
+} as Tool;
 
 
-const getDefaultParameter = () => {
+const getDefaultParameter = (): Parameter => {
     return {
         name: '',
         type: 'string',
@@ -30,19 +31,12 @@ const getDefaultParameter = () => {
     }
 }
 
-const getCodeName = (name: string) => {
+const getCodeName = (name: string): string => {
     return name.replace(/ /g, '_').toLowerCase();
 }
 
-const getTestInput = (parameter: any) => {
-    if (["string", "number"].includes(parameter.type)) {
-        return {
-            name: parameter.name,
-            type: parameter.type,
-            value: ''
-        }
-    }
-
+const getTestInputFromParam = (parameter: Parameter): TestInput => {
+    
     if (parameter.type === "boolean") {
         return {
             name: parameter.name,
@@ -55,7 +49,7 @@ const getTestInput = (parameter: any) => {
         return {
             name: parameter.name,
             type: parameter.type,
-            options: parameter.parameters.map((param: any) => param.name),
+            options: parameter.parameters.map((param: Parameter) => param.name),
             value: parameter.parameters[0].name
         }
     }
@@ -64,7 +58,7 @@ const getTestInput = (parameter: any) => {
         return {
             name: parameter.name,
             type: parameter.type,
-            value: parameter.parameters.map((param: any) => getTestInput(param))
+            value: parameter.parameters.map((param: Parameter) => getTestInputFromParam(param))
         }
     }
 
@@ -76,21 +70,25 @@ const getTestInput = (parameter: any) => {
             value: []
         }
     }
+
+    return {
+        name: parameter.name,
+        type: parameter.type,
+        value: ''
+    }
 }
 
 class ToolBuilderStore {
 
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
-    tool: Record<string, any> = {};
-    testInput: Record<string, any>[] = [];
+    tool: Tool = defaultTool;
+    testInputs: TestInput[] = [];
     toolSaving = false;
     toolDeleting = false;
     functionDeclaration = 'def custom_function():';
 
 
     constructor() {
-        this.tool = defaultTool;
-
         makeAutoObservable(this);
     }
 
@@ -109,11 +107,12 @@ class ToolBuilderStore {
         };
     }
 
-    setTool = (tool: Record<string, any>) => {
+    setTool = (tool: Tool) => {
         this.tool = tool;
     }
 
-    setToolWithId = async (toolId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setToolWithId = async (tool_id: string) => {
         /*
         await chatPagesStore.loadChatPages();
         if (!chatPagesStore.chatPages) {
@@ -137,11 +136,11 @@ class ToolBuilderStore {
 
 
     get isUpdating() {
-        return this.tool.chat_page_id !== '';
+        return this.tool.tool_id !== '';
     }
 
-    getFunctionDeclaration = () => {
-        const paramsString = this.tool.parameters.map((param: any) => {
+    getFunctionDeclaration = (): string => {
+        const paramsString = this.tool.parameters.map((param: Parameter) => {
             return `${getCodeName(param.name)}`;
         }).join(', ');
         return `def ${getCodeName(this.tool.name)}(${paramsString}):`;
@@ -156,7 +155,7 @@ class ToolBuilderStore {
         this.tool.description = description;
     }
 
-    getPerameters = (indexArray: number[]) => {
+    getPerameters = (indexArray: number[]): Parameter[] => {
         let perameters = this.tool.parameters;
         for (let i = 0; i < indexArray.length; i++) {
             perameters = perameters[indexArray[i]].parameters;
@@ -165,31 +164,31 @@ class ToolBuilderStore {
     }
 
     addParameter = (indexArray: number[]) => {
-        let parameters = this.getPerameters(indexArray);
+        const parameters = this.getPerameters(indexArray);
         parameters.push(getDefaultParameter());
         this.updateCode()
-        this.updateTestInput()
+        this.updateTestInputs()
     }
 
     deleteParameter = (indexArray: number[]) => {
         const parametersArray = indexArray.slice(0, -1);
         const index = indexArray[indexArray.length - 1];
 
-        console.log("parametersArray", parametersArray);
-        console.log("index", index);
-
-        let parameters = this.getPerameters(parametersArray);
+        const parameters = this.getPerameters(parametersArray);
         parameters.splice(index, 1);
         this.updateCode()
-        this.updateTestInput()
+        this.updateTestInputs()
     }
 
-    getParameter = (indexArray: number[]) => {
+    getParameter = (indexArray: number[]): Parameter => {
         let parameter = null;
         let parameters = this.tool.parameters;
         for (let i = 0; i < indexArray.length; i++) {
             parameter = parameters[indexArray[i]];
             parameters = parameter.parameters
+        }
+        if (!parameter) {
+            throw new Error('Parameter not found');
         }
         return parameter;
     }
@@ -198,19 +197,16 @@ class ToolBuilderStore {
         const parameter = this.getParameter(indexArray);
         parameter.name = name;
         this.updateCode()
-        this.updateTestInput()
+        this.updateTestInputs()
     }
 
-    setParameterType = (indexArray: number[], type: string) => {
+    setParameterType = (indexArray: number[], type:  "string" | "number" | "boolean" | "object" | "array" | "enum") => {
         const parameter = this.getParameter(indexArray);
         parameter.type = type;
         if (type === 'object' || type === 'array' || type === 'enum') {
             parameter.parameters = [getDefaultParameter()];
         }
-        if (type === 'boolean') {
-            parameter.test_value = false;
-        }
-        this.updateTestInput()
+        this.updateTestInputs()
     }
 
     setParameterDescription = (indexArray: number[], description: string) => {
@@ -232,37 +228,43 @@ class ToolBuilderStore {
         this.tool.code = newCode;
     }
 
-    updateTestInput = () => {
-        this.testInput = this.tool.parameters.map((param: any) => getTestInput(param))
+    updateTestInputs = () => {
+        this.testInputs = this.tool.parameters.map((param: Parameter) => getTestInputFromParam(param))
     }
 
-    getTestInputValue = (indexArray: number[]) => {
-        let testInputValue: any = null;
-        let testInput: any = this.testInput;
+    getTestInput = (indexArray: number[]): TestInput => {
+        let testInput: TestInput | null = null;
+        let testInputs: TestInput[] = this.testInputs;
         for (let i = 0; i < indexArray.length; i++) {
-            testInputValue = testInput[indexArray[i]];
-            testInput = testInputValue.value;
+            testInput = testInputs[indexArray[i]];
+            testInputs = testInput.value as TestInput[];
         }
-        return testInputValue;
+        if (!testInput) {
+            throw new Error('Test input not found');
+        }
+        return testInput;
     }
 
     setTestInputValue = (indexArray: number[], value: string | number | boolean) => {
-        const testInputValue = this.getTestInputValue(indexArray);
+        const testInputValue = this.getTestInput(indexArray);
         testInputValue.value = value;
     }
 
 
     addTestArrayItem = (indexArray: number[]) => {
-        const testInputValue = this.getTestInputValue(indexArray);
-        testInputValue.value.push(getTestInput(testInputValue.arrayTypeParameter));
+        const testInputValue = this.getTestInput(indexArray);
+        if (!testInputValue.arrayTypeParameter) {
+            throw new Error('Array type parameter not found');
+        }
+        (testInputValue.value as TestInput[]).push(getTestInputFromParam(testInputValue.arrayTypeParameter));
     }
 
     deleteTestArrayItem = (indexArray: number[]) => {
         const parametersArray = indexArray.slice(0, -1);
         const index = indexArray[indexArray.length - 1];
 
-        let testInputValue = this.getTestInputValue(parametersArray);
-        testInputValue.value.splice(index, 1);
+        const testInputValue = this.getTestInput(parametersArray);
+        (testInputValue.value as TestInput[]).splice(index, 1);
     }
 
 

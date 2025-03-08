@@ -11,10 +11,11 @@ import { useAlert } from "@/app/components/AlertProvider";
 import { observer } from "mobx-react-lite";
 import { toolBuilderStore } from "@/store/ToolBuilderStore";
 import { toolsStore } from "@/store/ToolsStore";
-import { Parameter } from "./components/Parameter";
-import MonacoEditor from "@monaco-editor/react";
-import { TestInput } from "./components/TestInput";
-
+import { ParameterView } from "./components/Parameter";
+import MonacoEditor, { Monaco } from "@monaco-editor/react";
+import type monaco from 'monaco-editor';
+import { TestInputView } from "./components/TestInput";
+import { Parameter, TestInput } from "@/types/tools";
 
 type Params = Promise<{ tool_id: string[] }>;
 
@@ -75,7 +76,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
     }
 
     // Lock the first line using decorations
-    const handleEditorDidMount = (editor: any, monaco: any) => {
+    const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) => {
 
         // Set decorations to make first line read-only
         editor.createDecorationsCollection([
@@ -95,8 +96,9 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
         });
     };
 
-    function handleEditorChange(value: any, event: any) {
-        toolBuilderStore.setCode(value);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function handleEditorChange(value: string | undefined, event: monaco.editor.IModelContentChangedEvent) {
+        toolBuilderStore.setCode(value ?? '');
     }
 
 
@@ -148,9 +150,9 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 {/* Parameters */}
                 <Flex direction="column" w="100%" gap={6}>
                     <Heading size="md">Parameters</Heading>
-                    {toolBuilderStore.tool.parameters.map((param: any, index: number) => (
+                    {toolBuilderStore.tool.parameters.map((param: Parameter, index: number) => (
                         <div key={index}>
-                            <Parameter indexArray={[index]} param={param} />
+                            <ParameterView indexArray={[index]} param={param} />
                         </div>
                     ))}
                 </Flex>
@@ -183,9 +185,9 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 {/* Test */}
                 <Flex direction="column" w="100%" gap={6}>
                     <Heading size="md">Test parameters</Heading>
-                    {toolBuilderStore.testInput.map((testInput: any, index: number) => (
+                    {toolBuilderStore.testInputs.map((testInput: TestInput, index: number) => (
                         <div key={index}>
-                            <TestInput indexArray={[index]} testInput={testInput} />
+                            <TestInputView indexArray={[index]} testInput={testInput} />
                         </div>
                     ))}
                 </Flex>

@@ -1,4 +1,5 @@
 import { toolBuilderStore } from "@/store/ToolBuilderStore"
+import { Parameter } from "@/types/tools";
 import { CloseIcon } from "@chakra-ui/icons";
 
 import { Flex, FormControl, IconButton, Select, Input, Heading, Button } from "@chakra-ui/react"
@@ -6,12 +7,12 @@ import { observer } from "mobx-react-lite";
 
 interface ParameterProps {
     indexArray: number[];
-    param: any;
+    param: Parameter;
     isEnumOption?: boolean;
     showDelete?: boolean;
 }
 
-export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param, isEnumOption = false, showDelete = true }) => {
+export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, param, isEnumOption = false, showDelete = true }) => {
     return (
         <Flex
             border="1px solid"
@@ -55,7 +56,7 @@ export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param
                     <FormControl>
                         <Select
                             value={param.type}
-                            onChange={(e) => toolBuilderStore.setParameterType(indexArray, e.target.value)}
+                            onChange={(e) => toolBuilderStore.setParameterType(indexArray, e.target.value as "string" | "number" | "boolean" | "object" | "array" | "enum")}
                         >
                             <option value="string">String</option>
                             <option value="number">Number</option>
@@ -70,9 +71,9 @@ export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param
                     {param.type === "object" ? (
                         <Flex direction="column" w="100%" gap={6} pl={4}>
                             <Heading size="sm">Sub Parameters</Heading>
-                            {param.parameters.map((subParam: any, subIndex: number) => (
+                            {param.parameters.map((subParam: Parameter, subIndex: number) => (
                                 <div key={subIndex}>
-                                    <Parameter indexArray={[...indexArray, subIndex]} param={subParam} />
+                                    <ParameterView indexArray={[...indexArray, subIndex]} param={subParam} />
                                 </div>
                             ))}
                             {/* Add Sub Parameter Button */}
@@ -89,7 +90,7 @@ export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param
                     {param.type === "array" ? (
                         <Flex direction="column" w="100%" gap={6} pl={4}>
                             <Heading size="sm">Array Type</Heading>
-                            <Parameter indexArray={[...indexArray, 0]} param={param.parameters[0]} showDelete={false}/>
+                            <ParameterView indexArray={[...indexArray, 0]} param={param.parameters[0]} showDelete={false}/>
                         </Flex>
                     ) : null}
 
@@ -97,9 +98,9 @@ export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param
                     {param.type === "enum" ? (
                         <Flex direction="column" w="100%" gap={6} pl={4}>
                             <Heading size="sm">Enum Options</Heading>
-                            {param.parameters.map((enumOption: any, enumIndex: number) => (
+                            {param.parameters.map((enumOption: Parameter, enumIndex: number) => (
                                 <div key={enumIndex}>
-                                    <Parameter indexArray={[...indexArray, enumIndex]} param={enumOption} isEnumOption={true} />
+                                    <ParameterView indexArray={[...indexArray, enumIndex]} param={enumOption} isEnumOption={true} />
                                 </div>
                             ))}
                             {/* Add Enum Option Button */}
