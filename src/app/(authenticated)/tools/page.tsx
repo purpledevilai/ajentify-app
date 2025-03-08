@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { toolsStore } from '@/store/ToolsStore';
@@ -16,7 +16,6 @@ import {
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
-import { authStore } from '@/store/AuthStore';
 
 const ToolsPage = observer(() => {
   const router = useRouter();

@@ -1,29 +1,20 @@
 'use client';
 
-import React, { useEffect, useRef } from "react";
-import { useNavigationGuard } from "next-navigation-guard";
+import React, { useEffect } from "react";
 import {
-    Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
-    useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
-    useColorMode,
-    useClipboard,
-    FormLabel,
-    Select,
-    Divider
+    Flex, FormControl, Heading, IconButton, Input, Button, Tooltip,
+    useColorMode
 } from "@chakra-ui/react";
-import { ArrowBackIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons";
-import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
+import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
-import { agentsStore } from "@/store/AgentsStore";
-import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
 import { useAlert } from "@/app/components/AlertProvider";
-import { ChatEvent } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
-import { AgentToolInstance } from "@/types/agent";
 import { toolBuilderStore } from "@/store/ToolBuilderStore";
 import { toolsStore } from "@/store/ToolsStore";
 import { Parameter } from "./components/Parameter";
+import MonacoEditor from "@monaco-editor/react";
+import { TestInput } from "./components/TestInput";
+
 
 type Params = Promise<{ tool_id: string[] }>;
 
@@ -33,15 +24,11 @@ interface ToolBuilderPageProps {
 
 const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
 
-    // Nav Guard to detect page navigation - Really dump NextJS limitiation
-    const navGuard = useNavigationGuard({});
-    const isShowingNavAlert = useRef(false);
-
     const { showAlert } = useAlert();
 
     useEffect(() => {
         setShowAlertOnStore();
-        loadToolId();
+        loadToolId(); // Load tool id from URL
 
         return () => {
             toolBuilderStore.reset();
@@ -61,31 +48,6 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
             }
         }
     }
-
-    // Detect page navigation
-    useEffect(() => {
-        if (navGuard.active && !isShowingNavAlert.current) {
-            isShowingNavAlert.current = true;
-            const stayOnPage = () => {
-                isShowingNavAlert.current = false;
-                navGuard.reject();
-            }
-            if (false) {
-                // Unsaved changes alert
-                showAlert({
-                    title: "Unsaved Changes",
-                    message: "You have unsaved changes. Are you sure you want to leave?",
-                    actions: [
-                        { label: "Cancel", onClick: stayOnPage },
-                        { label: "Leave", onClick: () => navGuard.accept() }
-                    ]
-                })
-            } else {
-                navGuard.accept();
-            }
-        }
-    }, [navGuard, showAlert]);
-
 
     const onSaveTool = async () => {
         await toolBuilderStore.saveTool();
@@ -110,6 +72,31 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 }
             ]
         })
+    }
+
+    // Lock the first line using decorations
+    const handleEditorDidMount = (editor: any, monaco: any) => {
+
+        // Set decorations to make first line read-only
+        editor.createDecorationsCollection([
+            {
+                range: new monaco.Range(1, 1, 1, toolBuilderStore.functionDeclaration.length + 1),
+                options: {
+                    inlineClassName: "readonly-line", // Optional for styling
+                },
+            },
+        ]);
+
+        // Prevent cursor from entering the first line
+        editor.onDidChangeCursorPosition((event: { position: { lineNumber: number; }; }) => {
+            if (event.position.lineNumber === 1) {
+                editor.setPosition({ lineNumber: 2, column: 1 });
+            }
+        });
+    };
+
+    function handleEditorChange(value: any, event: any) {
+        toolBuilderStore.setCode(value);
     }
 
 
@@ -159,7 +146,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 </FormControl>
 
                 {/* Parameters */}
-                <Flex direction="column" w="100%" gap={12}>
+                <Flex direction="column" w="100%" gap={6}>
                     <Heading size="md">Parameters</Heading>
                     {toolBuilderStore.tool.parameters.map((param: any, index: number) => (
                         <div key={index}>
@@ -173,7 +160,36 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     onClick={() => toolBuilderStore.addParameter([])}
                     colorScheme="purple"
                     size="lg"
+                    variant={'outline'}
                 >Add Parameter</Button>
+
+                {/* Code editor */}
+                <Heading size="md">Code</Heading>
+                <MonacoEditor
+                    height="70vh"
+                    defaultLanguage="python"
+                    value={toolBuilderStore.tool.code}
+                    onChange={handleEditorChange}
+                    onMount={handleEditorDidMount}
+                    theme={useColorMode().colorMode === 'dark' ? 'vs-dark' : 'vs'}
+                    options={{
+                        minimap: { enabled: false },
+                        fontSize: 16,
+                        lineNumbersMinChars: 1,
+                        wordWrap: "on"
+                    }}
+                />
+
+                {/* Test */}
+                <Flex direction="column" w="100%" gap={6}>
+                    <Heading size="md">Test parameters</Heading>
+                    {toolBuilderStore.testInput.map((testInput: any, index: number) => (
+                        <div key={index}>
+                            <TestInput indexArray={[index]} testInput={testInput} />
+                        </div>
+                    ))}
+                </Flex>
+
 
                 {/* Save Button */}
                 <Tooltip

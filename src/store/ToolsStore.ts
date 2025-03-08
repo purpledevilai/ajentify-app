@@ -1,6 +1,4 @@
 import { makeAutoObservable } from 'mobx';
-import { getAgents } from '@/api/agent/getAgents';
-import { Agent } from '@/types/agent';
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 
 class ToolsStore {

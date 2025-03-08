@@ -8,9 +8,10 @@ interface ParameterProps {
     indexArray: number[];
     param: any;
     isEnumOption?: boolean;
+    showDelete?: boolean;
 }
 
-export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param, isEnumOption = false }) => {
+export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param, isEnumOption = false, showDelete = true }) => {
     return (
         <Flex
             border="1px solid"
@@ -29,14 +30,14 @@ export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param
                         onChange={(e) => toolBuilderStore.setParameterName(indexArray, e.target.value)}
                     />
                 </FormControl>
-                <IconButton
+                {showDelete && <IconButton
                     aria-label="Delete"
                     icon={<CloseIcon />}
                     variant="ghost"
                     color="inherit"
                     _hover={{ bg: 'gray.200', _dark: { bg: 'gray.700' } }}
                     onClick={() => toolBuilderStore.deleteParameter(indexArray)}
-                />
+                />}
             </Flex>
 
             {!isEnumOption && (
@@ -88,7 +89,7 @@ export const Parameter: React.FC<ParameterProps> = observer(({ indexArray, param
                     {param.type === "array" ? (
                         <Flex direction="column" w="100%" gap={6} pl={4}>
                             <Heading size="sm">Array Type</Heading>
-                            <Parameter indexArray={[...indexArray, 0]} param={param.parameters[0]} />
+                            <Parameter indexArray={[...indexArray, 0]} param={param.parameters[0]} showDelete={false}/>
                         </Flex>
                     ) : null}
 
