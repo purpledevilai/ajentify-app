@@ -46,7 +46,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
         { icon: RiRobot3Fill, title: 'Agents', route: '/agents' },
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
-        { icon: FiTool, title: 'Tools', route: '/tools' },
+        { icon: FiTool, title: 'Agent Tools', route: '/tools' },
     ];
 
     return (

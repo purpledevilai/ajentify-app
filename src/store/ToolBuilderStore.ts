@@ -2,6 +2,8 @@ import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
 import { Parameter, TestInput, Tool } from '@/types/tools';
+import { testTool } from '@/api/tool/testTool';
+import { get } from 'http';
 
 export const paramTypes = [
     'string',
@@ -78,6 +80,30 @@ const getTestInputFromParam = (parameter: Parameter): TestInput => {
     }
 }
 
+const getTestObject = (testInputs: TestInput[], isArrayItem: boolean = false): Record<string, any> | any => {
+    if (isArrayItem) {
+        if (testInputs[0].type === 'object') {
+            return getTestObject(testInputs[0].value as TestInput[]);
+        } else if (testInputs[0].type === 'array') {
+            return (testInputs[0].value as TestInput[]).map((testInput: TestInput) => getTestObject([testInput], true));
+        } else {
+            return testInputs[0].value;
+        }
+    }
+    const testObject: Record<string, any> = {};
+    testInputs.forEach((testInput: TestInput) => {
+        const fieldName = getCodeName(testInput.name);
+        if (testInput.type === 'object') {
+            testObject[fieldName] = getTestObject(testInput.value as TestInput[]);
+        } else if (testInput.type === 'array') {
+            testObject[fieldName] = (testInput.value as TestInput[]).map((testInput: TestInput) => getTestObject([testInput], true));
+        } else {
+            testObject[fieldName] = testInput.value;
+        }
+    });
+    return testObject;
+}
+
 class ToolBuilderStore {
 
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
@@ -86,6 +112,7 @@ class ToolBuilderStore {
     toolSaving = false;
     toolDeleting = false;
     functionDeclaration = 'def custom_function():';
+    toolExecuting = false;
 
 
     constructor() {
@@ -265,6 +292,31 @@ class ToolBuilderStore {
 
         const testInputValue = this.getTestInput(parametersArray);
         (testInputValue.value as TestInput[]).splice(index, 1);
+    }
+
+    executeTestInput = async () => {
+        try {
+            this.toolExecuting = true;
+            const payload = {
+                function_name: getCodeName(this.tool.name),
+                params: getTestObject(this.testInputs),
+                code: this.tool.code,
+            }
+            console.log(payload);
+            const result = await testTool(payload);
+            console.log(result);
+            this.showAlert({
+                title: 'Test Results',
+                message: result,
+            })
+        } catch (error) {
+            this.showAlert({
+                title: 'Whoops',
+                message: (error as Error).message,
+            })
+        } finally {
+            this.toolExecuting = false;
+        }
     }
 
 

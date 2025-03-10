@@ -178,11 +178,15 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                         minimap: { enabled: false },
                         fontSize: 16,
                         lineNumbersMinChars: 1,
-                        wordWrap: "on"
+                        wordWrap: "on",
+                        scrollBeyondLastLine: false,
+                        scrollbar: {
+                            alwaysConsumeMouseWheel: false
+                        },
                     }}
                 />
 
-                {/* Test */}
+                {/* Test Input */}
                 <Flex direction="column" w="100%" gap={6}>
                     <Heading size="md">Test parameters</Heading>
                     {toolBuilderStore.testInputs.map((testInput: TestInput, index: number) => (
@@ -192,6 +196,14 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     ))}
                 </Flex>
 
+                {/* Test Input Button */}
+                <Button
+                    onClick={() => toolBuilderStore.executeTestInput()}
+                    colorScheme="purple"
+                    size="lg"
+                    variant={'outline'}
+                    isLoading={toolBuilderStore.toolExecuting}
+                >Test</Button>
 
                 {/* Save Button */}
                 <Tooltip
