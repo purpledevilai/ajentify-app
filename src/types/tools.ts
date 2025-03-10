@@ -21,3 +21,5 @@ export interface TestInput {
     options?: string[];
     arrayTypeParameter?: Parameter;
 }
+
+export type AnyType = string | number | boolean | { [key: string]: AnyType } | AnyType[];

@@ -1,9 +1,11 @@
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { AnyType } from "@/types/tools";
+
 
 export interface TestToolPayload {
     function_name: string;
-    params: Record<string, any>;
+    params: Record<string, AnyType>;
     code: string;
 }
 

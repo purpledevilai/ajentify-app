@@ -1,9 +1,8 @@
 import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
-import { Parameter, TestInput, Tool } from '@/types/tools';
+import { AnyType, Parameter, TestInput, Tool } from '@/types/tools';
 import { testTool } from '@/api/tool/testTool';
-import { get } from 'http';
 
 export const paramTypes = [
     'string',
@@ -38,59 +37,52 @@ const getCodeName = (name: string): string => {
 }
 
 const getTestInputFromParam = (parameter: Parameter): TestInput => {
-    
     if (parameter.type === "boolean") {
         return {
             name: parameter.name,
             type: parameter.type,
             value: false,
         }
-    }
-
-    if (parameter.type === "enum") {
+    } else if (parameter.type === "enum") {
         return {
             name: parameter.name,
             type: parameter.type,
             options: parameter.parameters.map((param: Parameter) => param.name),
             value: parameter.parameters[0].name
         }
-    }
-
-    if (parameter.type === "object") {
+    } else if (parameter.type === "object") {
         return {
             name: parameter.name,
             type: parameter.type,
             value: parameter.parameters.map((param: Parameter) => getTestInputFromParam(param))
         }
-    }
-
-    if (parameter.type === "array") {
+    } else if (parameter.type === "array") {
         return {
             name: parameter.name,
             type: parameter.type,
             arrayTypeParameter: parameter.parameters[0],
             value: []
         }
-    }
-
-    return {
-        name: parameter.name,
-        type: parameter.type,
-        value: ''
+    } else {
+        return {
+            name: parameter.name,
+            type: parameter.type,
+            value: ''
+        }
     }
 }
 
-const getTestObject = (testInputs: TestInput[], isArrayItem: boolean = false): Record<string, any> | any => {
+const getTestObject = (testInputs: TestInput[], isArrayItem: boolean = false): Record<string, AnyType> | AnyType => {
     if (isArrayItem) {
         if (testInputs[0].type === 'object') {
             return getTestObject(testInputs[0].value as TestInput[]);
         } else if (testInputs[0].type === 'array') {
             return (testInputs[0].value as TestInput[]).map((testInput: TestInput) => getTestObject([testInput], true));
         } else {
-            return testInputs[0].value;
+            return testInputs[0].value as string | number | boolean;
         }
     }
-    const testObject: Record<string, any> = {};
+    const testObject: Record<string, AnyType> = {};
     testInputs.forEach((testInput: TestInput) => {
         const fieldName = getCodeName(testInput.name);
         if (testInput.type === 'object') {
@@ -98,7 +90,7 @@ const getTestObject = (testInputs: TestInput[], isArrayItem: boolean = false): R
         } else if (testInput.type === 'array') {
             testObject[fieldName] = (testInput.value as TestInput[]).map((testInput: TestInput) => getTestObject([testInput], true));
         } else {
-            testObject[fieldName] = testInput.value;
+            testObject[fieldName] = testInput.value as string | number | boolean;
         }
     });
     return testObject;
@@ -299,12 +291,10 @@ class ToolBuilderStore {
             this.toolExecuting = true;
             const payload = {
                 function_name: getCodeName(this.tool.name),
-                params: getTestObject(this.testInputs),
+                params: getTestObject(this.testInputs) as Record<string, AnyType>,
                 code: this.tool.code,
             }
-            console.log(payload);
             const result = await testTool(payload);
-            console.log(result);
             this.showAlert({
                 title: 'Test Results',
                 message: result,
