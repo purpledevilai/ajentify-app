@@ -15,7 +15,8 @@ import { ParameterView } from "./components/Parameter";
 import MonacoEditor, { Monaco } from "@monaco-editor/react";
 import type monaco from 'monaco-editor';
 import { TestInputView } from "./components/TestInput";
-import { Parameter, TestInput } from "@/types/tools";
+import { TestInput } from "@/types/tools";
+import { Parameter } from "@/types/parameterdefinition";
 
 type Params = Promise<{ tool_id: string[] }>;
 
@@ -150,7 +151,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 {/* Parameters */}
                 <Flex direction="column" w="100%" gap={6}>
                     <Heading size="md">Parameters</Heading>
-                    {toolBuilderStore.tool.parameters.map((param: Parameter, index: number) => (
+                    {toolBuilderStore.parameters.map((param: Parameter, index: number) => (
                         <div key={index}>
                             <ParameterView indexArray={[index]} param={param} />
                         </div>

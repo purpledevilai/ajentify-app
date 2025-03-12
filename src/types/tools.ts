@@ -1,16 +1,11 @@
-export interface Parameter {
-    name: string;
-    description: string;
-    type: "string" | "number" | "boolean" | "object" | "array" | "enum";
-    parameters: Parameter[];
-}
+import { Parameter } from "./parameterdefinition";
 
 export interface Tool {
     tool_id: string;
-    org_id: string;
+    org_id?: string;
     name: string;
     description: string;
-    parameters: Parameter[];
+    pd_id: string;
     code: string;
 }
 

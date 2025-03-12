@@ -1,7 +1,16 @@
 import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
-import { AnyType, Parameter, TestInput, Tool } from '@/types/tools';
+import { AnyType, TestInput, Tool } from '@/types/tools';
+import { ParameterDefinition, Parameter } from '@/types/parameterdefinition';
+import { createParameterDefinition } from '@/api/parameterdefinition/createParameterDefinition';
+import { getParameterDefinition } from '@/api/parameterdefinition/getParameterDefinition';
+import { updateParameterDefinition } from '@/api/parameterdefinition/updateParameterDefinition';
+import { deleteParameterDefinition } from '@/api/parameterdefinition/deleteParameterDefinition';
+import { createTool } from '@/api/tool/createTool';
+import { getTool } from '@/api/tool/getTool';
+import { updateTool } from '@/api/tool/updateTool';
+import { deleteTool } from '@/api/tool/deleteTool';
 import { testTool } from '@/api/tool/testTool';
 
 export const paramTypes = [
@@ -15,10 +24,9 @@ export const paramTypes = [
 
 const defaultTool = {
     tool_id: '',
-    org_id: '',
+    org_id: undefined,
     name: 'custom_function',
     description: '',
-    parameters: [],
     code: 'def custom_function():\n    # YOUR CODE HERE\n    return "Function was called"',
 } as Tool;
 
@@ -100,6 +108,7 @@ class ToolBuilderStore {
 
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
     tool: Tool = defaultTool;
+    parameters: Parameter[] = [];
     testInputs: TestInput[] = [];
     toolSaving = false;
     toolDeleting = false;
@@ -113,6 +122,12 @@ class ToolBuilderStore {
 
     reset = () => {
         this.tool = defaultTool;
+        this.parameters = [];
+        this.testInputs = [];
+        this.toolSaving = false;
+        this.toolDeleting = false;
+        this.functionDeclaration = 'def custom_function():';
+        this.toolExecuting = false;
     }
 
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
@@ -159,7 +174,7 @@ class ToolBuilderStore {
     }
 
     getFunctionDeclaration = (): string => {
-        const paramsString = this.tool.parameters.map((param: Parameter) => {
+        const paramsString = this.parameters.map((param: Parameter) => {
             return `${getCodeName(param.name)}`;
         }).join(', ');
         return `def ${getCodeName(this.tool.name)}(${paramsString}):`;
@@ -175,7 +190,7 @@ class ToolBuilderStore {
     }
 
     getPerameters = (indexArray: number[]): Parameter[] => {
-        let perameters = this.tool.parameters;
+        let perameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
             perameters = perameters[indexArray[i]].parameters;
         }
@@ -201,7 +216,7 @@ class ToolBuilderStore {
 
     getParameter = (indexArray: number[]): Parameter => {
         let parameter = null;
-        let parameters = this.tool.parameters;
+        let parameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
             parameter = parameters[indexArray[i]];
             parameters = parameter.parameters
@@ -248,7 +263,7 @@ class ToolBuilderStore {
     }
 
     updateTestInputs = () => {
-        this.testInputs = this.tool.parameters.map((param: Parameter) => getTestInputFromParam(param))
+        this.testInputs = this.parameters.map((param: Parameter) => getTestInputFromParam(param))
     }
 
     getTestInput = (indexArray: number[]): TestInput => {
@@ -309,14 +324,42 @@ class ToolBuilderStore {
         }
     }
 
+    codifyParameterNames = (parameters: Parameter[]) => {
+        parameters.forEach((param: Parameter) => {
+            param.name = getCodeName(param.name);
+            param.parameters.forEach((param: Parameter) => {
+                this.codifyParameterNames(param.parameters);
+            });
+        });
+    }
+
+    codifyNames = () => {
+        this.tool.name = getCodeName(this.tool.name);
+        this.codifyParameterNames(this.parameters);
+    }
+
 
     saveTool = async (): Promise<boolean> => {
         try {
             this.toolSaving = true;
+            this.codifyNames();
             if (this.isUpdating) {
                 //await updateChatPage(this.tool);
             } else {
-                //await createChatPage(this.tool);
+                // Create Parameter Definition
+                const parameterDefinitionPayload = {
+                    parameters: this.parameters,
+                }
+                const parameterDefinition = await createParameterDefinition(parameterDefinitionPayload);
+
+                // Create Tool
+                const toolPayload = {
+                    ...this.tool,
+                    pd_id: parameterDefinition.pd_id,
+                }
+                console.log("Payload", JSON.stringify(toolPayload, null, 2));
+                const tool = await createTool(toolPayload);
+                console.log("Response", JSON.stringify(tool, null, 2));
             }
             return true;
         } catch (error) {
