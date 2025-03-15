@@ -3,10 +3,10 @@ import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 interface CreateToolPayload {
-    name: string;
-    description: string;
-    pd_id: string;
-    code: string;
+    name?: string;
+    description?: string;
+    pd_id?: string;
+    code?: string;
 }
 
 export async function createTool(payload: CreateToolPayload): Promise<Tool> {

@@ -12,6 +12,7 @@ import { getTool } from '@/api/tool/getTool';
 import { updateTool } from '@/api/tool/updateTool';
 import { deleteTool } from '@/api/tool/deleteTool';
 import { testTool } from '@/api/tool/testTool';
+import { toolsStore } from './ToolsStore';
 
 export const paramTypes = [
     'string',
@@ -24,7 +25,7 @@ export const paramTypes = [
 
 const defaultTool = {
     tool_id: '',
-    org_id: undefined,
+    org_id: '',
     name: 'custom_function',
     description: '',
     code: 'def custom_function():\n    # YOUR CODE HERE\n    return "Function was called"',
@@ -108,6 +109,7 @@ class ToolBuilderStore {
 
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
     tool: Tool = defaultTool;
+    isLoadingParameterDefinition = false;
     parameters: Parameter[] = [];
     testInputs: TestInput[] = [];
     toolSaving = false;
@@ -122,6 +124,7 @@ class ToolBuilderStore {
 
     reset = () => {
         this.tool = defaultTool;
+        this.isLoadingParameterDefinition = false;
         this.parameters = [];
         this.testInputs = [];
         this.toolSaving = false;
@@ -143,29 +146,49 @@ class ToolBuilderStore {
 
     setTool = (tool: Tool) => {
         this.tool = tool;
+        if (!tool.pd_id) {
+            this.parameters = [];
+            this.testInputs = [];
+            return;
+        }
+        this.loadParameterDefinition(tool.pd_id);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    setToolWithId = async (tool_id: string) => {
-        /*
-        await chatPagesStore.loadChatPages();
-        if (!chatPagesStore.chatPages) {
+    setToolWithId = async (toolId: string) => {
+        await toolsStore.loadTools();
+        if (!toolsStore.tools) {
             this.showAlert({
                 title: 'Whoops',
-                message: 'There was a problem loading the chat pages',
+                message: 'There was a problem loading the tools',
             });
             return;
         }
-        const chatPage = chatPagesStore.chatPages.find((c) => c.chat_page_id === toolId);
-        if (!chatPage) {
+        const tool = toolsStore.tools.find((t) => t.tool_id === toolId);
+        if (!tool) {
             this.showAlert({
                 title: 'Whoops',
                 message: 'Could not find chat page',
             });
             return;
         }
-        this.setTool(chatPage);
-        */
+        this.setTool(tool);
+    }
+
+    loadParameterDefinition = async (pdId: string) => {
+        try {
+            this.isLoadingParameterDefinition = true;
+            const parameterDefinition = await getParameterDefinition(pdId);
+            this.parameters = parameterDefinition.parameters;
+            this.updateCode();
+            this.updateTestInputs();
+        } catch (error) {
+            this.showAlert({
+                title: 'Whoops',
+                message: (error as Error).message,
+            })
+        } finally {
+            this.isLoadingParameterDefinition = false;
+        }
     }
 
 
@@ -234,7 +257,7 @@ class ToolBuilderStore {
         this.updateTestInputs()
     }
 
-    setParameterType = (indexArray: number[], type:  "string" | "number" | "boolean" | "object" | "array" | "enum") => {
+    setParameterType = (indexArray: number[], type: "string" | "number" | "boolean" | "object" | "array" | "enum") => {
         const parameter = this.getParameter(indexArray);
         parameter.type = type;
         if (type === 'object' || type === 'array' || type === 'enum') {
@@ -253,7 +276,7 @@ class ToolBuilderStore {
     }
 
     updateCode = () => {
-        const codeLines = this.tool.code.split('\n');
+        const codeLines = (this.tool.code || '').split('\n');
         this.functionDeclaration = this.getFunctionDeclaration();
         const newCode = [
             this.functionDeclaration,
@@ -304,6 +327,9 @@ class ToolBuilderStore {
     executeTestInput = async () => {
         try {
             this.toolExecuting = true;
+            if (!this.tool.code) {
+                throw new Error('Code is required to test the tool');
+            }
             const payload = {
                 function_name: getCodeName(this.tool.name),
                 params: getTestObject(this.testInputs) as Record<string, AnyType>,
@@ -338,28 +364,76 @@ class ToolBuilderStore {
         this.codifyParameterNames(this.parameters);
     }
 
+    validateParameteNamesAndDescriptions = (parameters: Parameter[]) => {
+        parameters.forEach((param: Parameter) => {
+            if (!param.name) {
+                throw new Error('Names for all parameters are required. The AI must know what the parameters are called.');
+            }
+            if (!param.description) {
+                throw new Error(`Description for parameter ${param.name} is required. The AI must know what the parameter does.`);
+            }
+            this.validateParameteNamesAndDescriptions(param.parameters);
+        });
+    }
+
+    validateNamesAndDescriptions = () => {
+        if (!this.tool.name) {
+            throw new Error('Tool name is required. The AI must know what the tool is called.');
+        }
+        if (!this.tool.description) {
+            throw new Error('Tool description is required. The AI must know what the tool does.');
+        }
+        this.validateParameteNamesAndDescriptions(this.parameters);
+    }
+
 
     saveTool = async (): Promise<boolean> => {
         try {
             this.toolSaving = true;
             this.codifyNames();
+            this.validateNamesAndDescriptions();
             if (this.isUpdating) {
-                //await updateChatPage(this.tool);
-            } else {
-                // Create Parameter Definition
-                const parameterDefinitionPayload = {
-                    parameters: this.parameters,
+                // if no parameters set pd_id to null
+                if (this.parameters.length === 0) {
+                    if (this.tool.pd_id) {
+                        await deleteParameterDefinition(this.tool.pd_id);
+                    }
+                    this.tool.pd_id = undefined;
+                } else if (!this.tool.pd_id) {
+                    // Create Parameter Definition
+                    const parameterDefinitionPayload = {
+                        parameters: this.parameters,
+                    }
+                    const parameterDefinition = await createParameterDefinition(parameterDefinitionPayload);
+                    this.tool.pd_id = parameterDefinition.pd_id;
+                } else {
+                    // Update Parameter Definition
+                    const parameterDefinitionPayload = {
+                        pd_id: this.tool.pd_id,
+                        parameters: this.parameters,
+                    }
+                    await updateParameterDefinition(parameterDefinitionPayload);
                 }
-                const parameterDefinition = await createParameterDefinition(parameterDefinitionPayload);
-
+                // Update Tool
+                const toolPayload = {
+                    ...this.tool,
+                }
+                await updateTool(toolPayload);
+            } else {
+                if (this.parameters.length > 0) {
+                    // Create Parameter Definition
+                    const parameterDefinitionPayload = {
+                        parameters: this.parameters,
+                    }
+                    const parameterDefinition = await createParameterDefinition(parameterDefinitionPayload);
+                    this.tool.pd_id = parameterDefinition.pd_id;
+                }
                 // Create Tool
                 const toolPayload = {
                     ...this.tool,
-                    pd_id: parameterDefinition.pd_id,
+                    org_id: undefined,
                 }
-                console.log("Payload", JSON.stringify(toolPayload, null, 2));
                 const tool = await createTool(toolPayload);
-                console.log("Response", JSON.stringify(tool, null, 2));
             }
             return true;
         } catch (error) {
@@ -376,7 +450,7 @@ class ToolBuilderStore {
     deleteTool = async (): Promise<boolean> => {
         try {
             this.toolDeleting = true;
-            //await deleteChatPage(this.tool.chat_page_id);
+            await deleteTool(this.tool.tool_id);
             return true;
         } catch (error) {
             this.showAlert({

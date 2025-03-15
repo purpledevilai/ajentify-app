@@ -2,11 +2,11 @@ import { Parameter } from "./parameterdefinition";
 
 export interface Tool {
     tool_id: string;
-    org_id?: string;
+    org_id: string;
     name: string;
-    description: string;
-    pd_id: string;
-    code: string;
+    description?: string;
+    pd_id?: string;
+    code?: string;
 }
 
 export interface TestInput {

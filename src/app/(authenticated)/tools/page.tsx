@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { toolsStore } from '@/store/ToolsStore';
@@ -17,16 +17,17 @@ import {
 import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
 import { Tool } from '@/types/tools';
+import { authStore } from '@/store/AuthStore';
 
 const ToolsPage = observer(() => {
   const router = useRouter();
   const { showAlert } = useAlert();
 
-//   useEffect(() => {
-//     if (!authStore.signedIn) return;
-//     setShowAlertOnStore();
-//     toolsStore.loadTools();
-//   });
+  useEffect(() => {
+    if (!authStore.signedIn) return;
+    setShowAlertOnStore();
+    toolsStore.loadTools();
+  });
 
   // eslint-disable-next-line
   const setShowAlertOnStore = () => {

@@ -1,6 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 import { Tool } from '@/types/tools';
+import { getTools } from '@/api/tool/getTools';
 
 class ToolsStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
@@ -22,7 +23,7 @@ class ToolsStore {
 
         try {
             this.toolsLoading = true;
-            //this.tools = await getAgents();
+            this.tools = await getTools();
         } catch (error) {
             this.showAlert({
                 title: "Whoops",

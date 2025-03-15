@@ -3,7 +3,8 @@
 import React, { useEffect } from "react";
 import {
     Flex, FormControl, Heading, IconButton, Input, Button, Tooltip,
-    useColorMode
+    useColorMode,
+    Spinner
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
@@ -52,7 +53,8 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
     }
 
     const onSaveTool = async () => {
-        await toolBuilderStore.saveTool();
+        const success = await toolBuilderStore.saveTool();
+        if (!success) return;
         toolsStore.loadTools(true);
         // Navigate back
         window.history.back();
@@ -149,14 +151,21 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 </FormControl>
 
                 {/* Parameters */}
-                <Flex direction="column" w="100%" gap={6}>
-                    <Heading size="md">Parameters</Heading>
-                    {toolBuilderStore.parameters.map((param: Parameter, index: number) => (
-                        <div key={index}>
-                            <ParameterView indexArray={[index]} param={param} />
-                        </div>
-                    ))}
-                </Flex>
+                {toolBuilderStore.isLoadingParameterDefinition ? (
+                    <Flex justify="center" align="center" height="200px">
+                        <Spinner size="xl" />
+                    </Flex>
+                ) : (
+                    <Flex direction="column" w="100%" gap={6}>
+                        <Heading size="md">Parameters</Heading>
+                        {toolBuilderStore.parameters.map((param: Parameter, index: number) => (
+                            <div key={index}>
+                                <ParameterView indexArray={[index]} param={param} />
+                            </div>
+                        ))}
+                    </Flex>
+                )}
+
 
                 {/* Add Parameter Button */}
                 <Button
@@ -218,11 +227,11 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                         size="lg"
                         disabled={!toolBuilderStore.tool.name || !toolBuilderStore.tool.description}
                         isLoading={toolBuilderStore.toolSaving || toolsStore.toolsLoading}
-                    >Save</Button>
+                    >{toolBuilderStore.isUpdating ? "Update" : "Save"}</Button>
                 </Tooltip>
 
                 {/* Delete Button */}
-                {false && (
+                {toolBuilderStore.isUpdating && (
                     <Button
                         onClick={onDeleteToolClick}
                         variant="outline"
