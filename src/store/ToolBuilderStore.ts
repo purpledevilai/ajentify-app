@@ -2,13 +2,12 @@ import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
 import { AnyType, TestInput, Tool } from '@/types/tools';
-import { ParameterDefinition, Parameter } from '@/types/parameterdefinition';
+import { Parameter } from '@/types/parameterdefinition';
 import { createParameterDefinition } from '@/api/parameterdefinition/createParameterDefinition';
 import { getParameterDefinition } from '@/api/parameterdefinition/getParameterDefinition';
 import { updateParameterDefinition } from '@/api/parameterdefinition/updateParameterDefinition';
 import { deleteParameterDefinition } from '@/api/parameterdefinition/deleteParameterDefinition';
 import { createTool } from '@/api/tool/createTool';
-import { getTool } from '@/api/tool/getTool';
 import { updateTool } from '@/api/tool/updateTool';
 import { deleteTool } from '@/api/tool/deleteTool';
 import { testTool } from '@/api/tool/testTool';
@@ -433,7 +432,7 @@ class ToolBuilderStore {
                     ...this.tool,
                     org_id: undefined,
                 }
-                const tool = await createTool(toolPayload);
+                await createTool(toolPayload);
             }
             return true;
         } catch (error) {

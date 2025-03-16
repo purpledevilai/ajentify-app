@@ -3,9 +3,10 @@ import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 
-export async function getTools(): Promise<Tool[]> {
+export async function getTools(agentId?: string): Promise<Tool[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tools`, {
+    const query = agentId ? `?agent_id=${agentId}` : '';
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tools${query}`, {
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'

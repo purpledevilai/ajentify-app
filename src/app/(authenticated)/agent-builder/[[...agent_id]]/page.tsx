@@ -18,8 +18,9 @@ import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
 import { useAlert } from "@/app/components/AlertProvider";
 import { ChatEvent } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
-import { AgentToolInstance } from "@/types/agent";
 import { PassEventTool } from "./components/PassEventTool";
+import { Tool } from "@/types/tools";
+import { CustomAgentTools } from "./components/CustomAgentTools";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -162,7 +163,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
         onClosePromptEngineerModal();
     }
 
-    const onRemoveTool = (agentTool: AgentToolInstance) => {
+    const onRemoveTool = (agentTool: Tool) => {
         agentBuilderStore.removeTool(agentTool)
     }
 
@@ -170,6 +171,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
         switch (toolName) {
             case 'pass_event':
                 return <PassEventTool />;
+            case 'custom_code':
+                return <CustomAgentTools />;
             default:
                 return <Text>Tool not implemented yet</Text>;
         }
@@ -291,19 +294,17 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     />
                     <Flex direction="row" wrap="wrap" gap={2} mt={2}>
                         <Button size="sm" onClick={onOpenToolPickerModal}>Add Tool</Button>
-                        {agentBuilderStore.currentAgent.tools && (
-                            agentBuilderStore.currentAgent.tools.map((tool, index) => (
-                                <Button
-                                    key={index}
-                                    size="sm"
-                                    variant="outline"
-                                    colorScheme="purple"
-                                    onClick={() => onRemoveTool(tool)}
-                                >
-                                    {tool.name}
-                                </Button>
-                            ))
-                        )}
+                        {agentBuilderStore.tools.map((tool, index) => (
+                            <Button
+                                key={index}
+                                size="sm"
+                                variant="outline"
+                                colorScheme="purple"
+                                onClick={() => onRemoveTool(tool)}
+                            >
+                                {tool.name}
+                            </Button>
+                        ))}
                     </Flex>
                 </FormControl>
 
