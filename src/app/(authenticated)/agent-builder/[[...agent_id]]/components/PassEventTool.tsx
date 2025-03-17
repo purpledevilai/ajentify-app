@@ -4,13 +4,13 @@ import { Heading, Text, Button, Flex } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 
 export const PassEventTool = () => {
-    const hasTool = agentBuilderStore.currentAgent.tools?.some(tool => tool.name === "pass_event");
+    const hasTool = agentBuilderStore.currentAgent.tools?.some(tool => tool === "pass_event");
 
     const addOrRemoveTool = () => {
         if (hasTool) {
-            agentBuilderStore.removeTool({ name: "pass_event" });
+            agentBuilderStore.removeTool({ tool_id: "pass_event", org_id: "default", name: "pass_event" });
         } else {
-            agentBuilderStore.addTool({ name: "pass_event" });
+            agentBuilderStore.addTool({ tool_id: "pass_event", org_id: "default", name: "pass_event" });
         }
     }
     return (

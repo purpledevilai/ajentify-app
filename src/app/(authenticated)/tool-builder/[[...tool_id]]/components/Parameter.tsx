@@ -1,5 +1,5 @@
 import { toolBuilderStore } from "@/store/ToolBuilderStore"
-import { Parameter } from "@/types/tools";
+import { Parameter } from "@/types/parameterdefinition";
 import { CloseIcon } from "@chakra-ui/icons";
 
 import { Flex, FormControl, IconButton, Select, Input, Heading, Button } from "@chakra-ui/react"
