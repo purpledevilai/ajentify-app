@@ -1,4 +1,4 @@
-import { Agent, AgentToolInstance } from "@/types/agent";
+import { Agent } from "@/types/agent";
 import { Context } from "@/types/context";
 import { makeAutoObservable, computed } from "mobx";
 import { createContext } from "@/api/context/createContext";
@@ -7,7 +7,9 @@ import { createAgent } from "@/api/agent/createAgent";
 import { deleteAgent } from "@/api/agent/deleteAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
+import { getTools } from "@/api/tool/getTools";
 import { agentsStore } from "./AgentsStore";
+import { Tool } from "@/types/tools";
 
 interface AgentStringFields {
     agent_name: string;
@@ -52,12 +54,16 @@ class AgentBuilderStore {
 
     agentTools: string[] = [
         'pass_event',
+        'custom_code',
         'api_call'
     ]
     presentedAgentTool: string = 'pass_event';
 
     showPromptArgsInput: boolean = false;
     promptArgsInput: Record<string, string> = {};
+
+    tools: Tool[] = []
+    isLoadingTools = false;
 
     get promptArgs(): string[] {
         if (!this.currentAgent.uses_prompt_args) {
@@ -97,6 +103,8 @@ class AgentBuilderStore {
         this.presentedAgentTool = 'pass_event';
         this.showPromptArgsInput = false;
         this.promptArgsInput = {};
+        this.tools = [];
+        this.isLoadingTools = false;
     }
 
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
@@ -107,8 +115,29 @@ class AgentBuilderStore {
         this.isNewAgent = isNewAgent;
     }
 
+    loadAgentTools = async () => {
+        
+        try {
+            this.isLoadingTools = true;
+            const tools = await getTools(this.currentAgent.agent_id);
+            this.tools = tools;
+        } catch (error) {
+            this.showAlert({
+                title: 'Error',
+                message: (error as Error).message,
+            })
+        } finally {
+            this.isLoadingTools = false;
+        }
+    }
+
     setCurrentAgent(agent: Agent) {
         this.currentAgent = agent;
+        if (!this.currentAgent.tools) {
+            this.currentAgent.tools = [];
+        } else {
+            this.loadAgentTools();
+        }
         this.hasUpdates = false;
         this.showDeleteButton = true;
         this.showAgentId = true;
@@ -144,14 +173,14 @@ class AgentBuilderStore {
         this.hasUpdates = true;
     }
 
-    addTool(agentTool: AgentToolInstance) {
-        if (!this.currentAgent.tools) return;
-        this.currentAgent.tools.push(agentTool);
+    addTool(tool: Tool) {
+        this.currentAgent?.tools?.push(tool.tool_id);
+        this.tools.push(tool);
     }
 
-    removeTool(agentTool: AgentToolInstance) {
-        if (!this.currentAgent.tools) return;
-        this.currentAgent.tools = this.currentAgent.tools.filter((tool) => tool.name !== agentTool.name);
+    removeTool(tool: Tool) {
+        this.currentAgent.tools = this.currentAgent?.tools?.filter((t) => tool.tool_id !== t);
+        this.tools = this.tools.filter((t) => tool.tool_id !== t.tool_id);
     }
 
     async createAgent() {

@@ -1,4 +1,4 @@
-import { Agent, AgentToolInstance } from "@/types/agent";
+import { Agent } from "@/types/agent";
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
@@ -8,7 +8,7 @@ interface CreateAgentPayload {
     is_public: boolean;
     prompt: string;
     agent_speaks_first: boolean;
-    tools?: AgentToolInstance[];
+    tools?: string[];
     uses_prompt_args?: boolean;
 }
 

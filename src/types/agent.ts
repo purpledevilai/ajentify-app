@@ -1,8 +1,3 @@
-export interface AgentToolInstance {
-    name: string;
-    config?: Record<string, unknown>
-}
-
 export interface Agent {
     agent_id: string;
     agent_name: string;
@@ -11,5 +6,5 @@ export interface Agent {
     agent_speaks_first: boolean;
     uses_prompt_args?: boolean;
     prompt: string;
-    tools?:  AgentToolInstance[];
+    tools?:  string[];
 }
