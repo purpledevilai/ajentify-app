@@ -16,6 +16,7 @@
     "@monaco-editor/react": "^4.7.0-rc.0",
     "aws-amplify": "^6.10.2",
     "framer-motion": "^11.13.1",
+    "marked": "^15.0.7",
     "mobx": "^6.13.5",
     "mobx-react-lite": "^4.0.7",
     "next": "15.0.4",
