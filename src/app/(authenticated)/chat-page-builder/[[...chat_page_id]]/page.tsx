@@ -249,6 +249,7 @@ const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
                 <ChatPage
                   chatPageData={chatPageBuilderStore.chatPage}
                   context={chatPageBuilderStore.dummyContext}
+                  for_display={true}
                 />
               </Box>
             </Box>
@@ -266,6 +267,7 @@ const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
                 <ChatPage
                   chatPageData={chatPageBuilderStore.chatPage}
                   context={chatPageBuilderStore.dummyContext}
+                  for_display={true}
                 />
               </Flex>
             </ModalBody>

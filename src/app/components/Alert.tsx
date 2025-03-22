@@ -67,7 +67,7 @@ const Alert: React.FC<AlertProps> = ({
             bg={overlayBg}
             align="center"
             justify="center"
-            zIndex="1000"
+            zIndex="10000"
         >
             <Box
                 bg={alertBg}

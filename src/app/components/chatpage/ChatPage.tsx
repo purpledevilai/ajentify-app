@@ -6,9 +6,10 @@ import { Context } from '@/types/context';
 interface ChatPageProps {
     chatPageData: ChatPageData;
     context: Context;
+    for_display?: boolean;
 }
 
-export default function ChatPage({chatPageData, context}: ChatPageProps) {
+export default function ChatPage({chatPageData, context, for_display = false}: ChatPageProps) {
 
   return (
     <Box
@@ -54,7 +55,7 @@ export default function ChatPage({chatPageData, context}: ChatPageProps) {
         borderRadius="md"
         overflow="hidden"
       >
-        <ChatBox context={context} style={chatPageData.chat_box_style} />
+        <ChatBox context={context} style={chatPageData.chat_box_style} for_display={for_display}/>
       </Box>
 
       {/* Buttons Section */}

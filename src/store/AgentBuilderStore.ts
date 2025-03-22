@@ -131,12 +131,12 @@ class AgentBuilderStore {
         }
     }
 
-    setCurrentAgent(agent: Agent) {
+    async setCurrentAgent(agent: Agent) {
         this.currentAgent = agent;
         if (!this.currentAgent.tools) {
             this.currentAgent.tools = [];
         } else {
-            this.loadAgentTools();
+            await this.loadAgentTools();
         }
         this.hasUpdates = false;
         this.showDeleteButton = true;
@@ -176,11 +176,13 @@ class AgentBuilderStore {
     addTool(tool: Tool) {
         this.currentAgent?.tools?.push(tool.tool_id);
         this.tools.push(tool);
+        this.hasUpdates = true;
     }
 
     removeTool(tool: Tool) {
         this.currentAgent.tools = this.currentAgent?.tools?.filter((t) => tool.tool_id !== t);
         this.tools = this.tools.filter((t) => tool.tool_id !== t.tool_id);
+        this.hasUpdates = true;
     }
 
     async createAgent() {
@@ -364,7 +366,6 @@ class AgentBuilderStore {
             this.agentContextLoading = true;
             const context = await createContext({
                 agent_id: this.currentAgent.agent_id,
-                invoke_agent_message: this.currentAgent.agent_speaks_first,
                 prompt_args: promptArgs
             });
             this.agentContext = context;

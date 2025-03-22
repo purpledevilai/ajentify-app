@@ -16,7 +16,7 @@ export const MessageView = ({ message, style }: MessageViewProps) => {
     const isAI = message.sender === "ai";
     const messageColor = isAI ? style.ai_message_background_color : style.user_message_background_color;
     const messageTextColor = isAI ? style.ai_message_text_color : style.user_message_text_color;
-    const maxWidth = "600px";
+    const maxWidth = "400px";
 
     return (
         <Flex justifyContent={isAI ? "start" : "end"}>

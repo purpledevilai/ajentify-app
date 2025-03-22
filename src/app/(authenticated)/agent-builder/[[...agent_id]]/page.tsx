@@ -257,34 +257,32 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 </FormControl>
 
                 {/* Toggles */}
-                <Flex direction="row" w="100%" justifyContent="flex-start" align="center" gap={12}>
-                    <FormControl width="auto">
-                        <FormLabelToolTip
-                            label="Public Agent"
-                            tooltip="If not public, only you and your organization can talk to this agent"
-                        />
-                        <Switch
-                            mt={2}
-                            colorScheme="purple"
-                            size="lg"
-                            isChecked={agentBuilderStore.currentAgent.is_public}
-                            onChange={(e) => agentBuilderStore.setBooleanField("is_public", e.target.checked)}
-                        />
-                    </FormControl>
-                    <FormControl width="auto">
-                        <FormLabelToolTip
-                            label="Agent Speaks First"
-                            tooltip="When a new context with this agent is created, the agent will generate the first message."
-                        />
-                        <Switch
-                            mt={2}
-                            colorScheme="purple"
-                            size="lg"
-                            isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
-                            onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
-                        />
-                    </FormControl>
-                </Flex>
+                <FormControl width="auto">
+                    <FormLabelToolTip
+                        label="Public Agent"
+                        tooltip="If not public, only you and your organization can talk to this agent"
+                    />
+                    <Switch
+                        mt={2}
+                        colorScheme="purple"
+                        size="lg"
+                        isChecked={agentBuilderStore.currentAgent.is_public}
+                        onChange={(e) => agentBuilderStore.setBooleanField("is_public", e.target.checked)}
+                    />
+                </FormControl>
+                <FormControl width="auto">
+                    <FormLabelToolTip
+                        label="Agent Speaks First"
+                        tooltip="When a new context with this agent is created, the agent will generate the first message."
+                    />
+                    <Switch
+                        mt={2}
+                        colorScheme="purple"
+                        size="lg"
+                        isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
+                        onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
+                    />
+                </FormControl>
 
                 {/* Agent Tool Bar */}
                 <FormControl>

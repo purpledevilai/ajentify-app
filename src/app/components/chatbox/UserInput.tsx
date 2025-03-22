@@ -5,9 +5,10 @@ import { ChatBoxStyle } from "@/types/chatboxstyle";
 interface UserInputProps {
     onMessage: (message: string) => void;
     style: ChatBoxStyle;
+    isConnecting: boolean;
 }
 
-export const UserInput = ({onMessage, style}: UserInputProps) => {
+export const UserInput = ({onMessage, style, isConnecting}: UserInputProps) => {
     const [inputValue, setInputValue] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -80,6 +81,7 @@ export const UserInput = ({onMessage, style}: UserInputProps) => {
                 color={style.user_input_send_button_text_color}
                 ml={2}
                 height="40px"
+                isLoading={isConnecting}
             >
                 Send
             </Button>
