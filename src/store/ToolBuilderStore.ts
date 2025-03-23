@@ -363,15 +363,15 @@ class ToolBuilderStore {
         this.codifyParameterNames(this.parameters);
     }
 
-    validateParameteNamesAndDescriptions = (parameters: Parameter[]) => {
+    validateParameteNamesAndDescriptions = (parameters: Parameter[], is_child_of_enum: boolean = false) => {
         parameters.forEach((param: Parameter) => {
             if (!param.name) {
                 throw new Error('Names for all parameters are required. The AI must know what the parameters are called.');
             }
-            if (!param.description) {
+            if (!param.description && !is_child_of_enum) {
                 throw new Error(`Description for parameter ${param.name} is required. The AI must know what the parameter does.`);
             }
-            this.validateParameteNamesAndDescriptions(param.parameters);
+            this.validateParameteNamesAndDescriptions(param.parameters, param.type === 'enum');
         });
     }
 
