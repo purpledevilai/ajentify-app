@@ -12,6 +12,7 @@ import { runSME } from "@/api/singlemessageendpoint/runSME";
 import { singleMessageEndpointsStore } from "./SingleMessageEndpointStore";
 import { AnyType } from "@/types/tools";
 import { getParameterDefinition } from "@/api/parameterdefinition/getParameterDefinition";
+import { deleteParameterDefinition } from "@/api/parameterdefinition/deleteParameterDefinition";
 
 const defaultSME: SingleMessageEndpoint = {
     sme_id: '',
@@ -37,6 +38,8 @@ const getCodeName = (name: string): string => {
 
 class SingleMessageEndpointBuilderStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+    isNewSme = true;
+    useClickedSave = false;
     sme: SingleMessageEndpoint = defaultSME;
     parameters: Parameter[] = [];
     isLoadingParameterDefinition = false;
@@ -53,6 +56,9 @@ class SingleMessageEndpointBuilderStore {
     }
 
     reset = () => {
+        console.log("Calling reset");
+        this.isNewSme = true;
+        this.useClickedSave = false;
         this.sme = defaultSME;
         this.parameters = [];
         this.isLoadingParameterDefinition = false;
@@ -76,12 +82,23 @@ class SingleMessageEndpointBuilderStore {
         };
     }
 
+    setIsNewSme = (isNewSme: boolean) => {
+        this.isNewSme = isNewSme;
+        console.log("Setting is new to:", isNewSme);
+    }
+
+    setUserClickedSave = (clickedSave: boolean) => {
+        this.useClickedSave = clickedSave;
+        console.log("Setting user clicked save to:", clickedSave);
+    }
+
     setSME = (sme: SingleMessageEndpoint) => {
         this.sme = sme;
         this.loadParameterDefinition(sme.pd_id);
     }
 
     setSMEWithId = async (smeId: string) => {
+        this.isNewSme = false;
         await singleMessageEndpointsStore.loadSMEs()
         if (!singleMessageEndpointsStore.smes) {
             this.showAlert({
@@ -131,7 +148,7 @@ class SingleMessageEndpointBuilderStore {
         this.hasUpdatedSME = true;
     }
 
-    get isUpdating() {
+    get hasSMEId() {
         return this.sme.sme_id !== '';
     }
 
@@ -215,6 +232,8 @@ class SingleMessageEndpointBuilderStore {
         parameter.type = type;
         if (type === 'object' || type === 'array' || type === 'enum') {
             parameter.parameters = [getDefaultParameter()];
+        } else {
+            parameter.parameters = [];
         }
         this.hasUpdatedParameterDefinition = true;
     }
@@ -235,7 +254,7 @@ class SingleMessageEndpointBuilderStore {
 
             // Create or update parameter definition
             if (this.hasUpdatedParameterDefinition) {
-                if (this.isUpdating) {
+                if (this.sme.pd_id) {
                     console.log("Updating parameter definition");
                     await updateParameterDefinition({ pd_id: this.sme.pd_id, parameters: this.parameters });
                 } else {
@@ -248,7 +267,7 @@ class SingleMessageEndpointBuilderStore {
 
             // Create or update SME
             if (this.hasUpdatedSME) {
-                if (this.isUpdating) {
+                if (this.hasSMEId) {
                     console.log("Updating SME");
                     this.sme = await updateSME(this.sme);
                 } else {
@@ -258,6 +277,7 @@ class SingleMessageEndpointBuilderStore {
                         org_id: undefined
                     }
                     this.sme = await createSME(smePayload);
+                    console.log("Created SME", JSON.stringify(this.sme));
                 }
                 this.hasUpdatedSME = false;
             }
@@ -275,8 +295,15 @@ class SingleMessageEndpointBuilderStore {
     }
 
     deleteSME = async (): Promise<boolean> => {
+        console.log("Deleting SME", JSON.stringify(this.sme));
         try {
             this.smeDeleting = true;
+            try {
+                await deleteParameterDefinition(this.sme.pd_id);
+            } catch (error) {
+                console.log("Error deleting parameter definition", error);
+            }
+            
             await deleteSME(this.sme.sme_id);
             return true;
         } catch (error) {

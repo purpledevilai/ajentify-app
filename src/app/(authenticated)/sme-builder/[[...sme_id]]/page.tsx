@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigationGuard } from "next-navigation-guard";
 import {
   Flex, FormControl, Heading, IconButton, Input, Button, Tooltip, Textarea, Box, Switch,
   Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
@@ -22,10 +23,15 @@ interface SMEBuilderPageProps {
 }
 
 const SMEBuilderPage = observer(({ params }: SMEBuilderPageProps) => {
+
+  // Nav Guard to detect page navigation - Really dump NextJS limitiation
+  const navGuard = useNavigationGuard({});
+  const isShowingNavAlert = useRef(false);
+
   const { showAlert } = useAlert();
   const [message, setMessage] = useState("");
   const resultBackgroundColor = useColorMode().colorMode === 'dark' ? "#2b2b2b" : "#f7f7f7";
-  
+
   useEffect(() => {
     setShowAlertOnStore();
     loadSMEId();
@@ -34,6 +40,45 @@ const SMEBuilderPage = observer(({ params }: SMEBuilderPageProps) => {
       smeBuilderStore.reset();
     };
   }, []);
+
+  // Detect page navigation
+  useEffect(() => {
+    console.log("Nav Guard");
+    if (navGuard.active && !isShowingNavAlert.current) {
+      console.log("Nav Guard active");
+      isShowingNavAlert.current = true;
+      const isNewSME = smeBuilderStore.isNewSme;
+      const stayOnPage = () => {
+        isShowingNavAlert.current = false;
+        navGuard.reject();
+      }
+      const leavePage = async () => {
+        if (isNewSME && smeBuilderStore.sme.sme_id) {
+          console.log("Deleting SME");
+          await smeBuilderStore.deleteSME();
+        }
+        navGuard.accept();
+      }
+      console.log("hasUpdatedParameterDefinition", smeBuilderStore.hasUpdatedParameterDefinition)
+      console.log("hasUpdatedSME", smeBuilderStore.hasUpdatedSME)
+
+      if (smeBuilderStore.hasUpdatedParameterDefinition || smeBuilderStore.hasUpdatedSME || (isNewSME && !smeBuilderStore.useClickedSave)) {
+        // Unsaved changes alert
+        console.log("Unsaved changes alert");
+        showAlert({
+          title: "Unsaved Changes",
+          message: "You have unsaved changes. Are you sure you want to leave?",
+          actions: [
+            { label: "Cancel", onClick: stayOnPage },
+            { label: "Leave", onClick: leavePage }
+          ]
+        })
+      } else {
+        console.log("No unsaved changes");
+        leavePage();
+      }
+    }
+  }, [navGuard, showAlert]);
 
   const setShowAlertOnStore = () => {
     smeBuilderStore.setShowAlert(showAlert);
@@ -50,6 +95,7 @@ const SMEBuilderPage = observer(({ params }: SMEBuilderPageProps) => {
   };
 
   const onSaveSME = async () => {
+    smeBuilderStore.useClickedSave = true;
     const success = await smeBuilderStore.saveSME();
     if (!success) return;
     singleMessageEndpointsStore.loadSMEs(true);
@@ -213,12 +259,12 @@ const SMEBuilderPage = observer(({ params }: SMEBuilderPageProps) => {
             disabled={!smeBuilderStore.sme.name || !smeBuilderStore.sme.description}
             isLoading={smeBuilderStore.smeSaving || singleMessageEndpointsStore.smesLoading}
           >
-            {smeBuilderStore.isUpdating ? "Update" : "Save"}
+            {smeBuilderStore.isNewSme ? "Save" : "Update"}
           </Button>
         </Tooltip>
 
         {/* Delete Button */}
-        {smeBuilderStore.isUpdating && (
+        {!smeBuilderStore.isNewSme && (
           <Button
             onClick={onDeleteSMEClick}
             variant="outline"
