@@ -15,6 +15,7 @@ import { smeBuilderStore } from "@/store/SingleMessageEndpointBuilderStore";
 import { singleMessageEndpointsStore } from "@/store/SingleMessageEndpointStore";
 import { ParameterView } from "./components/Parameter";
 import { Parameter } from "@/types/parameterdefinition";
+import { has } from "mobx";
 
 type Params = Promise<{ sme_id?: string[] }>;
 
@@ -43,27 +44,38 @@ const SMEBuilderPage = observer(({ params }: SMEBuilderPageProps) => {
 
   // Detect page navigation
   useEffect(() => {
-    console.log("Nav Guard");
+    
     if (navGuard.active && !isShowingNavAlert.current) {
       console.log("Nav Guard active");
       isShowingNavAlert.current = true;
-      const isNewSME = smeBuilderStore.isNewSme;
+
       const stayOnPage = () => {
         isShowingNavAlert.current = false;
         navGuard.reject();
       }
+
       const leavePage = async () => {
-        if (isNewSME && smeBuilderStore.sme.sme_id) {
-          console.log("Deleting SME");
+        // If the SME is new and the user has not clicked save, delete the SME
+        if (
+          smeBuilderStore.isNewSme && 
+          smeBuilderStore.sme.sme_id && 
+          !smeBuilderStore.useClickedSave
+        ) {
+          console.log("Deleting New SME");
           await smeBuilderStore.deleteSME();
         }
         navGuard.accept();
       }
+
+
       console.log("hasUpdatedParameterDefinition", smeBuilderStore.hasUpdatedParameterDefinition)
       console.log("hasUpdatedSME", smeBuilderStore.hasUpdatedSME)
 
-      if (smeBuilderStore.hasUpdatedParameterDefinition || smeBuilderStore.hasUpdatedSME || (isNewSME && !smeBuilderStore.useClickedSave)) {
-        // Unsaved changes alert
+      // Show alert if there are unsaved changes
+      // OR if the SME is new and the user has not clicked save
+      const hasUnsavedChanges = smeBuilderStore.hasUpdatedParameterDefinition || smeBuilderStore.hasUpdatedSME;
+      const isNewButDidNotClickSave = smeBuilderStore.isNewSme && !smeBuilderStore.useClickedSave;
+      if (hasUnsavedChanges || isNewButDidNotClickSave) {
         console.log("Unsaved changes alert");
         showAlert({
           title: "Unsaved Changes",
@@ -201,6 +213,7 @@ const SMEBuilderPage = observer(({ params }: SMEBuilderPageProps) => {
           colorScheme="purple"
           size="lg"
           variant={'outline'}
+          isLoading={smeBuilderStore.isLoadingParameterDefinition}
         >
           Add Parameter
         </Button>

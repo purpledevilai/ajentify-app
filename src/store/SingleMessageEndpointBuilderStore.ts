@@ -115,7 +115,7 @@ class SingleMessageEndpointBuilderStore {
             });
             return;
         }
-        this.setSME(sme);
+        this.setSME({ ...sme });
     }
 
     loadParameterDefinition = async (pdId: string) => {
