@@ -1,4 +1,5 @@
 import { Box, Button, Heading, Text } from '@chakra-ui/react';
+import Link from 'next/link';
 
 export default function HeroSection() {
     return (
@@ -14,11 +15,14 @@ export default function HeroSection() {
                 Welcome to Ajentify
             </Heading>
             <Text fontSize="lg" mb="6">
-                Your AI agent platform. Automate tasks, solve problems, and streamline your workflow effortlessly.
+                We&apos;re so glad you&apos;re here. If you&apos;re building with LLMs, you&apos;re in the right place.
             </Text>
-            <Button bg="brand.300" size="lg">
-                Get Started
-            </Button>
+
+            <Link href="/signup" passHref>
+                <Button bg="brand.300" size="lg">
+                    Get Started
+                </Button>
+            </Link>
         </Box>
     );
 }

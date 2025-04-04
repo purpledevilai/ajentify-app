@@ -83,7 +83,13 @@ class ChatPageStore {
         }
         try {
             this.contextHistoryLoading = true;
-            this.contextHistory = await getContextHistory();
+            try {
+                this.contextHistory = await getContextHistory();
+            }
+            catch (error) {
+                console.log('Error loading context history:', error);
+                this.contextHistory = [];
+            }            
             if (this.contextHistory.length > 0 && this.currentContext === undefined) { // in the case of the first load
                 const lastContext = this.contextHistory[0];
                 this.loadAndSetCurrentContext(lastContext.context_id);
