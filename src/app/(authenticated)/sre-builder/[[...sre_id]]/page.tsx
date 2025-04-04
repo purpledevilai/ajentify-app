@@ -45,7 +45,6 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
   useEffect(() => {
     
     if (navGuard.active && !isShowingNavAlert.current) {
-      console.log("Nav Guard active");
       isShowingNavAlert.current = true;
 
       const stayOnPage = () => {
@@ -60,22 +59,16 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           sreBuilderStore.sre.sre_id && 
           !sreBuilderStore.useClickedSave
         ) {
-          console.log("Deleting New SRE");
           await sreBuilderStore.deleteSRE();
         }
         navGuard.accept();
       }
-
-
-      console.log("hasUpdatedParameterDefinition", sreBuilderStore.hasUpdatedParameterDefinition)
-      console.log("hasUpdatedSRE", sreBuilderStore.hasUpdatedSRE)
 
       // Show alert if there are unsaved changes
       // OR if the SRE is new and the user has not clicked save
       const hasUnsavedChanges = sreBuilderStore.hasUpdatedParameterDefinition || sreBuilderStore.hasUpdatedSRE;
       const isNewButDidNotClickSave = sreBuilderStore.isNewSme && !sreBuilderStore.useClickedSave;
       if (hasUnsavedChanges || isNewButDidNotClickSave) {
-        console.log("Unsaved changes alert");
         showAlert({
           title: "Unsaved Changes",
           message: "You have unsaved changes. Are you sure you want to leave?",
@@ -85,7 +78,6 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           ]
         })
       } else {
-        console.log("No unsaved changes");
         leavePage();
       }
     }

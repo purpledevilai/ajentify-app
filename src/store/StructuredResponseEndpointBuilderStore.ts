@@ -56,7 +56,6 @@ class StructuredResponseEndpointBuilderStore {
     }
 
     reset = () => {
-        console.log("Calling reset");
         this.isNewSme = true;
         this.useClickedSave = false;
         this.sre = defaultSRE;
@@ -84,12 +83,10 @@ class StructuredResponseEndpointBuilderStore {
 
     setIsNewSme = (isNewSme: boolean) => {
         this.isNewSme = isNewSme;
-        console.log("Setting is new to:", isNewSme);
     }
 
     setUserClickedSave = (clickedSave: boolean) => {
         this.useClickedSave = clickedSave;
-        console.log("Setting user clicked save to:", clickedSave);
     }
 
     setSRE = (sre: StructuredResponseEndpoint) => {
@@ -255,10 +252,8 @@ class StructuredResponseEndpointBuilderStore {
             // Create or update parameter definition
             if (this.hasUpdatedParameterDefinition) {
                 if (this.sre.pd_id) {
-                    console.log("Updating parameter definition");
                     await updateParameterDefinition({ pd_id: this.sre.pd_id, parameters: this.parameters });
                 } else {
-                    console.log("Creating parameter definition");
                     const pd = await createParameterDefinition({ parameters: this.parameters });
                     this.sre.pd_id = pd.pd_id;
                 }
@@ -268,16 +263,13 @@ class StructuredResponseEndpointBuilderStore {
             // Create or update SRE
             if (this.hasUpdatedSRE) {
                 if (this.hasSREId) {
-                    console.log("Updating SRE");
                     this.sre = await updateSRE(this.sre);
                 } else {
-                    console.log("Creating SRE");
                     const srePayload = {
                         ...this.sre,
                         org_id: undefined
                     }
                     this.sre = await createSRE(srePayload);
-                    console.log("Created SRE", JSON.stringify(this.sre));
                 }
                 this.hasUpdatedSRE = false;
             }
@@ -295,7 +287,6 @@ class StructuredResponseEndpointBuilderStore {
     }
 
     deleteSRE = async (): Promise<boolean> => {
-        console.log("Deleting SRE", JSON.stringify(this.sre));
         try {
             this.sreDeleting = true;
             try {
