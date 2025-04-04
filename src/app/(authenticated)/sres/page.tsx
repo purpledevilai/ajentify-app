@@ -88,22 +88,6 @@ const SREsPage = observer(() => {
                     sre={sre}
                     handleClick={() => handleSREClick(sre)}
                   />
-                  {/* <Card
-                    shadow="md"
-                    _hover={{ shadow: 'lg' }}
-                    cursor="pointer"
-                    onClick={() => handleSREClick(sre)}
-                    minHeight="150px"
-                  >
-                    <Flex h="100%" direction="column">
-                      <Heading as="h3" size="md" mb={2} isTruncated>
-                        {sre.name}
-                      </Heading>
-                      <Text fontSize="sm" color="gray.500" isTruncated>
-                        {sre.description}
-                      </Text>
-                    </Flex>
-                  </Card> */}
                 </GridItem>
               ))
             ) : (
