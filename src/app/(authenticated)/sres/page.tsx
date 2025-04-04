@@ -14,7 +14,6 @@ import {
   Text,
   Spinner,
 } from '@chakra-ui/react';
-import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
 import { StructuredResponseEndpoint } from '@/types/structuredresponseendpoint';
 import { authStore } from '@/store/AuthStore';

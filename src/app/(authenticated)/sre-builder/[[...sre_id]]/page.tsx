@@ -15,7 +15,6 @@ import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore"
 import { structuredResponseEndpointsStore } from "@/store/StructuredResponseEndpointStore";
 import { ParameterView } from "./components/Parameter";
 import { Parameter } from "@/types/parameterdefinition";
-import { has } from "mobx";
 
 type Params = Promise<{ sre_id?: string[] }>;
 
