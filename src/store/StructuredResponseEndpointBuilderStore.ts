@@ -2,20 +2,20 @@ import { makeAutoObservable } from "mobx";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 import { authStore } from "./AuthStore";
 import { Parameter } from "@/types/parameterdefinition";
-import { SingleMessageEndpoint } from "@/types/singlemessageendpoint";
+import { StructuredResponseEndpoint } from "@/types/structuredresponseendpoint";
 import { createParameterDefinition } from "@/api/parameterdefinition/createParameterDefinition";
 import { updateParameterDefinition } from "@/api/parameterdefinition/updateParameterDefinition";
-import { createSME } from "@/api/singlemessageendpoint/createSME";
-import { updateSME } from "@/api/singlemessageendpoint/updateSME";
-import { deleteSME } from "@/api/singlemessageendpoint/deleteSME";
-import { runSME } from "@/api/singlemessageendpoint/runSME";
-import { singleMessageEndpointsStore } from "./SingleMessageEndpointStore";
+import { createSRE } from "@/api/structuredresponseendpoint/createSRE";
+import { updateSRE } from "@/api/structuredresponseendpoint/updateSRE";
+import { deleteSRE } from "@/api/structuredresponseendpoint/deleteSRE";
+import { runSRE } from "@/api/structuredresponseendpoint/runSRE";
+import { structuredResponseEndpointsStore } from "./StructuredResponseEndpointStore";
 import { AnyType } from "@/types/tools";
 import { getParameterDefinition } from "@/api/parameterdefinition/getParameterDefinition";
 import { deleteParameterDefinition } from "@/api/parameterdefinition/deleteParameterDefinition";
 
-const defaultSME: SingleMessageEndpoint = {
-    sme_id: '',
+const defaultSRE: StructuredResponseEndpoint = {
+    sre_id: '',
     org_id: '',
     name: '',
     description: '',
@@ -36,19 +36,19 @@ const getCodeName = (name: string): string => {
     return name.replace(/ /g, '_').toLowerCase();
 };
 
-class SingleMessageEndpointBuilderStore {
+class StructuredResponseEndpointBuilderStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
     isNewSme = true;
     useClickedSave = false;
-    sme: SingleMessageEndpoint = defaultSME;
+    sre: StructuredResponseEndpoint = defaultSRE;
     parameters: Parameter[] = [];
     isLoadingParameterDefinition = false;
-    isLoadingSME = false;
-    smeSaving = false;
-    smeDeleting = false;
-    isRunningSME = false;
+    isLoadingSRE = false;
+    sreSaving = false;
+    sreDeleting = false;
+    isRunningSRE = false;
     runResult: AnyType | undefined = undefined;
-    hasUpdatedSME = false;
+    hasUpdatedSRE = false;
     hasUpdatedParameterDefinition = false;
 
     constructor() {
@@ -59,15 +59,15 @@ class SingleMessageEndpointBuilderStore {
         console.log("Calling reset");
         this.isNewSme = true;
         this.useClickedSave = false;
-        this.sme = defaultSME;
+        this.sre = defaultSRE;
         this.parameters = [];
         this.isLoadingParameterDefinition = false;
-        this.isLoadingSME = false;
-        this.smeSaving = false;
-        this.smeDeleting = false;
-        this.isRunningSME = false;
+        this.isLoadingSRE = false;
+        this.sreSaving = false;
+        this.sreDeleting = false;
+        this.isRunningSRE = false;
         this.runResult = undefined;
-        this.hasUpdatedSME = false;
+        this.hasUpdatedSRE = false;
         this.hasUpdatedParameterDefinition = false;
     }
 
@@ -76,8 +76,8 @@ class SingleMessageEndpointBuilderStore {
     }
 
     initiateNew = () => {
-        this.sme = {
-            ...defaultSME,
+        this.sre = {
+            ...defaultSRE,
             org_id: authStore.user?.organizations[0].id || '',
         };
     }
@@ -92,30 +92,30 @@ class SingleMessageEndpointBuilderStore {
         console.log("Setting user clicked save to:", clickedSave);
     }
 
-    setSME = (sme: SingleMessageEndpoint) => {
-        this.sme = sme;
-        this.loadParameterDefinition(sme.pd_id);
+    setSRE = (sre: StructuredResponseEndpoint) => {
+        this.sre = sre;
+        this.loadParameterDefinition(sre.pd_id);
     }
 
-    setSMEWithId = async (smeId: string) => {
+    setSREWithId = async (sreId: string) => {
         this.isNewSme = false;
-        await singleMessageEndpointsStore.loadSMEs()
-        if (!singleMessageEndpointsStore.smes) {
+        await structuredResponseEndpointsStore.loadSREs()
+        if (!structuredResponseEndpointsStore.sres) {
             this.showAlert({
                 title: 'Whoops',
-                message: 'There was a problem loading the SMEs',
+                message: 'There was a problem loading the SREs',
             });
             return;
         }
-        const sme = singleMessageEndpointsStore.smes.find((s) => s.sme_id === smeId);
-        if (!sme) {
+        const sre = structuredResponseEndpointsStore.sres.find((s) => s.sre_id === sreId);
+        if (!sre) {
             this.showAlert({
                 title: 'Whoops',
-                message: 'Could not find sme',
+                message: 'Could not find sre',
             });
             return;
         }
-        this.setSME({ ...sme });
+        this.setSRE({ ...sre });
     }
 
     loadParameterDefinition = async (pdId: string) => {
@@ -134,26 +134,26 @@ class SingleMessageEndpointBuilderStore {
     }
 
     setName = (name: string) => {
-        this.sme.name = getCodeName(name);
-        this.hasUpdatedSME = true;
+        this.sre.name = getCodeName(name);
+        this.hasUpdatedSRE = true;
     }
 
     setDescription = (description: string) => {
-        this.sme.description = description;
-        this.hasUpdatedSME = true;
+        this.sre.description = description;
+        this.hasUpdatedSRE = true;
     }
 
     setIsPublic = (isPublic: boolean) => {
-        this.sme.is_public = isPublic;
-        this.hasUpdatedSME = true;
+        this.sre.is_public = isPublic;
+        this.hasUpdatedSRE = true;
     }
 
-    get hasSMEId() {
-        return this.sme.sme_id !== '';
+    get hasSREId() {
+        return this.sre.sre_id !== '';
     }
 
     codifyNames = () => {
-        this.sme.name = getCodeName(this.sme.name);
+        this.sre.name = getCodeName(this.sre.name);
         this.codifyParameterNames(this.parameters);
     }
 
@@ -165,8 +165,8 @@ class SingleMessageEndpointBuilderStore {
     }
 
     validate = () => {
-        if (!this.sme.name) throw new Error("SME name is required.");
-        if (!this.sme.description) throw new Error("SME description is required.");
+        if (!this.sre.name) throw new Error("SRE name is required.");
+        if (!this.sre.description) throw new Error("SRE description is required.");
         if (this.parameters.length === 0) {
             throw new Error("At least one parameter is required.");
         }
@@ -246,40 +246,40 @@ class SingleMessageEndpointBuilderStore {
 
     // CRUD
 
-    saveSME = async (): Promise<boolean> => {
+    saveSRE = async (): Promise<boolean> => {
         try {
-            this.smeSaving = true;
+            this.sreSaving = true;
             this.codifyNames();
             this.validate();
 
             // Create or update parameter definition
             if (this.hasUpdatedParameterDefinition) {
-                if (this.sme.pd_id) {
+                if (this.sre.pd_id) {
                     console.log("Updating parameter definition");
-                    await updateParameterDefinition({ pd_id: this.sme.pd_id, parameters: this.parameters });
+                    await updateParameterDefinition({ pd_id: this.sre.pd_id, parameters: this.parameters });
                 } else {
                     console.log("Creating parameter definition");
                     const pd = await createParameterDefinition({ parameters: this.parameters });
-                    this.sme.pd_id = pd.pd_id;
+                    this.sre.pd_id = pd.pd_id;
                 }
                 this.hasUpdatedParameterDefinition = false;
             }
 
-            // Create or update SME
-            if (this.hasUpdatedSME) {
-                if (this.hasSMEId) {
-                    console.log("Updating SME");
-                    this.sme = await updateSME(this.sme);
+            // Create or update SRE
+            if (this.hasUpdatedSRE) {
+                if (this.hasSREId) {
+                    console.log("Updating SRE");
+                    this.sre = await updateSRE(this.sre);
                 } else {
-                    console.log("Creating SME");
-                    const smePayload = {
-                        ...this.sme,
+                    console.log("Creating SRE");
+                    const srePayload = {
+                        ...this.sre,
                         org_id: undefined
                     }
-                    this.sme = await createSME(smePayload);
-                    console.log("Created SME", JSON.stringify(this.sme));
+                    this.sre = await createSRE(srePayload);
+                    console.log("Created SRE", JSON.stringify(this.sre));
                 }
-                this.hasUpdatedSME = false;
+                this.hasUpdatedSRE = false;
             }
             
             return true;
@@ -290,21 +290,21 @@ class SingleMessageEndpointBuilderStore {
             });
             return false;
         } finally {
-            this.smeSaving = false;
+            this.sreSaving = false;
         }
     }
 
-    deleteSME = async (): Promise<boolean> => {
-        console.log("Deleting SME", JSON.stringify(this.sme));
+    deleteSRE = async (): Promise<boolean> => {
+        console.log("Deleting SRE", JSON.stringify(this.sre));
         try {
-            this.smeDeleting = true;
+            this.sreDeleting = true;
             try {
-                await deleteParameterDefinition(this.sme.pd_id);
+                await deleteParameterDefinition(this.sre.pd_id);
             } catch (error) {
                 console.log("Error deleting parameter definition", error);
             }
             
-            await deleteSME(this.sme.sme_id);
+            await deleteSRE(this.sre.sre_id);
             return true;
         } catch (error) {
             this.showAlert({
@@ -313,18 +313,18 @@ class SingleMessageEndpointBuilderStore {
             });
             return false;
         } finally {
-            this.smeDeleting = false;
+            this.sreDeleting = false;
         }
     }
 
     // RUNNING
 
-    runSME = async (message: string): Promise<void> => {
+    runSRE = async (prompt: string): Promise<void> => {
         try {
-            this.isRunningSME = true;
-            const result = await runSME({
-                sme_id: this.sme.sme_id,
-                message,
+            this.isRunningSRE = true;
+            const result = await runSRE({
+                sre_id: this.sre.sre_id,
+                prompt,
             });
             this.runResult = result;
         } catch (error) {
@@ -333,7 +333,7 @@ class SingleMessageEndpointBuilderStore {
                 message: (error as Error).message,
             });
         } finally {
-            this.isRunningSME = false;
+            this.isRunningSRE = false;
         }
     }
 
@@ -342,4 +342,4 @@ class SingleMessageEndpointBuilderStore {
     }
 }
 
-export const smeBuilderStore = new SingleMessageEndpointBuilderStore();
+export const sreBuilderStore = new StructuredResponseEndpointBuilderStore();

@@ -1,12 +1,12 @@
 import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from "@/app/components/AlertProvider";
-import { SingleMessageEndpoint } from '@/types/singlemessageendpoint';
-import { getSMEs } from '@/api/singlemessageendpoint/getSMEs';
+import { StructuredResponseEndpoint } from '@/types/structuredresponseendpoint';
+import { getSREs } from '@/api/structuredresponseendpoint/getSREs';
 
-class SingleMessageEndpointsStore {
+class StructuredResponseEndpointsStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
-    smes: SingleMessageEndpoint[] | undefined = undefined;
-    smesLoading = false;
+    sres: StructuredResponseEndpoint[] | undefined = undefined;
+    sresLoading = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -16,27 +16,27 @@ class SingleMessageEndpointsStore {
         this.showAlert = showAlert;
     }
 
-    async loadSMEs(force: boolean = false) {
-        if (!force && this.smes) {
+    async loadSREs(force: boolean = false) {
+        if (!force && this.sres) {
             return;
         }
 
         try {
-            this.smesLoading = true;
-            this.smes = await getSMEs();
+            this.sresLoading = true;
+            this.sres = await getSREs();
         } catch (error) {
             this.showAlert({
                 title: "Whoops",
                 message: (error as Error).message
             });
         } finally {
-            this.smesLoading = false;
+            this.sresLoading = false;
         }
     }
 
     reset = () => {
-        this.smes = undefined;
+        this.sres = undefined;
     }
 }
 
-export const singleMessageEndpointsStore = new SingleMessageEndpointsStore();
+export const structuredResponseEndpointsStore = new StructuredResponseEndpointsStore();

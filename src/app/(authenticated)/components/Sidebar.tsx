@@ -48,7 +48,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
         { icon: FiTool, title: 'Agent Tools', route: '/tools' },
-        { icon: VscJson, title: 'SMEs', route: '/smes' },
+        { icon: VscJson, title: 'Structured Responses', route: '/sres' },
     ];
 
     return (

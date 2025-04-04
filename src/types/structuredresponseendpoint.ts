@@ -1,5 +1,5 @@
-export interface SingleMessageEndpoint {
-    sme_id: string;
+export interface StructuredResponseEndpoint {
+    sre_id: string;
     org_id: string;
     name: string;
     description?: string;

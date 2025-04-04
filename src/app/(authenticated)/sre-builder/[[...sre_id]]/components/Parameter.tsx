@@ -1,4 +1,4 @@
-import { smeBuilderStore } from "@/store/SingleMessageEndpointBuilderStore";
+import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore";
 import { Parameter } from "@/types/parameterdefinition";
 import { CloseIcon } from "@chakra-ui/icons";
 
@@ -26,9 +26,9 @@ export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, p
             <Flex direction="row" align="space-between">
                 <FormControl>
                     <Input
-                        placeholder={isEnumOption ? "Option..." : "Param Name..."}
+                        placeholder={isEnumOption ? "Option..." : "Field Name..."}
                         value={param.name}
-                        onChange={(e) => smeBuilderStore.setParameterName(indexArray, e.target.value)}
+                        onChange={(e) => sreBuilderStore.setParameterName(indexArray, e.target.value)}
                     />
                 </FormControl>
                 {showDelete && <IconButton
@@ -37,7 +37,7 @@ export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, p
                     variant="ghost"
                     color="inherit"
                     _hover={{ bg: 'gray.200', _dark: { bg: 'gray.700' } }}
-                    onClick={() => smeBuilderStore.deleteParameter(indexArray)}
+                    onClick={() => sreBuilderStore.deleteParameter(indexArray)}
                 />}
             </Flex>
 
@@ -48,7 +48,7 @@ export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, p
                         <Input
                             placeholder="Description..."
                             value={param.description}
-                            onChange={(e) => smeBuilderStore.setParameterDescription(indexArray, e.target.value)}
+                            onChange={(e) => sreBuilderStore.setParameterDescription(indexArray, e.target.value)}
                         />
                     </FormControl>
 
@@ -56,7 +56,7 @@ export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, p
                     <FormControl>
                         <Select
                             value={param.type}
-                            onChange={(e) => smeBuilderStore.setParameterType(indexArray, e.target.value as "string" | "number" | "boolean" | "object" | "array" | "enum")}
+                            onChange={(e) => sreBuilderStore.setParameterType(indexArray, e.target.value as "string" | "number" | "boolean" | "object" | "array" | "enum")}
                         >
                             <option value="string">String</option>
                             <option value="number">Number</option>
@@ -78,10 +78,10 @@ export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, p
                             ))}
                             {/* Add Sub Parameter Button */}
                             <Button
-                                onClick={() => smeBuilderStore.addParameter(indexArray)}
+                                onClick={() => sreBuilderStore.addParameter(indexArray)}
                                 size="lg"
                                 variant="outline"
-                            >Add Sub Parameter</Button>
+                            >Add Sub Field</Button>
                         </Flex>
 
                     ) : null}
@@ -105,7 +105,7 @@ export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, p
                             ))}
                             {/* Add Enum Option Button */}
                             <Button
-                                onClick={() => smeBuilderStore.addParameter(indexArray)}
+                                onClick={() => sreBuilderStore.addParameter(indexArray)}
                                 size="lg"
                                 variant="outline"
                             >Add Enum Option</Button>

@@ -3,14 +3,14 @@ import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 import { AnyType } from "@/types/tools";
 
 
-export interface RunSMEPayload {
-    sme_id: string;
-    message: string;
+export interface RunSREPayload {
+    sre_id: string;
+    prompt: string;
 }
 
-export async function runSME(payload: RunSMEPayload): Promise<AnyType> {
+export async function runSRE(payload: RunSREPayload): Promise<AnyType> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/run-sme/${payload.sme_id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/run-sre/${payload.sre_id}`, {
         method: 'POST',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
@@ -20,7 +20,7 @@ export async function runSME(payload: RunSMEPayload): Promise<AnyType> {
     });
     return await checkResponseAndGetJson(response) as unknown as AnyType;
   } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred running the SingleMessageEndpoint';
+    const errorMessage = (error as Error).message || 'An unknown error occurred running the StructuredResponseEndpoint';
     throw Error(errorMessage);
   }
 }

@@ -1,9 +1,9 @@
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
-export async function deleteSME(smeId: string): Promise<void> {
+export async function deleteSRE(sreId: string): Promise<void> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sme/${smeId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/sre/${sreId}`, {
         method: 'DELETE',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
@@ -13,7 +13,7 @@ export async function deleteSME(smeId: string): Promise<void> {
 
     await checkResponseAndGetJson(response);
   } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred deleting the SingleMessageEndpoint';
+    const errorMessage = (error as Error).message || 'An unknown error occurred deleting the StructuredResponseEndpoint';
     throw Error(errorMessage);
   }
 }
