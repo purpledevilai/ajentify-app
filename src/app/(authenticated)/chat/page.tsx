@@ -53,7 +53,7 @@ const ChatPage = observer(() => {
     return (
         <Flex direction="column" height="100%" p={2}>
             {/* Page Heading */}
-            <ChatHeading onMobileChatDrawerOpen={onMobileChatDrawerOpen} />
+            <ChatHeading onMobileChatDrawerOpen={onMobileChatDrawerOpen} context_id={chatPageStore.currentContext?.context_id}/>
 
             {/* Body */}
             <Flex flex="1" direction="row" gap={4}>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from "react";
+import { TokenStreamingService } from "@/api/tokenstreamingservice/TokenStreamingService";
 import { Box } from "@chakra-ui/react";
 import { MessagesArea } from "./MessagesArea";
 import { UserInput } from "./UserInput";
@@ -59,87 +60,75 @@ interface ChatBoxProps {
 }
 
 export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_display = false }: ChatBoxProps) => {
-
     const [responseLoading, setResponseLoading] = useState<boolean>(false);
     const [messages, setMessages] = useState<Message[]>(context.messages)
     const { showAlert } = useAlert();
-    const websocketRef = useRef<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [isConnecting, setIsConnecting] = useState<boolean>(false);
     const startNewAIMessageRef = useRef<boolean>(true);
+    const tokenStreamingServiceRef = useRef<TokenStreamingService | null>(null);
 
+    const hasInitialized = useRef(false);
     useEffect(() => {
-        if (for_display) {
-            return;
-        }
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
+        
+        if (for_display) return;
 
-        // Create WebSocket connection
-        const webSocketUrl = process.env.NEXT_PUBLIC_LIVE_AGENT_URL || "wss://live-agent-service.prod.live-agent.ajentify.com/ws";
-        const ws = new WebSocket(webSocketUrl);
-        websocketRef.current = ws;
+        const init = async () => {
+            setIsConnecting(true);
+            try {
+                const service = new TokenStreamingService(
+                    process.env.NEXT_PUBLIC_LIVE_AGENT_URL || "",
+                    context.context_id,
+                    await authStore.getAccessToken() || ''
+                );
 
-        ws.onopen = () => {
-            console.log("Connected to WebSocket server");
-            connectToContext();
-        };
+                tokenStreamingServiceRef.current = service;
 
-        ws.onmessage = (event) => {
-            const eventMessage = JSON.parse(event.data);
-            switch (eventMessage.type) {
-                case "error":
-                    showAlert({ title: "Whoops", message: eventMessage.error });
-                    break;
-                case "context_connected":
-                    if (!eventMessage.success) {
-                        showAlert({ title: "Whoops", message: "Failed to connect to context" });
-                        setIsConnected(false);
-                        setIsConnecting(false);
-                        return;
-                    }
-                    setIsConnected(true);
-                    setIsConnecting(false);
-                    setResponseLoading(eventMessage.agent_speaks_first);
-                    break;
-                case "message":
+                service.setOnToken((token: string) => {
                     if (startNewAIMessageRef.current) {
                         startNewAIMessageRef.current = false;
                         setResponseLoading(false);
                         addMessage("", "ai");
                     }
-                    appendLastAIMessageWithToken(eventMessage.message);
-                    break;
-                case "events":
+                    appendLastAIMessageWithToken(token);
+                });
+
+                service.setOnToolCall((id, name, input) => {
+                    console.log("Tool call:", id, name, input);
+                });
+
+                service.setOnToolResponse((id, name, output) => {
+                    console.log("Tool response:", id, name, output);
+                });
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                service.setOnEvents((events, responseId) => {
+                    console.log("Received events:", events);
                     if (onEvents) {
-                        onEvents(eventMessage.events);
+                        onEvents(events);
                     }
-                    break;
+                });
+
+                await service.connect();
+                setIsConnected(true);
+            } catch (err) {
+                showAlert({ title: "Whoops", message: "Failed to connect to context." });
+                console.error("Failed to connect to context:", err);
+                setIsConnected(false);
+            } finally {
+                setIsConnecting(false);
             }
         };
 
-        // For some reason it has error on every connection - just leave it for now
-        // ws.onerror = (error) => {
-        //     console.error("WebSocket Error:", error);
-        // };
+        init();
 
-        ws.onclose = () => {
-            console.log("WebSocket connection closed");
-            setIsConnected(false);
-        };
-
-        // Cleanup on component unmount
         return () => {
-            ws.close();
+            tokenStreamingServiceRef.current?.close();
         };
     }, []);
 
-    const connectToContext = async () => {
-        setIsConnecting(true);
-        websocketRef.current?.send(JSON.stringify({
-            type: "connect_to_context",
-            context_id: context.context_id,
-            access_token: await authStore.getAccessToken() || ''
-        }));
-    }
 
     const sendMessage = async (message: string) => {
         if (!isConnected) {
@@ -148,22 +137,21 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                 message: "Not connected to context",
                 actions: [
                     { label: "close", onClick: undefined },
-                    { label: "Reconnect", onClick: connectToContext }
+                    { label: "Reconnect", onClick: () => tokenStreamingServiceRef.current?.connect() }
                 ]
             });
             return;
         }
+
         try {
             addMessage(message, "human");
             startNewAIMessageRef.current = true;
             setResponseLoading(true);
-            websocketRef.current?.send(JSON.stringify({ type: "message", message }));
+            await tokenStreamingServiceRef.current?.addMessage(message);
         } catch (error) {
-            showAlert({ title: "Whoops", message: (error as Error).message })
-        } finally {
-            
+            showAlert({ title: "Whoops", message: (error as Error).message });
         }
-    }
+    };
 
     const addMessage = (message: string, sender: "ai" | "human") => {
         setMessages((prevMessages) => [
