@@ -4,11 +4,16 @@ import { Context } from "@/types/context";
 
 export interface GetContextPayload {
     context_id: string;
+    with_tool_calls?: boolean;
 }
 
-export async function getContext({context_id}: GetContextPayload): Promise<Context> {
+export async function getContext({context_id, with_tool_calls}: GetContextPayload): Promise<Context> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context/${context_id}`, {
+    let queryParams = '';
+    if (with_tool_calls) {
+      queryParams += `?with_tool_calls=true`;
+    }
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context/${context_id}${queryParams}`, {
         method: 'GET',
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
