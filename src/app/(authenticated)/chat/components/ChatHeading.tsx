@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HamburgerIcon, CopyIcon, CheckIcon } from "@chakra-ui/icons";
 import {
     Flex,
@@ -19,7 +19,7 @@ import {
     Box
 } from "@chakra-ui/react";
 import { getContext } from '@/api/context/getContext';
-import { Message } from "@/types/context";
+import { Context, Message } from "@/types/context";
 
 
 interface ChatHeadingProps {
@@ -32,7 +32,7 @@ export const ChatHeading = ({ onMobileChatDrawerOpen, context_id }: ChatHeadingP
     const { hasCopied, onCopy } = useClipboard(context_id || "");
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [loading, setLoading] = useState(false);
-    const [contextData, setContextData] = useState<any>(null);
+    const [contextData, setContextData] = useState<Context | undefined>(undefined);
 
     const handleOpenModal = async () => {
         if (!context_id) return;
