@@ -163,7 +163,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
     const appendLastAIMessageWithToken = (token: string) => {
         setMessages((prevMessages) => {
             return prevMessages.map((msg, index) =>
-                index === prevMessages.length - 1 && msg.sender === "ai"
+                index === prevMessages.length - 1 && 'sender' in msg && msg.sender === "ai"
                     ? { ...msg, message: msg.message + token }
                     : msg
             );
