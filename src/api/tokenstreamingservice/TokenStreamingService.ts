@@ -8,8 +8,6 @@ export class TokenStreamingService {
     private accessToken: string;
     private websocket?: SimpleWebSocketClient;
     private tokenStreamingService?: JSONRPCPeer;
-    private tokenQueue: string[] = [];
-    private queueListeners: ((token: string) => void)[] = [];
 
     private onTokenCallback?: (token: string) => void;
     private onToolCallCallback?: (id: string, name: string, input: string) => void;
@@ -60,6 +58,10 @@ export class TokenStreamingService {
 
     setOnEvents(cb: (events: any[], responseId: string) => void) {
         this.onEventsCallback = cb;
+    }
+
+    setOnClose(cb: () => void) {
+        this.websocket?.setOnClose(cb);
     }
 
     private async _onToken(token: string, responseId: string): Promise<void> {

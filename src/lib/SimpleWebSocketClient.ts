@@ -2,6 +2,7 @@ export class SimpleWebSocketClient {
     private url: string;
     private socket?: WebSocket;
     private onMessageCallback?: (msg: string) => void;
+    private onCloseCallback?: () => void;
 
     constructor(url: string) {
         this.url = url;
@@ -9,6 +10,10 @@ export class SimpleWebSocketClient {
 
     setOnMessage(callback: (msg: string) => void): void {
         this.onMessageCallback = callback;
+    }
+
+    setOnClose(callback: () => void): void {
+        this.onCloseCallback = callback;
     }
 
     async connect(): Promise<void> {
@@ -30,6 +35,9 @@ export class SimpleWebSocketClient {
 
             this.socket.onclose = () => {
                 console.log('WebSocket closed.');
+                if (this.onCloseCallback) {
+                    this.onCloseCallback();
+                }
             };
         });
     }

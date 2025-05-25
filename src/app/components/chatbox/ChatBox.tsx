@@ -67,12 +67,14 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
     const [isConnecting, setIsConnecting] = useState<boolean>(false);
     const startNewAIMessageRef = useRef<boolean>(true);
     const tokenStreamingServiceRef = useRef<TokenStreamingService | null>(null);
+    const [activeToolCall, setActiveToolCall] = useState<{ name: string, input: string } | null>(null);
+
 
     const hasInitialized = useRef(false);
     useEffect(() => {
         if (hasInitialized.current) return;
         hasInitialized.current = true;
-        
+
         if (for_display) return;
 
         const init = async () => {
@@ -97,10 +99,12 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
 
                 service.setOnToolCall((id, name, input) => {
                     console.log("Tool call:", id, name, input);
+                    setActiveToolCall({ name, input });
                 });
 
                 service.setOnToolResponse((id, name, output) => {
                     console.log("Tool response:", id, name, output);
+                    setActiveToolCall(null);
                 });
 
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -109,6 +113,13 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                     if (onEvents) {
                         onEvents(events);
                     }
+                });
+
+                service.setOnClose(() => {
+                    console.log("WebSocket closed");
+                    setIsConnected(false);
+                    setIsConnecting(false);
+                    showAlert({ title: "Connection Lost", message: "The connection to the context has been lost." });
                 });
 
                 await service.connect();
@@ -132,7 +143,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
 
     const sendMessage = async (message: string) => {
         if (!isConnected) {
-            showAlert({ 
+            showAlert({
                 title: "Whoops",
                 message: "Not connected to context",
                 actions: [
@@ -172,7 +183,12 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
 
     return (
         <Box width="100%" height="100%" position="relative">
-            <MessagesArea messages={messages} responseLoading={responseLoading} style={style} />
+            <MessagesArea
+                messages={messages}
+                responseLoading={responseLoading}
+                style={style}
+                activeToolCall={activeToolCall}
+            />
             <UserInput onMessage={sendMessage} style={style} isConnecting={isConnecting} />
         </Box>
     );
