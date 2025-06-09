@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, computed } from "mobx";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 import { authStore } from "./AuthStore";
 import { Parameter } from "@/types/parameterdefinition";
@@ -20,6 +20,7 @@ const defaultSRE: StructuredResponseEndpoint = {
     name: '',
     description: '',
     pd_id: '',
+    prompt_template: '',
     is_public: false,
     created_at: 0,
     updated_at: 0,
@@ -50,9 +51,25 @@ class StructuredResponseEndpointBuilderStore {
     runResult: AnyType | undefined = undefined;
     hasUpdatedSRE = false;
     hasUpdatedParameterDefinition = false;
+    templateArgsInput: Record<string, string> = {};
+    get templateArgs(): string[] {
+        const matches = this.sre.prompt_template?.match(/\{([^}]+)\}/g) || [];
+        return matches.map((m) => m.replace(/[{}]/g, ""));
+    }
 
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            templateArgs: computed,
+        });
+        this.syncTemplateArgsInput();
+    }
+
+    syncTemplateArgsInput = () => {
+        const filtered: Record<string, string> = {};
+        for (const arg of this.templateArgs) {
+            filtered[arg] = this.templateArgsInput[arg] ?? '';
+        }
+        this.templateArgsInput = filtered;
     }
 
     reset = () => {
@@ -68,6 +85,8 @@ class StructuredResponseEndpointBuilderStore {
         this.runResult = undefined;
         this.hasUpdatedSRE = false;
         this.hasUpdatedParameterDefinition = false;
+        this.templateArgsInput = {};
+        this.syncTemplateArgsInput();
     }
 
     setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
@@ -79,6 +98,7 @@ class StructuredResponseEndpointBuilderStore {
             ...defaultSRE,
             org_id: authStore.user?.organizations[0].id || '',
         };
+        this.syncTemplateArgsInput();
     }
 
     setIsNewSme = (isNewSme: boolean) => {
@@ -92,6 +112,7 @@ class StructuredResponseEndpointBuilderStore {
     setSRE = (sre: StructuredResponseEndpoint) => {
         this.sre = sre;
         this.loadParameterDefinition(sre.pd_id);
+        this.syncTemplateArgsInput();
     }
 
     setSREWithId = async (sreId: string) => {
@@ -138,6 +159,12 @@ class StructuredResponseEndpointBuilderStore {
     setDescription = (description: string) => {
         this.sre.description = description;
         this.hasUpdatedSRE = true;
+    }
+
+    setPromptTemplate = (template: string) => {
+        this.sre.prompt_template = template;
+        this.hasUpdatedSRE = true;
+        this.syncTemplateArgsInput();
     }
 
     setIsPublic = (isPublic: boolean) => {
@@ -241,6 +268,10 @@ class StructuredResponseEndpointBuilderStore {
         this.hasUpdatedParameterDefinition = true;
     }
 
+    updateTemplateArg = (key: string, value: string) => {
+        this.templateArgsInput[key] = value;
+    }
+
     // CRUD
 
     saveSRE = async (): Promise<boolean> => {
@@ -310,12 +341,12 @@ class StructuredResponseEndpointBuilderStore {
 
     // RUNNING
 
-    runSRE = async (prompt: string): Promise<void> => {
+    runSRE = async (): Promise<void> => {
         try {
             this.isRunningSRE = true;
             const result = await runSRE({
                 sre_id: this.sre.sre_id,
-                prompt,
+                prompt_args: this.templateArgsInput,
             });
             this.runResult = result;
         } catch (error) {

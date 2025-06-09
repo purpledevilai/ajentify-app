@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigationGuard } from "next-navigation-guard";
 import {
   Flex, FormControl, Heading, IconButton, Input, Button, Tooltip, Textarea, Box, Switch,
   Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
-  useColorMode
+  useColorMode, Text,
+  FormLabel
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
@@ -29,7 +30,6 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
   const isShowingNavAlert = useRef(false);
 
   const { showAlert } = useAlert();
-  const [prompt, setPrompt] = useState("");
   const resultBackgroundColor = useColorMode().colorMode === 'dark' ? "#2b2b2b" : "#f7f7f7";
 
   useEffect(() => {
@@ -125,7 +125,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
   const onRunSRE = async () => {
     const success = await sreBuilderStore.saveSRE();
     if (!success) return;
-    await sreBuilderStore.runSRE(prompt);
+    await sreBuilderStore.runSRE();
   };
 
 
@@ -173,6 +173,30 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           />
         </FormControl>
 
+        {/* Prompt Template */}
+        <FormControl>
+          <FormLabelToolTip
+            label="Prompt Template"
+            tooltip="Template used when calling this endpoint. Variables should be wrapped in curly braces."
+          />
+          <Textarea
+            mt={2}
+            placeholder="Extract order details from the following text: {message}"
+            value={sreBuilderStore.sre.prompt_template}
+            onChange={(e) => sreBuilderStore.setPromptTemplate(e.target.value)}
+            rows={5}
+          />
+        </FormControl>
+
+        {sreBuilderStore.templateArgs.length > 0 && (
+          <Flex direction="column" w="100%" mt={2} gap={2}>
+            <Heading size="sm">Template Args</Heading>
+            {sreBuilderStore.templateArgs.map((arg, idx) => (
+              <Text key={idx}>- {arg}</Text>
+            ))}
+          </Flex>
+        )}
+
         {/* SRE Is Public */}
         <FormControl>
           <FormLabelToolTip
@@ -211,18 +235,21 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
         {/* Run SRE Test */}
         <Heading size="md">Test Structured Response Endpoint</Heading>
-        <FormControl>
-          <FormLabelToolTip
-            label="Prompt"
-            tooltip="Paste a prompt here to test what the SRE extracts."
-          />
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Hi, my name is John Doe and I ordered a laptop yesterday..."
-            rows={5}
-          />
-        </FormControl>
+
+        {sreBuilderStore.templateArgs.length > 0 && (
+          <Flex direction="column" gap={4} mt={4} w="100%">
+            {sreBuilderStore.templateArgs.map((arg, idx) => (
+              <FormControl key={idx}>
+                <FormLabel>{arg}</FormLabel>
+                <Input
+                  placeholder="Value"
+                  value={sreBuilderStore.templateArgsInput[arg] ?? ''}
+                  onChange={(e) => sreBuilderStore.updateTemplateArg(arg, e.target.value)}
+                />
+              </FormControl>
+            ))}
+          </Flex>
+        )}
 
         <Button
           onClick={onRunSRE}
