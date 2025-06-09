@@ -7,6 +7,7 @@ interface UpdateSREPayload {
     name?: string;
     description?: string;
     is_public?: boolean;
+    prompt_template?: string;
 }
 
 export async function updateSRE(payload: UpdateSREPayload): Promise<StructuredResponseEndpoint> {

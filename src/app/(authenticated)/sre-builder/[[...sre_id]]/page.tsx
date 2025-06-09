@@ -5,7 +5,7 @@ import { useNavigationGuard } from "next-navigation-guard";
 import {
   Flex, FormControl, Heading, IconButton, Input, Button, Tooltip, Textarea, Box, Switch,
   Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
-  useColorMode
+  useColorMode, Text
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
@@ -172,6 +172,30 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
             onChange={(e) => sreBuilderStore.setDescription(e.target.value)}
           />
         </FormControl>
+
+        {/* Prompt Template */}
+        <FormControl>
+          <FormLabelToolTip
+            label="Prompt Template"
+            tooltip="Template used when calling this endpoint. Variables should be wrapped in curly braces."
+          />
+          <Textarea
+            mt={2}
+            placeholder="Extract order details from the following text: {message}"
+            value={sreBuilderStore.sre.prompt_template}
+            onChange={(e) => sreBuilderStore.setPromptTemplate(e.target.value)}
+            rows={5}
+          />
+        </FormControl>
+
+        {sreBuilderStore.templateArgs.length > 0 && (
+          <Flex direction="column" w="100%" mt={2} gap={2}>
+            <Heading size="sm">Template Args</Heading>
+            {sreBuilderStore.templateArgs.map((arg, idx) => (
+              <Text key={idx}>- {arg}</Text>
+            ))}
+          </Flex>
+        )}
 
         {/* SRE Is Public */}
         <FormControl>

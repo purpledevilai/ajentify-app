@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, computed } from "mobx";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 import { authStore } from "./AuthStore";
 import { Parameter } from "@/types/parameterdefinition";
@@ -20,6 +20,7 @@ const defaultSRE: StructuredResponseEndpoint = {
     name: '',
     description: '',
     pd_id: '',
+    prompt_template: '',
     is_public: false,
     created_at: 0,
     updated_at: 0,
@@ -50,9 +51,15 @@ class StructuredResponseEndpointBuilderStore {
     runResult: AnyType | undefined = undefined;
     hasUpdatedSRE = false;
     hasUpdatedParameterDefinition = false;
+    get templateArgs(): string[] {
+        const matches = this.sre.prompt_template?.match(/\{([^}]+)\}/g) || [];
+        return matches.map((m) => m.replace(/[{}]/g, ""));
+    }
 
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            templateArgs: computed,
+        });
     }
 
     reset = () => {
@@ -137,6 +144,11 @@ class StructuredResponseEndpointBuilderStore {
 
     setDescription = (description: string) => {
         this.sre.description = description;
+        this.hasUpdatedSRE = true;
+    }
+
+    setPromptTemplate = (template: string) => {
+        this.sre.prompt_template = template;
         this.hasUpdatedSRE = true;
     }
 
