@@ -341,12 +341,11 @@ class StructuredResponseEndpointBuilderStore {
 
     // RUNNING
 
-    runSRE = async (prompt: string): Promise<void> => {
+    runSRE = async (): Promise<void> => {
         try {
             this.isRunningSRE = true;
             const result = await runSRE({
                 sre_id: this.sre.sre_id,
-                prompt,
                 prompt_args: this.templateArgsInput,
             });
             this.runResult = result;
