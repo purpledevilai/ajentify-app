@@ -248,6 +248,21 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           />
         </FormControl>
 
+        {sreBuilderStore.templateArgs.length > 0 && (
+          <Flex direction="column" gap={4} mt={4} w="100%">
+            {sreBuilderStore.templateArgs.map((arg, idx) => (
+              <FormControl key={idx}>
+                <FormLabel>{arg}</FormLabel>
+                <Input
+                  placeholder="Value"
+                  value={sreBuilderStore.templateArgsInput[arg] ?? ''}
+                  onChange={(e) => sreBuilderStore.updateTemplateArg(arg, e.target.value)}
+                />
+              </FormControl>
+            ))}
+          </Flex>
+        )}
+
         <Button
           onClick={onRunSRE}
           variant={"outline"}
