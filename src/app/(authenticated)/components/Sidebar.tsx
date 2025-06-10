@@ -22,7 +22,7 @@ import { RiRobot3Fill } from "react-icons/ri";
 import { MdChatBubble } from "react-icons/md";
 import { BiDotsVerticalRounded } from 'react-icons/bi';
 import { MdOutlineWebAsset } from "react-icons/md";
-import { FiTool } from "react-icons/fi";
+import { FiTool, FiFileText } from "react-icons/fi";
 import { VscJson } from "react-icons/vsc";
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
@@ -46,6 +46,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
     const tabs = [
         { icon: RiRobot3Fill, title: 'Agents', route: '/agents' },
         { icon: FiTool, title: 'Agent Tools', route: '/tools' },
+        { icon: FiFileText, title: 'Documents', route: '/documents' },
         { icon: VscJson, title: 'Structured Responses', route: '/sres' },
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
