@@ -11,7 +11,7 @@ export async function getJsonDocuments(): Promise<JsonDocument[]> {
             },
         });
         const obj = await checkResponseAndGetJson(response);
-        return obj["documents"] as JsonDocument[];
+        return obj["json_documents"] as JsonDocument[];
     } catch (error) {
         const errorMessage = (error as Error).message || 'An unknown error occurred getting the documents';
         throw Error(errorMessage);

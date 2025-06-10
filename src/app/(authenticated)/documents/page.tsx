@@ -27,7 +27,7 @@ const DocumentsPage = observer(() => {
     if (!authStore.signedIn) return;
     jsonDocumentsStore.setShowAlert(showAlert);
     jsonDocumentsStore.loadDocuments();
-  });
+  }, []);
 
   const handleAddDocumentClick = () => {
     jsonDocumentBuilderStore.reset();
