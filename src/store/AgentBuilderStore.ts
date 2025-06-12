@@ -55,7 +55,7 @@ class AgentBuilderStore {
     agentTools: string[] = [
         'pass_event',
         'custom_code',
-        'api_call'
+        'jira_tools'
     ]
     presentedAgentTool: string = 'pass_event';
 
