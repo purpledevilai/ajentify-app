@@ -43,7 +43,9 @@ const IntegrationBuilderPage = observer(({ params }: IntegrationBuilderPageProps
 
   const onConnectJira = () => {
     const userId = authStore.user?.id || '';
-    const url = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=chQV2R1rUq7Ydx9tznQrR32b5TWEfmTk&scope=read%3Ajira-work%20write%3Ajira-work&redirect_uri=https%3A%2F%2Fwww.ajentify.com%2Foath-grant-response&state=${userId}&response_type=code&prompt=consent`;
+    const callBackUrl = encodeURIComponent(`${window.location.origin}/oath-grant-response`);
+    const clientId = process.env.NEXT_PUBLIC_JIRA_CLIENT_ID;
+    const url = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=${clientId}&scope=read%3Ajira-work%20write%3Ajira-work%20offline_access&redirect_uri=${callBackUrl}&state=${userId}&response_type=code&prompt=consent`;
     window.location.href = url;
   };
 

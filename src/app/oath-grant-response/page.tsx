@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { sendJiraAuthCode } from '@/api/integration/sendJiraAuthCode';
 import { integrationsStore } from '@/store/IntegrationsStore';
@@ -11,7 +11,10 @@ export default function OAuthGrantResponsePage() {
   const router = useRouter();
   const { showAlert } = useAlert();
 
+  const hasSentCode = useRef(false);
   useEffect(() => {
+    if (hasSentCode.current) return;
+    hasSentCode.current = true;
     const code = params.get('code');
     if (!code) return;
     const run = async () => {
