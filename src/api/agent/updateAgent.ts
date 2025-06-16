@@ -9,6 +9,7 @@ interface UpdateAgentPayload {
     is_public: boolean;
     prompt: string;
     agent_speaks_first: boolean;
+    voice_id?: string;
     tools?: string[];
     uses_prompt_args?: boolean;
 }

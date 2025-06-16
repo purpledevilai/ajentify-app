@@ -5,6 +5,8 @@ import { useNavigationGuard } from "next-navigation-guard";
 import {
     Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
+    Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
+    Tag, TagLabel, TagCloseButton,
     useColorMode,
     useClipboard,
     FormLabel
@@ -256,33 +258,76 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     />
                 </FormControl>
 
-                {/* Toggles */}
-                <FormControl width="auto">
-                    <FormLabelToolTip
-                        label="Public Agent"
-                        tooltip="If not public, only you and your organization can talk to this agent"
-                    />
-                    <Switch
-                        mt={2}
-                        colorScheme="purple"
-                        size="lg"
-                        isChecked={agentBuilderStore.currentAgent.is_public}
-                        onChange={(e) => agentBuilderStore.setBooleanField("is_public", e.target.checked)}
-                    />
-                </FormControl>
-                <FormControl width="auto">
-                    <FormLabelToolTip
-                        label="Agent Speaks First"
-                        tooltip="When a new context with this agent is created, the agent will generate the first message."
-                    />
-                    <Switch
-                        mt={2}
-                        colorScheme="purple"
-                        size="lg"
-                        isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
-                        onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
-                    />
-                </FormControl>
+                {/* Configuration */}
+                <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={4}>
+                    <Heading size="sm">Configuration</Heading>
+
+                    {/* Voice ID */}
+                    <FormControl>
+                        <FormLabelToolTip
+                            label="Voice ID"
+                            tooltip="Optional ElevenLabs voice ID for agent responses"
+                        />
+                        <Input
+                            mt={2}
+                            placeholder="ElevenLabs voice id"
+                            value={agentBuilderStore.currentAgent.voice_id}
+                            onChange={(e) => agentBuilderStore.setStringField("voice_id", e.target.value)}
+                        />
+                    </FormControl>
+                    {/* Toggles */}
+                    <FormControl width="auto">
+                        <FormLabelToolTip
+                            label="Public Agent"
+                            tooltip="If not public, only you and your organization can talk to this agent"
+                        />
+                        <Switch
+                            mt={2}
+                            colorScheme="purple"
+                            size="lg"
+                            isChecked={agentBuilderStore.currentAgent.is_public}
+                            onChange={(e) => agentBuilderStore.setBooleanField("is_public", e.target.checked)}
+                        />
+                    </FormControl>
+                    <FormControl width="auto">
+                        <FormLabelToolTip
+                            label="Agent Speaks First"
+                            tooltip="When a new context with this agent is created, the agent will generate the first message."
+                        />
+                        <Switch
+                            mt={2}
+                            colorScheme="purple"
+                            size="lg"
+                            isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
+                            onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
+                        />
+                    </FormControl>
+
+                    {/* Prompt Args Toggle */}
+                    <FormControl>
+                        <FormLabelToolTip
+                            label="Uses Prompt Args"
+                            tooltip="If enabled, the agent will accept arguments, ie. variables placed in curlly brackets, in the prompt. Set these variables when you create the context."
+                        />
+                        <Switch
+                            mt={2}
+                            colorScheme="purple"
+                            size="lg"
+                            isChecked={agentBuilderStore.currentAgent.uses_prompt_args}
+                            onChange={(e) => agentBuilderStore.setBooleanField("uses_prompt_args", e.target.checked)}
+                        />
+                    </FormControl>
+
+                    {/* Prompt Args List */}
+                    {agentBuilderStore.currentAgent.uses_prompt_args && (
+                        <Flex direction="column" w="100%" mt={2} gap={4}>
+                            <Heading size="sm">Prompt Args</Heading>
+                            {agentBuilderStore.promptArgs.map((arg, index) => (
+                                <Text key={index}>- {arg}</Text>
+                            ))}
+                        </Flex>
+                    )}
+                </Flex>
 
                 {/* Agent Tool Bar */}
                 <FormControl>
@@ -293,43 +338,14 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     <Flex direction="row" wrap="wrap" gap={2} mt={2}>
                         <Button size="sm" onClick={onOpenToolPickerModal}>Add Tool</Button>
                         {agentBuilderStore.tools.map((tool, index) => (
-                            <Button
-                                key={index}
-                                size="sm"
-                                variant="outline"
-                                colorScheme="purple"
-                                onClick={() => onRemoveTool(tool)}
-                            >
-                                {tool.name}
-                            </Button>
+                            <Tag key={index} colorScheme="purple" borderRadius="full">
+                                <TagLabel>{tool.name}</TagLabel>
+                                <TagCloseButton onClick={() => onRemoveTool(tool)} />
+                            </Tag>
                         ))}
                     </Flex>
                 </FormControl>
 
-                {/* Prompt Args Toggle */}
-                <FormControl>
-                    <FormLabelToolTip
-                        label="Uses Prompt Args"
-                        tooltip="If enabled, the agent will accept arguments, ie. variables placed in curlly brackets, in the prompt. Set these variables when you create the context."
-                    />
-                    <Switch
-                        mt={2}
-                        colorScheme="purple"
-                        size="lg"
-                        isChecked={agentBuilderStore.currentAgent.uses_prompt_args}
-                        onChange={(e) => agentBuilderStore.setBooleanField("uses_prompt_args", e.target.checked)}
-                    />
-                </FormControl>
-
-                {/* Prompt Args List */}
-                {agentBuilderStore.currentAgent.uses_prompt_args && (
-                    <Flex direction="column" w="100%" mt={2} gap={4}>
-                        <Heading size="sm">Prompt Args</Heading>
-                        {agentBuilderStore.promptArgs.map((arg, index) => (
-                            <Text key={index}>- {arg}</Text>
-                        ))}
-                    </Flex>
-                )}
 
                 {/* Agent Prompt */}
                 <FormControl>
@@ -405,27 +421,27 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 </ModalContent>
             </Modal>
 
-            {/* Prompt engineer modal */}
-            <Modal isOpen={isPromptEngineerModalOpen} onClose={beforeClosePromptEngineerModal} size="2xl">
-                <ModalOverlay />
-                <ModalContent>
-                    <ModalHeader>Prompt Engineer</ModalHeader>
-                    <ModalCloseButton />
-                    <ModalBody>
-                        <Flex h="70vh" w="100%">
+            {/* Prompt engineer drawer */}
+            <Drawer isOpen={isPromptEngineerModalOpen} placement="right" onClose={beforeClosePromptEngineerModal} size="md">
+                <DrawerOverlay />
+                <DrawerContent>
+                    <DrawerHeader>Prompt Engineer</DrawerHeader>
+                    <DrawerCloseButton />
+                    <DrawerBody>
+                        <Flex h="100%" w="100%" direction="column">
                             <ContentOrSpinner showSpinner={agentBuilderStore.promptEngineerContextLoading}>
-                                {agentBuilderStore.promptEngineerContext &&
+                                {agentBuilderStore.promptEngineerContext && (
                                     <ChatBox
                                         context={agentBuilderStore.promptEngineerContext}
                                         style={chatBoxStyle}
                                         onEvents={onChatEvents}
                                     />
-                                }
+                                )}
                             </ContentOrSpinner>
                         </Flex>
-                    </ModalBody>
-                </ModalContent>
-            </Modal>
+                    </DrawerBody>
+                </DrawerContent>
+            </Drawer>
 
 
             {/* Test modal */}
