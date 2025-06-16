@@ -14,6 +14,7 @@ import { Tool } from "@/types/tools";
 interface AgentStringFields {
     agent_name: string;
     agent_description: string;
+    voice_id: string;
     prompt: string;
 }
 
@@ -33,6 +34,7 @@ class AgentBuilderStore {
         agent_id: '',
         agent_name: '',
         agent_description: '',
+        voice_id: '',
         is_public: false,
         agent_speaks_first: false,
         uses_prompt_args: false,
@@ -85,6 +87,7 @@ class AgentBuilderStore {
             agent_id: '',
             agent_name: '',
             agent_description: '',
+            voice_id: '',
             is_public: false,
             agent_speaks_first: false,
             uses_prompt_args: false,
@@ -201,6 +204,7 @@ class AgentBuilderStore {
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
+                voice_id: this.currentAgent.voice_id,
                 tools: this.currentAgent.tools,
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
             });
@@ -233,6 +237,7 @@ class AgentBuilderStore {
                 is_public: this.currentAgent.is_public,
                 prompt: this.currentAgent.prompt,
                 agent_speaks_first: this.currentAgent.agent_speaks_first,
+                voice_id: this.currentAgent.voice_id,
                 tools: this.currentAgent.tools,
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
             });
@@ -348,6 +353,7 @@ class AgentBuilderStore {
                     agent_name: this.currentAgent.agent_name,
                     agent_description: this.currentAgent.agent_description,
                     agent_prompt: this.currentAgent.prompt,
+                    agent_tools: JSON.stringify(this.tools),
                 }
             });
             this.promptEngineerContext = context;
