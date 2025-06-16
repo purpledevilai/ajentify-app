@@ -16,6 +16,7 @@ export default function OAuthGrantResponsePage() {
     if (hasSentCode.current) return;
     hasSentCode.current = true;
     const code = params.get('code');
+    console.log('Received code:', code);
     if (!code) return;
     const run = async () => {
       try {

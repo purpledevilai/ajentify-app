@@ -10,31 +10,49 @@ const jiraTools: Tool[] = [
         tool_id: 'jira_create_issue',
         org_id: 'jira',
         name: 'Create Issue',
-        description: 'Create a new Jira issue.'
+        description: 'Create a new Jira issue with specified details. Use this tool when you need to create a task, bug, story or other issue type in a Jira project.'
     },
     {
         tool_id: 'jira_search_issues',
         org_id: 'jira',
         name: 'Search Issues',
-        description: 'Search Jira issues in a project.'
+        description: 'Search for Jira issues using JQL (Jira Query Language). Use this tool to find existing issues matching specific criteria.'
+    },
+    {
+        tool_id: 'jira_update_issue',
+        org_id: 'jira',
+        name: 'Update Issue',
+        description: 'Update an existing Jira issue\'s summary and/or description. Use this tool to modify the details of an issue that already exists.'
     },
     {
         tool_id: 'jira_transition_issue',
         org_id: 'jira',
         name: 'Transition Issue',
-        description: 'Move an issue to a new state.'
+        description: 'Change the status of a Jira issue by applying a workflow transition. Use this tool to move issues between statuses.'
     },
     {
         tool_id: 'jira_assign_issue',
         org_id: 'jira',
         name: 'Assign Issue',
-        description: 'Assign a Jira issue to a user.'
+        description: 'Assign a Jira issue to a specific user. Use this tool when you need to allocate an issue to someone based on their account ID.'
     },
     {
-        tool_id: 'jira_manage_sprints',
+        tool_id: 'jira_unassign_issue',
         org_id: 'jira',
-        name: 'Manage Sprints',
-        description: 'Create and manage Jira sprints.'
+        name: 'Unassign Issue',
+        description: 'Remove the current assignee from a Jira issue. Use this tool to clear the assignee field, making the issue unassigned.'
+    },
+    {
+        tool_id: 'jira_get_sprints',
+        org_id: 'jira',
+        name: 'Get Sprints',
+        description: 'Retrieve all sprints from a specified Jira board. Use this tool to get information about current, future, and past sprints in an Agile board.'
+    },
+    {
+        tool_id: 'jira_get_sprint_issues',
+        org_id: 'jira',
+        name: 'Get Sprint Issues',
+        description: 'Retrieve all issues currently assigned to a specific sprint. Use this tool to see what work is planned for or in progress in a particular sprint.'
     }
 ];
 

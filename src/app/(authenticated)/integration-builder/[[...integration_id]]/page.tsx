@@ -42,10 +42,61 @@ const IntegrationBuilderPage = observer(({ params }: IntegrationBuilderPageProps
   };
 
   const onConnectJira = () => {
-    const userId = authStore.user?.id || '';
-    const callBackUrl = encodeURIComponent(`${window.location.origin}/oath-grant-response`);
-    const clientId = process.env.NEXT_PUBLIC_JIRA_CLIENT_ID;
-    const url = `https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=${clientId}&scope=read%3Ajira-work%20write%3Ajira-work%20offline_access&redirect_uri=${callBackUrl}&state=${userId}&response_type=code&prompt=consent`;
+    // Base URL and query parameters
+    const baseUrl = "https://auth.atlassian.com/authorize";
+    const clientId = process.env.NEXT_PUBLIC_JIRA_CLIENT_ID || "iNDi7s62IUH20FdOVH10kG9RTXgCaHgW";
+    const redirectUri = process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL || "http://localhost:3000/oath-grant-response";
+    const state = authStore.user?.id || '';
+    const responseType = "code";
+    const audience = "api.atlassian.com";
+    const prompt = "consent";
+    
+    // List of all required scopes
+    const scopes = [
+      // Classic Jira scopes
+      "read:jira-work",
+
+      // Granular scopes for Jira Cloud
+      "read:application-role:jira",
+      "read:avatar:jira",
+      "read:group:jira",
+      "read:field:jira",
+      "read:field.default-value:jira",
+      "read:field.option:jira",
+      "read:issue-details:jira",
+      "read:issue-type:jira",
+      "read:issue-type-hierarchy:jira",
+      "read:user:jira",
+      "read:project:jira",
+      "read:project-category:jira",
+      "read:project.component:jira",
+      "read:project.property:jira",
+      "read:project-version:jira",
+      "read:jql:jira",
+      "read:board-scope:jira-software",
+      "read:epic:jira-software",
+      "write:epic:jira-software",
+      "read:sprint:jira-software",
+      "write:sprint:jira-software",
+
+      // To allow refresh tokens
+      "offline_access"
+    ];
+    
+    // Join scopes with spaces and encode for URL
+    const scopeParam = encodeURIComponent(scopes.join(" "));
+    
+    // Construct the full URL with all parameters
+    const url = `${baseUrl}?` + 
+      `audience=${audience}&` +
+      `client_id=${clientId}&` +
+      `scope=${scopeParam}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `state=${encodeURIComponent(state)}&` +
+      `response_type=${responseType}&` +
+      `prompt=${prompt}`;
+    
+    console.log('Redirecting to Jira OAuth:', url);
     window.location.href = url;
   };
 
