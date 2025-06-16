@@ -21,6 +21,8 @@ import { observer } from "mobx-react-lite";
 import { PassEventTool } from "./components/PassEventTool";
 import { Tool } from "@/types/tools";
 import { CustomAgentTools } from "./components/CustomAgentTools";
+import { JiraTools } from "./components/JiraTools";
+import { integrationsStore } from "@/store/IntegrationsStore";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -40,10 +42,12 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const { isOpen: isToolPickerModalOpen, onOpen: onOpenToolPickerModal, onClose: onCloseToolPickerModal } = useDisclosure();
     const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
     const { showAlert } = useAlert();
+    const hasJiraIntegration = integrationsStore.integrations?.some((i) => i.type === 'jira');
 
     useEffect(() => {
         setShowAlertOnStore();
         loadAgentId();
+        integrationsStore.loadIntegrations();
 
         return () => {
             agentBuilderStore.reset();
@@ -173,6 +177,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 return <PassEventTool />;
             case 'custom_code':
                 return <CustomAgentTools />;
+            case 'jira_tools':
+                return <JiraTools />;
             default:
                 return <Text>Tool not implemented yet</Text>;
         }
@@ -387,7 +393,9 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         <Flex direction="column" gap={4}>
                             {/* Tool tab menue */}
                             <Flex direction="row" gap={4}>
-                                {agentBuilderStore.agentTools.map((toolName, index) => (
+                                {agentBuilderStore.agentTools
+                                    .filter((toolName) => toolName !== 'jira_tools' || hasJiraIntegration)
+                                    .map((toolName, index) => (
                                     <Button
                                         key={index}
                                         variant={agentBuilderStore.presentedAgentTool === toolName ? 'solid' : 'outline'}
