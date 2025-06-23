@@ -55,11 +55,12 @@ class AgentBuilderStore {
     showAgentId = false;
 
     agentTools: string[] = [
-        'pass_event',
+        'memory',
+        'web_search',
         'custom_code',
-        'api_call'
+        'pass_event'
     ]
-    presentedAgentTool: string = 'pass_event';
+    presentedAgentTool: string = 'memory';
 
     showPromptArgsInput: boolean = false;
     promptArgsInput: Record<string, string> = {};
@@ -103,7 +104,7 @@ class AgentBuilderStore {
         this.showDeleteButton = false;
         this.agentDeleteLoading = false;
         this.showAgentId = false;
-        this.presentedAgentTool = 'pass_event';
+        this.presentedAgentTool = 'memory';
         this.showPromptArgsInput = false;
         this.promptArgsInput = {};
         this.tools = [];

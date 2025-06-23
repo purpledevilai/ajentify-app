@@ -6,10 +6,7 @@ import {
     Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
-    Tag, TagLabel, TagCloseButton,
-    useColorMode,
-    useClipboard,
-    FormLabel
+    Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
@@ -23,6 +20,8 @@ import { observer } from "mobx-react-lite";
 import { PassEventTool } from "./components/PassEventTool";
 import { Tool } from "@/types/tools";
 import { CustomAgentTools } from "./components/CustomAgentTools";
+import { MemoryTools } from "./components/MemoryTools";
+import { WebSearchTools } from "./components/WebSearchTools";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -175,6 +174,10 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 return <PassEventTool />;
             case 'custom_code':
                 return <CustomAgentTools />;
+            case 'memory':
+                return <MemoryTools />;
+            case 'web_search':
+                return <WebSearchTools />;
             default:
                 return <Text>Tool not implemented yet</Text>;
         }
@@ -271,7 +274,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         <Input
                             mt={2}
                             placeholder="ElevenLabs voice id"
-                            value={agentBuilderStore.currentAgent.voice_id}
+                            value={agentBuilderStore.currentAgent.voice_id || ""}
                             onChange={(e) => agentBuilderStore.setStringField("voice_id", e.target.value)}
                         />
                     </FormControl>
@@ -328,21 +331,27 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         </Flex>
                     )}
                 </Flex>
-
                 {/* Agent Tool Bar */}
                 <FormControl>
                     <FormLabelToolTip
                         label="Agent Tools"
                         tooltip="Tools that the agent can use to help the user."
                     />
-                    <Flex direction="row" wrap="wrap" gap={2} mt={2}>
+                    <Flex direction="row" wrap="wrap" gap={2} mt={2} align="center">
                         <Button size="sm" onClick={onOpenToolPickerModal}>Add Tool</Button>
-                        {agentBuilderStore.tools.map((tool, index) => (
-                            <Tag key={index} colorScheme="purple" borderRadius="full">
-                                <TagLabel>{tool.name}</TagLabel>
-                                <TagCloseButton onClick={() => onRemoveTool(tool)} />
-                            </Tag>
-                        ))}
+                        {agentBuilderStore.isLoadingTools ? (
+                            <Flex align="center" gap={2}>
+                                <Spinner size="sm" />
+                                <Text fontSize="sm" color="gray.500">Loading tools...</Text>
+                            </Flex>
+                        ) : (
+                            agentBuilderStore.tools.map((tool, index) => (
+                                <Tag key={index} colorScheme="purple" borderRadius="full">
+                                    <TagLabel>{tool.name}</TagLabel>
+                                    <TagCloseButton onClick={() => onRemoveTool(tool)} />
+                                </Tag>
+                            ))
+                        )}
                     </Flex>
                 </FormControl>
 
@@ -461,7 +470,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                                             <Input
                                                 key={index}
                                                 placeholder="Value"
-                                                value={agentBuilderStore.promptArgsInput[arg] ?? ""}
+                                                value={agentBuilderStore.promptArgsInput[arg] || ""}
                                                 onChange={(e) => agentBuilderStore.updatePromptArg(arg, e.target.value)}
                                             />
                                         </div>
@@ -473,7 +482,6 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                                     {agentBuilderStore.agentContext && <ChatBox context={agentBuilderStore.agentContext} style={chatBoxStyle} />}
                                 </ContentOrSpinner>
                             )}
-
                         </Flex>
                     </ModalBody>
                 </ModalContent>
