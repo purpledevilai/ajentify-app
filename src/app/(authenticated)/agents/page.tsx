@@ -57,10 +57,9 @@ const AgentsPage = observer(() => {
     router.push(`/agent-builder/${agent.agent_id}`);
   };
 
-  const handleShowCodeClick = (e: React.MouseEvent, agent: Agent) => {
+  const handleStartChatClick = (e: React.MouseEvent, agent: Agent) => {
     e.stopPropagation();
-    setCurrentAgentId(agent.agent_id);
-    onCodeModalOpen();
+    router.push(`/open-chat/${agent.agent_id}`);
   };
 
   const handleCreateTeamClick = () => {
@@ -125,9 +124,9 @@ const AgentsPage = observer(() => {
                       <Spacer />
                       <Button
                         size="sm"
-                        onClick={(e) => handleShowCodeClick(e, agent)}
+                        onClick={(e) => handleStartChatClick(e, agent)}
                       >
-                        Show Code
+                        Start Chat
                       </Button>
                     </Flex>
                   </Card>
