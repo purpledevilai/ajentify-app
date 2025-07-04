@@ -12,6 +12,7 @@ interface UpdateAgentPayload {
     voice_id?: string;
     tools?: string[];
     uses_prompt_args?: boolean;
+    initialize_tool_id?: string | null;
 }
 
 export async function updateAgent(payload: UpdateAgentPayload): Promise<Agent> {

@@ -11,6 +11,7 @@ interface CreateAgentPayload {
     voice_id?: string;
     tools?: string[];
     uses_prompt_args?: boolean;
+    initialize_tool_id?: string | null;
 }
 
 export async function createAgent(payload: CreateAgentPayload): Promise<Agent> {
