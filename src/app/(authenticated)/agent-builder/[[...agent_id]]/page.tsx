@@ -6,7 +6,7 @@ import {
     Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
-    Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner
+    Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner, Select
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
@@ -22,6 +22,7 @@ import { Tool } from "@/types/tools";
 import { CustomAgentTools } from "./components/CustomAgentTools";
 import { MemoryTools } from "./components/MemoryTools";
 import { WebSearchTools } from "./components/WebSearchTools";
+import { toolsStore } from "@/store/ToolsStore";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -45,6 +46,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     useEffect(() => {
         setShowAlertOnStore();
         loadAgentId();
+        toolsStore.loadTools();
 
         return () => {
             agentBuilderStore.reset();
@@ -304,6 +306,28 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                             isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
                             onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
                         />
+                    </FormControl>
+
+                    {/* Initialization Tool */}
+                    <FormControl>
+                        <FormLabelToolTip
+                            label="Initialization Tool"
+                            tooltip="This tool will run automatically whenever a new conversation context is created with this agent—useful for setup, greetings, fetching context, etc."
+                        />
+                        {toolsStore.toolsLoading ? (
+                            <Spinner mt={2} size="sm" />
+                        ) : (
+                            <Select
+                                mt={2}
+                                placeholder="None"
+                                value={agentBuilderStore.currentAgent.initialize_tool_id || ''}
+                                onChange={(e) => agentBuilderStore.setInitializeToolId(e.target.value || null)}
+                            >
+                                {toolsStore.tools && toolsStore.tools.map((tool) => (
+                                    <option key={tool.tool_id} value={tool.tool_id}>{tool.name}</option>
+                                ))}
+                            </Select>
+                        )}
                     </FormControl>
 
                     {/* Prompt Args Toggle */}
