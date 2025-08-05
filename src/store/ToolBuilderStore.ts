@@ -28,6 +28,7 @@ const defaultTool = {
     name: 'custom_function',
     description: '',
     code: 'def custom_function():\n    # YOUR CODE HERE\n    return "Function was called"',
+    pass_context: false,
 } as Tool;
 
 
@@ -148,6 +149,7 @@ class ToolBuilderStore {
         if (!tool.pd_id) {
             this.parameters = [];
             this.testInputs = [];
+            this.updateCode();
             return;
         }
         this.loadParameterDefinition(tool.pd_id);
@@ -196,9 +198,13 @@ class ToolBuilderStore {
     }
 
     getFunctionDeclaration = (): string => {
-        const paramsString = this.parameters.map((param: Parameter) => {
+        const params = this.parameters.map((param: Parameter) => {
             return `${getCodeName(param.name)}`;
-        }).join(', ');
+        });
+        if (this.tool.pass_context) {
+            params.unshift('context');
+        }
+        const paramsString = params.join(', ');
         return `def ${getCodeName(this.tool.name)}(${paramsString}):`;
     }
 
@@ -209,6 +215,11 @@ class ToolBuilderStore {
 
     setDescription = (description: string) => {
         this.tool.description = description;
+    }
+
+    setPassContext = (passContext: boolean) => {
+        this.tool.pass_context = passContext;
+        this.updateCode();
     }
 
     getPerameters = (indexArray: number[]): Parameter[] => {
@@ -324,6 +335,13 @@ class ToolBuilderStore {
     }
 
     executeTestInput = async () => {
+        if (this.tool.pass_context) {
+            this.showAlert({
+                title: 'Whoops',
+                message: 'Testing is disabled when pass context is enabled.',
+            });
+            return;
+        }
         try {
             this.toolExecuting = true;
             if (!this.tool.code) {

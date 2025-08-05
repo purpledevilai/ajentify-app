@@ -38,6 +38,7 @@ class AgentBuilderStore {
         is_public: false,
         agent_speaks_first: false,
         uses_prompt_args: false,
+        initialize_tool_id: null,
         prompt: '',
         tools: [],
     };
@@ -92,6 +93,7 @@ class AgentBuilderStore {
             is_public: false,
             agent_speaks_first: false,
             uses_prompt_args: false,
+            initialize_tool_id: null,
             prompt: '',
             tools: [],
         };
@@ -208,6 +210,7 @@ class AgentBuilderStore {
                 voice_id: this.currentAgent.voice_id,
                 tools: this.currentAgent.tools,
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
+                initialize_tool_id: this.currentAgent.initialize_tool_id,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -241,6 +244,7 @@ class AgentBuilderStore {
                 voice_id: this.currentAgent.voice_id,
                 tools: this.currentAgent.tools,
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
+                initialize_tool_id: this.currentAgent.initialize_tool_id,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -388,6 +392,11 @@ class AgentBuilderStore {
 
     setPresentedAgentTool(tool: string) {
         this.presentedAgentTool = tool;
+    }
+
+    setInitializeToolId(toolId: string | null) {
+        this.currentAgent.initialize_tool_id = toolId;
+        this.hasUpdates = true;
     }
 }
 export const agentBuilderStore = new AgentBuilderStore();

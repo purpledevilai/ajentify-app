@@ -8,6 +8,7 @@ interface UpdateToolPayload {
     description?: string;
     pd_id?: string;
     code?: string;
+    pass_context?: boolean;
 }
 
 export async function updateTool(payload: UpdateToolPayload): Promise<Tool> {

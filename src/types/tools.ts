@@ -7,6 +7,7 @@ export interface Tool {
     description?: string;
     pd_id?: string;
     code?: string;
+    pass_context?: boolean;
 }
 
 export interface TestInput {
