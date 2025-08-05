@@ -7,6 +7,7 @@ interface CreateToolPayload {
     description?: string;
     pd_id?: string;
     code?: string;
+    pass_context?: boolean;
 }
 
 export async function createTool(payload: CreateToolPayload): Promise<Tool> {

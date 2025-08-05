@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import {
     Flex, FormControl, Heading, IconButton, Input, Button, Tooltip,
     useColorMode,
-    Spinner
+    Spinner, Switch
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
@@ -150,6 +150,22 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     />
                 </FormControl>
 
+                {/* Pass Context Toggle */}
+                <FormControl display="flex" alignItems="center">
+                    <FormLabelToolTip
+                        label="Pass Context"
+                        tooltip="Include context object as a parameter to this tool call."
+                    />
+                    <Switch
+                        ml={2}
+                        colorScheme="purple"
+                        size="lg"
+                        isChecked={toolBuilderStore.tool.pass_context}
+                        onChange={(e) => toolBuilderStore.setPassContext(e.target.checked)}
+                    />
+                </FormControl>
+
+
                 {/* Parameters */}
                 {toolBuilderStore.isLoadingParameterDefinition ? (
                     <Flex justify="center" align="center" height="200px">
@@ -207,13 +223,20 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 </Flex>
 
                 {/* Test Input Button */}
-                <Button
-                    onClick={() => toolBuilderStore.executeTestInput()}
-                    colorScheme="purple"
-                    size="lg"
-                    variant={'outline'}
-                    isLoading={toolBuilderStore.toolExecuting}
-                >Test</Button>
+                <Tooltip
+                    isDisabled={!toolBuilderStore.tool.pass_context}
+                    label="Currently the test feature is only available when pass context is disabled"
+                    fontSize="md"
+                >
+                    <Button
+                        onClick={() => toolBuilderStore.executeTestInput()}
+                        colorScheme="purple"
+                        size="lg"
+                        variant={'outline'}
+                        isLoading={toolBuilderStore.toolExecuting}
+                        isDisabled={toolBuilderStore.tool.pass_context}
+                    >Test</Button>
+                </Tooltip>
 
                 {/* Save Button */}
                 <Tooltip
