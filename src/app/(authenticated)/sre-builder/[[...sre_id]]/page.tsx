@@ -54,6 +54,8 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
       const leavePage = async () => {
         // If the SRE is new and the user has not clicked save, delete the SRE
+        // NOTE: Commenting this out because it has lead to accidental deletions
+        /*
         if (
           sreBuilderStore.isNewSme && 
           sreBuilderStore.sre.sre_id && 
@@ -61,6 +63,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
         ) {
           await sreBuilderStore.deleteSRE();
         }
+        */
         navGuard.accept();
       }
 
