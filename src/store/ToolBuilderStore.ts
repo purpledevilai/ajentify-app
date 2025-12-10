@@ -29,6 +29,7 @@ const defaultTool = {
     description: '',
     code: 'def custom_function():\n    # YOUR CODE HERE\n    return "Function was called"',
     pass_context: false,
+    is_async: false,
 } as Tool;
 
 
@@ -201,6 +202,9 @@ class ToolBuilderStore {
         const params = this.parameters.map((param: Parameter) => {
             return `${getCodeName(param.name)}`;
         });
+        if (this.tool.is_async) {
+            params.unshift('tool_call_id');
+        }
         if (this.tool.pass_context) {
             params.unshift('context');
         }
@@ -219,6 +223,11 @@ class ToolBuilderStore {
 
     setPassContext = (passContext: boolean) => {
         this.tool.pass_context = passContext;
+        this.updateCode();
+    }
+
+    setIsAsync = (isAsync: boolean) => {
+        this.tool.is_async = isAsync;
         this.updateCode();
     }
 
@@ -347,9 +356,13 @@ class ToolBuilderStore {
             if (!this.tool.code) {
                 throw new Error('Code is required to test the tool');
             }
+            const params = getTestObject(this.testInputs) as Record<string, AnyType>;
+            if (this.tool.is_async) {
+                params.tool_call_id = 'test-tool-call-id';
+            }
             const payload = {
                 function_name: getCodeName(this.tool.name),
-                params: getTestObject(this.testInputs) as Record<string, AnyType>,
+                params,
                 code: this.tool.code,
             }
             const result = await testTool(payload);

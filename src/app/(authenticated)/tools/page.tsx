@@ -8,8 +8,6 @@ import { toolBuilderStore } from '@/store/ToolBuilderStore';
 import {
   Box,
   Heading,
-  Grid,
-  GridItem,
   Flex,
   Text,
   Spinner,
@@ -58,55 +56,52 @@ const ToolsPage = observer(() => {
         </Flex>
       ) : (
         <Box>
-          <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
+          <Flex direction="column" gap={6}>
             {/* Add Tool Button */}
-            <GridItem>
-              <Flex
-                align="center"
-                justify="center"
-                bg="gray.100"
-                _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-                p={6}
-                borderRadius="md"
-                border="1px dashed"
-                borderColor="gray.300"
-                cursor="pointer"
-                _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
-                onClick={handleAddToolClick}
-                minHeight="150px" // Uniform height for all cards
-              >
-                <Text fontWeight="bold" color="brand.500">
-                  + Add Tool
-                </Text>
-              </Flex>
-            </GridItem>
+            <Flex
+              align="center"
+              justify="center"
+              bg="gray.100"
+              _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+              p={6}
+              borderRadius="md"
+              border="1px dashed"
+              borderColor="gray.300"
+              cursor="pointer"
+              _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
+              onClick={handleAddToolClick}
+              minHeight="150px"
+            >
+              <Text fontWeight="bold" color="brand.500">
+                + Add Tool
+              </Text>
+            </Flex>
 
-            {/* Agent Cards */}
+            {/* Tool Cards */}
             {toolsStore.tools ? (
               toolsStore.tools.map((tool) => (
-                <GridItem key={tool['tool_id']}>
-                  <Card
-                    shadow="md"
-                    _hover={{ shadow: 'lg' }}
-                    cursor="pointer"
-                    onClick={() => handleToolClick(tool)}
-                    minHeight="150px" // Uniform height for all cards
-                  >
-                    <Flex h="100%" direction="column">
-                      <Heading as="h3" size="md" mb={2} isTruncated>
-                        {tool.name}
-                      </Heading>
-                      <Text fontSize="sm" color="gray.500" isTruncated>
-                        {tool.description}
-                      </Text>
-                    </Flex>
-                  </Card>
-                </GridItem>
+                <Card
+                  key={tool['tool_id']}
+                  shadow="md"
+                  _hover={{ shadow: 'lg' }}
+                  cursor="pointer"
+                  onClick={() => handleToolClick(tool)}
+                  minHeight="150px"
+                >
+                  <Flex h="100%" direction="column">
+                    <Heading as="h3" size="md" mb={2} isTruncated>
+                      {tool.name}
+                    </Heading>
+                    <Text fontSize="sm" color="gray.500" isTruncated>
+                      {tool.description}
+                    </Text>
+                  </Flex>
+                </Card>
               ))
             ) : (
               <Text>No tools found</Text>
             )}
-          </Grid>
+          </Flex>
         </Box>
       )}
     </Box>

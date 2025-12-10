@@ -165,6 +165,21 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     />
                 </FormControl>
 
+                {/* Is Async Toggle */}
+                <FormControl display="flex" alignItems="center">
+                    <FormLabelToolTip
+                        label="Is Async"
+                        tooltip="Include tool_call_id parameter to this tool call for async operations."
+                    />
+                    <Switch
+                        ml={2}
+                        colorScheme="purple"
+                        size="lg"
+                        isChecked={toolBuilderStore.tool.is_async}
+                        onChange={(e) => toolBuilderStore.setIsAsync(e.target.checked)}
+                    />
+                </FormControl>
+
 
                 {/* Parameters */}
                 {toolBuilderStore.isLoadingParameterDefinition ? (
