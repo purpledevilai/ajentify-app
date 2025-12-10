@@ -8,6 +8,7 @@ export interface Tool {
     pd_id?: string;
     code?: string;
     pass_context?: boolean;
+    is_async?: boolean;
 }
 
 export interface TestInput {

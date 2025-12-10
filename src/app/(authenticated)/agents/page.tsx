@@ -9,8 +9,6 @@ import { Agent } from '@/types/agent';
 import {
   Box,
   Heading,
-  Grid,
-  GridItem,
   Flex,
   Text,
   Spinner,
@@ -81,62 +79,59 @@ const AgentsPage = observer(() => {
         </Flex>
       ) : (
         <Box>
-          <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={6}>
+          <Flex direction="column" gap={6}>
             {/* Add Agent Button */}
-            <GridItem>
-              <Flex
-                align="center"
-                justify="center"
-                bg="gray.100"
-                _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-                p={6}
-                borderRadius="md"
-                border="1px dashed"
-                borderColor="gray.300"
-                cursor="pointer"
-                _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
-                onClick={handleAddAgentClick}
-                minHeight="150px" // Uniform height for all cards
-              >
-                <Text fontWeight="bold" color="brand.500">
-                  + Add Agent
-                </Text>
-              </Flex>
-            </GridItem>
+            <Flex
+              align="center"
+              justify="center"
+              bg="gray.100"
+              _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+              p={6}
+              borderRadius="md"
+              border="1px dashed"
+              borderColor="gray.300"
+              cursor="pointer"
+              _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
+              onClick={handleAddAgentClick}
+              minHeight="150px"
+            >
+              <Text fontWeight="bold" color="brand.500">
+                + Add Agent
+              </Text>
+            </Flex>
 
             {/* Agent Cards */}
             {agentsStore.agents ? (
               agentsStore.agents.map((agent) => (
-                <GridItem key={agent.agent_id}>
-                  <Card
-                    shadow="md"
-                    _hover={{ shadow: 'lg' }}
-                    cursor="pointer"
-                    onClick={() => handleAgentClick(agent)}
-                    minHeight="150px" // Uniform height for all cards
-                  >
-                    <Flex h="100%" direction="column">
-                      <Heading as="h3" size="md" mb={2} isTruncated>
-                        {agent.agent_name}
-                      </Heading>
-                      <Text fontSize="sm" color="gray.500" isTruncated>
-                        {agent.agent_description}
-                      </Text>
-                      <Spacer />
-                      <Button
-                        size="sm"
-                        onClick={(e) => handleShowCodeClick(e, agent)}
-                      >
-                        Show Code
-                      </Button>
-                    </Flex>
-                  </Card>
-                </GridItem>
+                <Card
+                  key={agent.agent_id}
+                  shadow="md"
+                  _hover={{ shadow: 'lg' }}
+                  cursor="pointer"
+                  onClick={() => handleAgentClick(agent)}
+                  minHeight="150px"
+                >
+                  <Flex h="100%" direction="column">
+                    <Heading as="h3" size="md" mb={2} isTruncated>
+                      {agent.agent_name}
+                    </Heading>
+                    <Text fontSize="sm" color="gray.500" isTruncated>
+                      {agent.agent_description}
+                    </Text>
+                    <Spacer />
+                    <Button
+                      size="sm"
+                      onClick={(e) => handleShowCodeClick(e, agent)}
+                    >
+                      Show Code
+                    </Button>
+                  </Flex>
+                </Card>
               ))
             ) : (
               <Text>No agents found</Text>
             )}
-          </Grid>
+          </Flex>
           <Heading as="h1" size="xl" mb={2} mt={8}>
             Create Team
           </Heading>
