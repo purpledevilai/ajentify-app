@@ -20,7 +20,7 @@ import {
 import { motion } from 'framer-motion';
 import { RiRobot3Fill } from "react-icons/ri";
 import { MdChatBubble } from "react-icons/md";
-import { BiDotsVerticalRounded } from 'react-icons/bi';
+import { BiDotsVerticalRounded, BiPlug } from 'react-icons/bi';
 import { MdOutlineWebAsset } from "react-icons/md";
 import { FiTool, FiFileText } from "react-icons/fi";
 import { VscJson } from "react-icons/vsc";
@@ -47,6 +47,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
         { icon: RiRobot3Fill, title: 'Agents', route: '/agents' },
         { icon: FiTool, title: 'Agent Tools', route: '/tools' },
         { icon: FiFileText, title: 'Documents', route: '/documents' },
+        { icon: BiPlug, title: 'Integrations', route: '/integrations' },
         { icon: VscJson, title: 'Structured Responses', route: '/sres' },
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
