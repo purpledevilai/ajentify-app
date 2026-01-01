@@ -58,6 +58,7 @@ class AgentBuilderStore {
     agentTools: string[] = [
         'memory',
         'web_search',
+        'gmail',
         'custom_code',
         'pass_event'
     ]
