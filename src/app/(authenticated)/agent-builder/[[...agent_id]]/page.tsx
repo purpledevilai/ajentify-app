@@ -22,6 +22,7 @@ import { Tool } from "@/types/tools";
 import { CustomAgentTools } from "./components/CustomAgentTools";
 import { MemoryTools } from "./components/MemoryTools";
 import { WebSearchTools } from "./components/WebSearchTools";
+import { GmailTools } from "./components/GmailTools";
 import { toolsStore } from "@/store/ToolsStore";
 
 type Params = Promise<{ agent_id: string[] }>;
@@ -180,6 +181,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 return <MemoryTools />;
             case 'web_search':
                 return <WebSearchTools />;
+            case 'gmail':
+                return <GmailTools />;
             default:
                 return <Text>Tool not implemented yet</Text>;
         }
