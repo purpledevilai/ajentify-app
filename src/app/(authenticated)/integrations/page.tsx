@@ -22,6 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  Badge,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
@@ -81,9 +84,22 @@ const IntegrationsPage = observer(() => {
   return (
     <Box p={6}>
       {/* Page Heading */}
-      <Heading as="h1" size="xl" mb={6}>
-        Integrations
-      </Heading>
+      <Flex align="center" gap={3} mb={4}>
+        <Heading as="h1" size="xl">
+          Integrations
+        </Heading>
+        <Badge colorScheme="purple" fontSize="md" px={2} py={1} borderRadius="md">
+          Beta
+        </Badge>
+      </Flex>
+
+      {/* Beta Notice */}
+      <Alert status="info" mb={6} borderRadius="md">
+        <AlertIcon />
+        <Text>
+          Integrations are currently in beta. Contact Keanu if you want this set up.
+        </Text>
+      </Alert>
 
       {/* Content Section */}
       {integrationsStore.integrationsLoading ? (
@@ -167,7 +183,7 @@ const IntegrationsPage = observer(() => {
       {/* Disconnect Confirmation Dialog */}
       <AlertDialog
         isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
+        leastDestructiveRef={cancelRef as unknown as React.RefObject<HTMLElement>}
         onClose={onClose}
       >
         <AlertDialogOverlay>

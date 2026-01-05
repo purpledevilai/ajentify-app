@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { exchangeGmailCode } from '@/api/integration/exchangeGmailCode';
 import {
@@ -19,8 +19,14 @@ function GmailAuthCallbackContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const hasExchanged = useRef(false);
 
   useEffect(() => {
+    // Prevent double execution from React Strict Mode
+    if (hasExchanged.current) return;
+    // Mark as exchanged before making the call
+    hasExchanged.current = true;
+
     const code = searchParams.get('code');
     const state = searchParams.get('state'); // Contains org_id if provided
     const errorParam = searchParams.get('error');

@@ -20,7 +20,7 @@ export async function exchangeGmailCode(code: string, orgId?: string): Promise<I
       body: JSON.stringify({ code }),
     });
     const data = await checkResponseAndGetJson(response);
-    return data as Integration;
+    return data as unknown as Integration;
   } catch (error) {
     const errorMessage = (error as Error).message || 'An unknown error occurred exchanging Gmail code';
     throw Error(errorMessage);
