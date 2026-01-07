@@ -11,6 +11,21 @@ import { getTools } from "@/api/tool/getTools";
 import { agentsStore } from "./AgentsStore";
 import { Tool } from "@/types/tools";
 
+// Default Ajentify tools that are recognized by the backend but not stored in the tools database
+const DEFAULT_AJENTIFY_TOOLS: string[] = [
+    // Gmail tools
+    "list_emails", "get_email", "list_labels", "set_email_read_status", 
+    "archive_email", "modify_email_labels", "send_email",
+    "create_draft", "list_drafts", "get_draft", "update_draft", "send_draft", "delete_draft",
+    "trash_email", "untrash_email", "delete_email",
+    // Memory tools
+    "read_memory", "view_memory_shape", "append_memory", "delete_memory", "write_memory",
+    // Web search tools
+    "web_search", "view_url",
+    // Pass event tool
+    "pass_event",
+];
+
 interface AgentStringFields {
     agent_name: string;
     agent_description: string;
@@ -126,8 +141,23 @@ class AgentBuilderStore {
         
         try {
             this.isLoadingTools = true;
-            const tools = await getTools(this.currentAgent.agent_id);
-            this.tools = tools;
+            // Fetch custom tools from API
+            const customTools = await getTools(this.currentAgent.agent_id);
+            
+            // Get the IDs of tools returned from the API
+            const customToolIds = new Set(customTools.map(t => t.tool_id));
+            
+            // Find default Ajentify tools that are attached to the agent but not returned by API
+            const defaultToolsOnAgent: Tool[] = (this.currentAgent.tools || [])
+                .filter(toolId => DEFAULT_AJENTIFY_TOOLS.includes(toolId) && !customToolIds.has(toolId))
+                .map(toolId => ({
+                    tool_id: toolId,
+                    org_id: "default",
+                    name: toolId,
+                }));
+            
+            // Combine custom tools with default tools
+            this.tools = [...customTools, ...defaultToolsOnAgent];
         } catch (error) {
             this.showAlert({
                 title: 'Error',
