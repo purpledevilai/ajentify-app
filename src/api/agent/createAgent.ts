@@ -11,6 +11,7 @@ interface CreateAgentPayload {
     voice_id?: string;
     tools?: string[];
     uses_prompt_args?: boolean;
+    prompt_arg_names?: string[];
     initialize_tool_id?: string | null;
 }
 

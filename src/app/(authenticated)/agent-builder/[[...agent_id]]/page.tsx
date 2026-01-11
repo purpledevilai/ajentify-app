@@ -8,7 +8,7 @@ import {
     Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
     Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner, Select
 } from "@chakra-ui/react";
-import { ArrowBackIcon, CheckIcon, CopyIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { agentBuilderStore } from "@/store/AgentBuilderStore";
@@ -337,7 +337,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     <FormControl>
                         <FormLabelToolTip
                             label="Uses Prompt Args"
-                            tooltip="If enabled, the agent will accept arguments, ie. variables placed in curlly brackets, in the prompt. Set these variables when you create the context."
+                            tooltip="If enabled, you can define argument placeholders that will be replaced with values when creating a context. Use placeholders like ARG_USER_NAME in your prompt."
                         />
                         <Switch
                             mt={2}
@@ -348,13 +348,38 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         />
                     </FormControl>
 
-                    {/* Prompt Args List */}
+                    {/* Prompt Arg Names */}
                     {agentBuilderStore.currentAgent.uses_prompt_args && (
                         <Flex direction="column" w="100%" mt={2} gap={4}>
-                            <Heading size="sm">Prompt Args</Heading>
-                            {agentBuilderStore.promptArgs.map((arg, index) => (
-                                <Text key={index}>- {arg}</Text>
+                            <FormLabelToolTip
+                                label="Prompt Argument Names"
+                                tooltip="Define the placeholder strings that will be replaced in the prompt when creating a context. Use the ARG_* prefix (e.g., ARG_USER_NAME) for clarity."
+                            />
+                            {(agentBuilderStore.currentAgent.prompt_arg_names ?? []).map((arg, index) => (
+                                <Flex key={index} direction="row" align="center" gap={2}>
+                                    <Input
+                                        placeholder="ARG_USER_NAME"
+                                        value={arg}
+                                        onChange={(e) => agentBuilderStore.updatePromptArgName(index, e.target.value)}
+                                    />
+                                    <IconButton
+                                        aria-label="Remove argument"
+                                        icon={<SmallCloseIcon />}
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => agentBuilderStore.removePromptArgName(index)}
+                                    />
+                                </Flex>
                             ))}
+                            <Button
+                                size="sm"
+                                leftIcon={<AddIcon />}
+                                variant="outline"
+                                onClick={() => agentBuilderStore.addPromptArgName()}
+                                w="fit-content"
+                            >
+                                Add Argument
+                            </Button>
                         </Flex>
                     )}
                 </Flex>

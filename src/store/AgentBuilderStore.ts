@@ -53,6 +53,7 @@ class AgentBuilderStore {
         is_public: false,
         agent_speaks_first: false,
         uses_prompt_args: false,
+        prompt_arg_names: [],
         initialize_tool_id: null,
         prompt: '',
         tools: [],
@@ -89,8 +90,7 @@ class AgentBuilderStore {
         if (!this.currentAgent.uses_prompt_args) {
             return [];
         }
-        const matches = this.currentAgent.prompt.match(/\{([^}]+)\}/g) || [];
-        return matches.map((match) => match.replace(/[{}]/g, ""));
+        return this.currentAgent.prompt_arg_names ?? [];
     }
 
     constructor() {
@@ -109,6 +109,7 @@ class AgentBuilderStore {
             is_public: false,
             agent_speaks_first: false,
             uses_prompt_args: false,
+            prompt_arg_names: [],
             initialize_tool_id: null,
             prompt: '',
             tools: [],
@@ -222,6 +223,28 @@ class AgentBuilderStore {
         this.hasUpdates = true;
     }
 
+    addPromptArgName() {
+        if (!this.currentAgent.prompt_arg_names) {
+            this.currentAgent.prompt_arg_names = [];
+        }
+        this.currentAgent.prompt_arg_names.push('');
+        this.hasUpdates = true;
+    }
+
+    removePromptArgName(index: number) {
+        if (this.currentAgent.prompt_arg_names) {
+            this.currentAgent.prompt_arg_names.splice(index, 1);
+            this.hasUpdates = true;
+        }
+    }
+
+    updatePromptArgName(index: number, value: string) {
+        if (this.currentAgent.prompt_arg_names) {
+            this.currentAgent.prompt_arg_names[index] = value;
+            this.hasUpdates = true;
+        }
+    }
+
     async createAgent() {
         if (this.currentAgent.agent_id) {
             this.showAlert({
@@ -241,6 +264,7 @@ class AgentBuilderStore {
                 voice_id: this.currentAgent.voice_id,
                 tools: this.currentAgent.tools,
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
+                prompt_arg_names: this.currentAgent.prompt_arg_names,
                 initialize_tool_id: this.currentAgent.initialize_tool_id,
             });
             this.currentAgent = agent;
@@ -275,6 +299,7 @@ class AgentBuilderStore {
                 voice_id: this.currentAgent.voice_id,
                 tools: this.currentAgent.tools,
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
+                prompt_arg_names: this.currentAgent.prompt_arg_names,
                 initialize_tool_id: this.currentAgent.initialize_tool_id,
             });
             this.currentAgent = agent;
