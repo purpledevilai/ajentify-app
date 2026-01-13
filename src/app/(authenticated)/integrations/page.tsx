@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { integrationsStore } from '@/store/IntegrationsStore';
 import { authStore } from '@/store/AuthStore';
 import { getGmailAuthUrl } from '@/api/integration/getGmailAuthUrl';
+import { getOutlookAuthUrl } from '@/api/integration/getOutlookAuthUrl';
 import { Integration } from '@/types/integration';
 import {
   Box,
@@ -28,11 +29,12 @@ import {
 } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
-import { FaGoogle } from 'react-icons/fa';
+import { FaGoogle, FaMicrosoft } from 'react-icons/fa';
 
 const IntegrationsPage = observer(() => {
   const { showAlert } = useAlert();
   const [connectingGmail, setConnectingGmail] = useState(false);
+  const [connectingOutlook, setConnectingOutlook] = useState(false);
   const [integrationToDelete, setIntegrationToDelete] = useState<Integration | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
@@ -62,6 +64,21 @@ const IntegrationsPage = observer(() => {
     }
   };
 
+  const handleConnectOutlook = async () => {
+    setConnectingOutlook(true);
+    try {
+      const orgId = authStore.user?.organizations[0]?.id;
+      const authUrl = await getOutlookAuthUrl(orgId);
+      window.location.href = authUrl;
+    } catch (error) {
+      showAlert({
+        title: 'Error',
+        message: (error as Error).message || 'Failed to connect Outlook',
+      });
+      setConnectingOutlook(false);
+    }
+  };
+
   const handleDisconnectClick = (integration: Integration) => {
     setIntegrationToDelete(integration);
     onOpen();
@@ -79,7 +96,19 @@ const IntegrationsPage = observer(() => {
     return new Date(timestamp * 1000).toLocaleDateString();
   };
 
+  const getIntegrationTypeName = (type: string): string => {
+    switch (type) {
+      case 'gmail':
+        return 'Gmail';
+      case 'outlook':
+        return 'Outlook';
+      default:
+        return type;
+    }
+  };
+
   const gmailIntegrations = integrationsStore.getGmailIntegrations();
+  const outlookIntegrations = integrationsStore.getOutlookIntegrations();
 
   return (
     <Box p={6}>
@@ -116,7 +145,7 @@ const IntegrationsPage = observer(() => {
             Connect your Gmail account to allow agents to read and send emails on your behalf.
           </Text>
 
-          <Flex direction="column" gap={6}>
+          <Flex direction="column" gap={6} mb={10}>
             {/* Connect Gmail Button */}
             <Flex
               align="center"
@@ -177,6 +206,76 @@ const IntegrationsPage = observer(() => {
               <Text color="gray.500">No Gmail accounts connected yet.</Text>
             )}
           </Flex>
+
+          {/* Outlook Section */}
+          <Heading as="h2" size="lg" mb={4}>
+            Outlook
+          </Heading>
+          <Text color="gray.500" mb={4}>
+            Connect your Outlook account to allow agents to read and send emails on your behalf.
+          </Text>
+
+          <Flex direction="column" gap={6}>
+            {/* Connect Outlook Button */}
+            <Flex
+              align="center"
+              justify="center"
+              bg="gray.100"
+              _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+              p={6}
+              borderRadius="md"
+              border="1px dashed"
+              borderColor="gray.300"
+              cursor="pointer"
+              _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
+              onClick={handleConnectOutlook}
+              minHeight="100px"
+            >
+              {connectingOutlook ? (
+                <Spinner size="md" />
+              ) : (
+                <Flex align="center" gap={2}>
+                  <Icon as={FaMicrosoft} />
+                  <Text fontWeight="bold" color="brand.500">
+                    + Connect Outlook Account
+                  </Text>
+                </Flex>
+              )}
+            </Flex>
+
+            {/* Outlook Integration Cards */}
+            {outlookIntegrations.length > 0 ? (
+              outlookIntegrations.map((integration) => (
+                <Card key={integration.integration_id} minHeight="100px">
+                  <Flex h="100%" direction="column">
+                    <Flex align="center" gap={3} mb={2}>
+                      <Icon as={FaMicrosoft} boxSize={5} color="blue.500" />
+                      <Heading as="h3" size="md" isTruncated>
+                        {integration.integration_config.email || 'Outlook Account'}
+                      </Heading>
+                    </Flex>
+                    <Text fontSize="sm" color="gray.500">
+                      Connected {formatDate(integration.created_at)}
+                    </Text>
+                    <Spacer />
+                    <Flex mt={4}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="red"
+                        onClick={() => handleDisconnectClick(integration)}
+                        isLoading={integrationsStore.deleteLoading && integrationToDelete?.integration_id === integration.integration_id}
+                      >
+                        Disconnect
+                      </Button>
+                    </Flex>
+                  </Flex>
+                </Card>
+              ))
+            ) : (
+              <Text color="gray.500">No Outlook accounts connected yet.</Text>
+            )}
+          </Flex>
         </Box>
       )}
 
@@ -189,12 +288,12 @@ const IntegrationsPage = observer(() => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Disconnect Gmail
+              Disconnect {integrationToDelete ? getIntegrationTypeName(integrationToDelete.type) : ''}
             </AlertDialogHeader>
 
             <AlertDialogBody>
               Are you sure you want to disconnect {integrationToDelete?.integration_config.email}? 
-              Agents will no longer be able to access this Gmail account.
+              Agents will no longer be able to access this {integrationToDelete ? getIntegrationTypeName(integrationToDelete.type) : ''} account.
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -218,4 +317,3 @@ const IntegrationsPage = observer(() => {
 });
 
 export default IntegrationsPage;
-

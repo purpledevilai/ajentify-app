@@ -1,7 +1,7 @@
 export interface Integration {
   integration_id: string;
   org_id: string;
-  type: 'gmail' | string;
+  type: 'gmail' | 'outlook' | string;
   integration_config: {
     email?: string;
     [key: string]: unknown;
