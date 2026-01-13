@@ -18,6 +18,12 @@ const DEFAULT_AJENTIFY_TOOLS: string[] = [
     "archive_email", "modify_email_labels", "send_email",
     "create_draft", "list_drafts", "get_draft", "update_draft", "send_draft", "delete_draft",
     "trash_email", "untrash_email", "delete_email",
+    // Outlook tools
+    "list_outlook_emails", "get_outlook_email", "send_outlook_email", "set_outlook_email_read_status",
+    "create_outlook_draft", "list_outlook_drafts", "get_outlook_draft", "update_outlook_draft",
+    "send_outlook_draft", "delete_outlook_draft", "list_outlook_folders", "create_outlook_folder",
+    "delete_outlook_folder", "move_outlook_email", "modify_outlook_email_categories",
+    "archive_outlook_email", "trash_outlook_email", "untrash_outlook_email", "delete_outlook_email",
     // Memory tools
     "read_memory", "view_memory_shape", "append_memory", "delete_memory", "write_memory",
     // Web search tools
@@ -75,6 +81,7 @@ class AgentBuilderStore {
         'memory',
         'web_search',
         'gmail',
+        'outlook',
         'custom_code',
         'pass_event'
     ]

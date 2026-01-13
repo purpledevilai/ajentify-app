@@ -55,6 +55,10 @@ class IntegrationsStore {
         return this.integrations?.filter(i => i.type === 'gmail') || [];
     }
 
+    getOutlookIntegrations(): Integration[] {
+        return this.integrations?.filter(i => i.type === 'outlook') || [];
+    }
+
     reset = () => {
         this.integrations = undefined;
     }
