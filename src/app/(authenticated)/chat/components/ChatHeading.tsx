@@ -27,6 +27,21 @@ interface ChatHeadingProps {
     context_id?: string;
 }
 
+// Helper to format tool output - tries to parse as JSON for pretty display
+const formatToolOutput = (output: unknown): string => {
+    if (typeof output === "string") {
+        try {
+            const parsed = JSON.parse(output);
+            return JSON.stringify(parsed, null, 2);
+        } catch {
+            // Not valid JSON, return as-is
+            return output;
+        }
+    }
+    // If it's already an object, stringify it
+    return JSON.stringify(output, null, 2);
+};
+
 export const ChatHeading = ({ onMobileChatDrawerOpen, context_id }: ChatHeadingProps) => {
     const isMobile = useBreakpointValue({ base: true, lg: false });
     const { hasCopied, onCopy } = useClipboard(context_id || "");
@@ -154,8 +169,9 @@ export const ChatHeading = ({ onMobileChatDrawerOpen, context_id }: ChatHeadingP
                                                     overflowX="auto"
                                                     fontSize="sm"
                                                     fontFamily="mono"
+                                                    whiteSpace="pre-wrap"
                                                 >
-                                                    {JSON.stringify(msg.tool_output, null, 2)}
+                                                    {formatToolOutput(msg.tool_output)}
                                                 </Box>
                                             </>
                                         )}
