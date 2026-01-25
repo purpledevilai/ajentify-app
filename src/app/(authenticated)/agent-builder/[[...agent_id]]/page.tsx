@@ -25,6 +25,7 @@ import { WebSearchTools } from "./components/WebSearchTools";
 import { GmailTools } from "./components/GmailTools";
 import { OutlookTools } from "./components/OutlookTools";
 import { GoogleCalendarTools } from "./components/GoogleCalendarTools";
+import { UtilityTools } from "./components/UtilityTools";
 import { toolsStore } from "@/store/ToolsStore";
 
 type Params = Promise<{ agent_id: string[] }>;
@@ -189,6 +190,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 return <OutlookTools />;
             case 'google_calendar':
                 return <GoogleCalendarTools />;
+            case 'utility':
+                return <UtilityTools />;
             default:
                 return <Text>Tool not implemented yet</Text>;
         }

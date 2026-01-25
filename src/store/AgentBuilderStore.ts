@@ -33,6 +33,8 @@ const DEFAULT_AJENTIFY_TOOLS: string[] = [
     "web_search", "view_url",
     // Pass event tool
     "pass_event",
+    // Utility tools
+    "get_time", "think",
 ];
 
 interface AgentStringFields {
@@ -81,6 +83,7 @@ class AgentBuilderStore {
     showAgentId = false;
 
     agentTools: string[] = [
+        'utility',
         'memory',
         'web_search',
         'gmail',
