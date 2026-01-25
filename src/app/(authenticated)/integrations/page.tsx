@@ -6,6 +6,7 @@ import { integrationsStore } from '@/store/IntegrationsStore';
 import { authStore } from '@/store/AuthStore';
 import { getGmailAuthUrl } from '@/api/integration/getGmailAuthUrl';
 import { getOutlookAuthUrl } from '@/api/integration/getOutlookAuthUrl';
+import { getGoogleCalendarAuthUrl } from '@/api/integration/getGoogleCalendarAuthUrl';
 import { Integration } from '@/types/integration';
 import {
   Box,
@@ -26,15 +27,45 @@ import {
   Badge,
   Alert,
   AlertIcon,
+  IconButton,
+  Tooltip,
+  useClipboard,
+  Code,
 } from '@chakra-ui/react';
+import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
 import Card from '@/app/components/Card';
 import { useAlert } from '@/app/components/AlertProvider';
-import { FaGoogle, FaMicrosoft } from 'react-icons/fa';
+import { FaGoogle, FaMicrosoft, FaCalendarAlt } from 'react-icons/fa';
+
+// Component for displaying and copying integration ID
+const CopyableIntegrationId = ({ integrationId }: { integrationId: string }) => {
+  const { hasCopied, onCopy } = useClipboard(integrationId);
+  
+  return (
+    <Flex align="center" gap={2} mt={1}>
+      <Text fontSize="xs" color="gray.500">ID:</Text>
+      <Code fontSize="xs" px={2} py={0.5} borderRadius="md">
+        {integrationId}
+      </Code>
+      <Tooltip label={hasCopied ? 'Copied!' : 'Copy ID'} closeOnClick={false}>
+        <IconButton
+          aria-label="Copy integration ID"
+          icon={hasCopied ? <CheckIcon /> : <CopyIcon />}
+          size="xs"
+          variant="ghost"
+          colorScheme={hasCopied ? 'green' : 'gray'}
+          onClick={onCopy}
+        />
+      </Tooltip>
+    </Flex>
+  );
+};
 
 const IntegrationsPage = observer(() => {
   const { showAlert } = useAlert();
   const [connectingGmail, setConnectingGmail] = useState(false);
   const [connectingOutlook, setConnectingOutlook] = useState(false);
+  const [connectingGoogleCalendar, setConnectingGoogleCalendar] = useState(false);
   const [integrationToDelete, setIntegrationToDelete] = useState<Integration | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
@@ -79,6 +110,21 @@ const IntegrationsPage = observer(() => {
     }
   };
 
+  const handleConnectGoogleCalendar = async () => {
+    setConnectingGoogleCalendar(true);
+    try {
+      const orgId = authStore.user?.organizations[0]?.id;
+      const authUrl = await getGoogleCalendarAuthUrl(orgId);
+      window.location.href = authUrl;
+    } catch (error) {
+      showAlert({
+        title: 'Error',
+        message: (error as Error).message || 'Failed to connect Google Calendar',
+      });
+      setConnectingGoogleCalendar(false);
+    }
+  };
+
   const handleDisconnectClick = (integration: Integration) => {
     setIntegrationToDelete(integration);
     onOpen();
@@ -102,6 +148,8 @@ const IntegrationsPage = observer(() => {
         return 'Gmail';
       case 'outlook':
         return 'Outlook';
+      case 'google_calendar':
+        return 'Google Calendar';
       default:
         return type;
     }
@@ -109,6 +157,7 @@ const IntegrationsPage = observer(() => {
 
   const gmailIntegrations = integrationsStore.getGmailIntegrations();
   const outlookIntegrations = integrationsStore.getOutlookIntegrations();
+  const googleCalendarIntegrations = integrationsStore.getGoogleCalendarIntegrations();
 
   return (
     <Box p={6}>
@@ -187,6 +236,7 @@ const IntegrationsPage = observer(() => {
                     <Text fontSize="sm" color="gray.500">
                       Connected {formatDate(integration.created_at)}
                     </Text>
+                    <CopyableIntegrationId integrationId={integration.integration_id} />
                     <Spacer />
                     <Flex mt={4}>
                       <Button
@@ -257,6 +307,7 @@ const IntegrationsPage = observer(() => {
                     <Text fontSize="sm" color="gray.500">
                       Connected {formatDate(integration.created_at)}
                     </Text>
+                    <CopyableIntegrationId integrationId={integration.integration_id} />
                     <Spacer />
                     <Flex mt={4}>
                       <Button
@@ -274,6 +325,77 @@ const IntegrationsPage = observer(() => {
               ))
             ) : (
               <Text color="gray.500">No Outlook accounts connected yet.</Text>
+            )}
+          </Flex>
+
+          {/* Google Calendar Section */}
+          <Heading as="h2" size="lg" mb={4} mt={10}>
+            Google Calendar
+          </Heading>
+          <Text color="gray.500" mb={4}>
+            Connect your Google Calendar to allow agents to view, create, and manage calendar events on your behalf.
+          </Text>
+
+          <Flex direction="column" gap={6}>
+            {/* Connect Google Calendar Button */}
+            <Flex
+              align="center"
+              justify="center"
+              bg="gray.100"
+              _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+              p={6}
+              borderRadius="md"
+              border="1px dashed"
+              borderColor="gray.300"
+              cursor="pointer"
+              _hover={{ bg: 'gray.200', _dark: { bg: 'gray.600' } }}
+              onClick={handleConnectGoogleCalendar}
+              minHeight="100px"
+            >
+              {connectingGoogleCalendar ? (
+                <Spinner size="md" />
+              ) : (
+                <Flex align="center" gap={2}>
+                  <Icon as={FaCalendarAlt} />
+                  <Text fontWeight="bold" color="brand.500">
+                    + Connect Google Calendar
+                  </Text>
+                </Flex>
+              )}
+            </Flex>
+
+            {/* Google Calendar Integration Cards */}
+            {googleCalendarIntegrations.length > 0 ? (
+              googleCalendarIntegrations.map((integration) => (
+                <Card key={integration.integration_id} minHeight="100px">
+                  <Flex h="100%" direction="column">
+                    <Flex align="center" gap={3} mb={2}>
+                      <Icon as={FaCalendarAlt} boxSize={5} color="green.500" />
+                      <Heading as="h3" size="md" isTruncated>
+                        {integration.integration_config.email || 'Google Calendar'}
+                      </Heading>
+                    </Flex>
+                    <Text fontSize="sm" color="gray.500">
+                      Connected {formatDate(integration.created_at)}
+                    </Text>
+                    <CopyableIntegrationId integrationId={integration.integration_id} />
+                    <Spacer />
+                    <Flex mt={4}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="red"
+                        onClick={() => handleDisconnectClick(integration)}
+                        isLoading={integrationsStore.deleteLoading && integrationToDelete?.integration_id === integration.integration_id}
+                      >
+                        Disconnect
+                      </Button>
+                    </Flex>
+                  </Flex>
+                </Card>
+              ))
+            ) : (
+              <Text color="gray.500">No Google Calendar accounts connected yet.</Text>
             )}
           </Flex>
         </Box>

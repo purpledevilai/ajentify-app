@@ -24,6 +24,9 @@ const DEFAULT_AJENTIFY_TOOLS: string[] = [
     "send_outlook_draft", "delete_outlook_draft", "list_outlook_folders", "create_outlook_folder",
     "delete_outlook_folder", "move_outlook_email", "modify_outlook_email_categories",
     "archive_outlook_email", "trash_outlook_email", "untrash_outlook_email", "delete_outlook_email",
+    // Google Calendar tools
+    "list_calendar_events", "get_calendar_event", "create_calendar_event",
+    "update_calendar_event", "delete_calendar_event", "list_calendars",
     // Memory tools
     "read_memory", "view_memory_shape", "append_memory", "delete_memory", "write_memory",
     // Web search tools
@@ -82,6 +85,7 @@ class AgentBuilderStore {
         'web_search',
         'gmail',
         'outlook',
+        'google_calendar',
         'custom_code',
         'pass_event'
     ]

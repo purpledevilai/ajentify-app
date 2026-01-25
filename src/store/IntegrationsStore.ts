@@ -59,6 +59,10 @@ class IntegrationsStore {
         return this.integrations?.filter(i => i.type === 'outlook') || [];
     }
 
+    getGoogleCalendarIntegrations(): Integration[] {
+        return this.integrations?.filter(i => i.type === 'google_calendar') || [];
+    }
+
     reset = () => {
         this.integrations = undefined;
     }

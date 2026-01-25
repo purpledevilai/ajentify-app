@@ -24,6 +24,7 @@ import { MemoryTools } from "./components/MemoryTools";
 import { WebSearchTools } from "./components/WebSearchTools";
 import { GmailTools } from "./components/GmailTools";
 import { OutlookTools } from "./components/OutlookTools";
+import { GoogleCalendarTools } from "./components/GoogleCalendarTools";
 import { toolsStore } from "@/store/ToolsStore";
 
 type Params = Promise<{ agent_id: string[] }>;
@@ -186,6 +187,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 return <GmailTools />;
             case 'outlook':
                 return <OutlookTools />;
+            case 'google_calendar':
+                return <GoogleCalendarTools />;
             default:
                 return <Text>Tool not implemented yet</Text>;
         }
