@@ -6,9 +6,10 @@ import {
     Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
-    Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner, Select
+    Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner, Select,
+    useBreakpointValue
 } from "@chakra-ui/react";
-import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon, HamburgerIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { agentBuilderStore } from "@/store/AgentBuilderStore";
@@ -45,8 +46,10 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const { isOpen: isTestingAgentModalOpen, onOpen: onOpenTestingAgentModal, onClose: onCloseTesingAgentModal } = useDisclosure();
     const { isOpen: isPromptEngineerModalOpen, onOpen: onOpenPromptEngineerModal, onClose: onClosePromptEngineerModal } = useDisclosure();
     const { isOpen: isToolPickerModalOpen, onOpen: onOpenToolPickerModal, onClose: onCloseToolPickerModal } = useDisclosure();
+    const { isOpen: isToolNavDrawerOpen, onOpen: onOpenToolNavDrawer, onClose: onCloseToolNavDrawer } = useDisclosure();
     const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
     const { showAlert } = useAlert();
+    const isMobile = useBreakpointValue({ base: true, md: false });
 
     useEffect(() => {
         setShowAlertOnStore();
@@ -467,32 +470,90 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
             </Flex>
 
             {/* Tool Picker modal */}
-            <Modal isOpen={isToolPickerModalOpen} onClose={onCloseToolPickerModal} size="2xl">
+            <Modal isOpen={isToolPickerModalOpen} onClose={onCloseToolPickerModal} size={isMobile ? "full" : "4xl"}>
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>Tool Picker</ModalHeader>
+                    <ModalHeader>
+                        <Flex align="center" gap={2}>
+                            {isMobile && (
+                                <IconButton
+                                    aria-label="Open tool navigation"
+                                    icon={<HamburgerIcon />}
+                                    variant="ghost"
+                                    onClick={onOpenToolNavDrawer}
+                                    size="sm"
+                                />
+                            )}
+                            <Text>Tool Picker</Text>
+                        </Flex>
+                    </ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody>
-                        <Flex direction="column" gap={4}>
-                            {/* Tool tab menue */}
-                            <Flex direction="row" gap={4}>
-                                {agentBuilderStore.agentTools.map((toolName, index) => (
-                                    <Button
-                                        key={index}
-                                        variant={agentBuilderStore.presentedAgentTool === toolName ? 'solid' : 'outline'}
-                                        onClick={() => agentBuilderStore.setPresentedAgentTool(toolName)}
-
-                                    >
-                                        {toolName}
-                                    </Button>
-                                ))}
+                    <ModalBody pb={6}>
+                        <Flex direction="row" gap={0} minH={isMobile ? "auto" : "400px"}>
+                            {/* Left sidebar navigation - hidden on mobile */}
+                            {!isMobile && (
+                                <Flex
+                                    direction="column"
+                                    gap={1}
+                                    borderRightWidth="1px"
+                                    borderColor="gray.200"
+                                    _dark={{ borderColor: "gray.600" }}
+                                    pr={4}
+                                    minW="160px"
+                                >
+                                    {agentBuilderStore.agentTools.map((toolName, index) => (
+                                        <Button
+                                            key={index}
+                                            variant={agentBuilderStore.presentedAgentTool === toolName ? 'solid' : 'ghost'}
+                                            colorScheme={agentBuilderStore.presentedAgentTool === toolName ? 'purple' : 'gray'}
+                                            onClick={() => agentBuilderStore.setPresentedAgentTool(toolName)}
+                                            justifyContent="flex-start"
+                                            size="sm"
+                                            textTransform="capitalize"
+                                        >
+                                            {toolName.replace(/_/g, ' ')}
+                                        </Button>
+                                    ))}
+                                </Flex>
+                            )}
+                            {/* Right content area */}
+                            <Flex direction="column" flex="1" pl={isMobile ? 0 : 6} overflowY="auto" maxH={isMobile ? "70vh" : "60vh"}>
+                                {getViewForTool(agentBuilderStore.presentedAgentTool)}
                             </Flex>
-                            {/* Tool view */}
-                            {getViewForTool(agentBuilderStore.presentedAgentTool)}
                         </Flex>
                     </ModalBody>
                 </ModalContent>
             </Modal>
+
+            {/* Mobile Tool Navigation Drawer */}
+            <Drawer isOpen={isToolNavDrawerOpen} placement="left" onClose={onCloseToolNavDrawer}>
+                <DrawerOverlay />
+                <DrawerContent maxW="200px">
+                    <DrawerHeader borderBottomWidth="1px">Tools</DrawerHeader>
+                    <DrawerCloseButton />
+                    <DrawerBody p={2}>
+                        <Flex direction="column" gap={1}>
+                            {agentBuilderStore.agentTools.map((toolName, index) => (
+                                <Button
+                                    key={index}
+                                    variant={agentBuilderStore.presentedAgentTool === toolName ? 'solid' : 'ghost'}
+                                    colorScheme={agentBuilderStore.presentedAgentTool === toolName ? 'purple' : 'gray'}
+                                    onClick={() => {
+                                        agentBuilderStore.setPresentedAgentTool(toolName);
+                                        onCloseToolNavDrawer();
+                                    }}
+                                    justifyContent="flex-start"
+                                    size="sm"
+                                    textTransform="capitalize"
+                                    w="100%"
+                                >
+                                    {toolName.replace(/_/g, ' ')}
+                                </Button>
+                            ))}
+                        </Flex>
+                    </DrawerBody>
+                </DrawerContent>
+            </Drawer>
 
             {/* Prompt engineer drawer */}
             <Drawer isOpen={isPromptEngineerModalOpen} placement="right" onClose={beforeClosePromptEngineerModal} size="md">

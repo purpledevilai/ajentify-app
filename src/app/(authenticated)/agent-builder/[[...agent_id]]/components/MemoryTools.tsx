@@ -130,26 +130,26 @@ When referencing the memory document, always use the ID: ${selectedDocument.docu
 
     return (
         <Flex direction="column" gap={4} pb={4}>
-            <Flex direction="row" justify="space-between" align="center">
-                <Heading size="md">Memory Tools</Heading>
-                <Flex gap={2}>
-                    <Button
-                        onClick={toggleReadMemory}
-                        colorScheme={hasReadMemory ? "purple" : "gray"}
-                        variant={hasReadMemory ? "solid" : "outline"}
-                        size="sm"
-                    >
-                        {hasReadMemory ? "Remove" : "Add"} Read Memory
-                    </Button>
-                    <Button
-                        onClick={toggleWriteMemory}
-                        colorScheme={hasWriteMemory ? "purple" : "gray"}
-                        variant={hasWriteMemory ? "solid" : "outline"}
-                        size="sm"
-                    >
-                        {hasWriteMemory ? "Remove" : "Add"} Write Memory
-                    </Button>
-                </Flex>
+            <Heading size="md">Memory Tools</Heading>
+
+            {/* Tool Toggle Buttons */}
+            <Flex gap={2} flexWrap="wrap">
+                <Button
+                    onClick={toggleReadMemory}
+                    colorScheme={hasReadMemory ? "purple" : "gray"}
+                    variant={hasReadMemory ? "solid" : "outline"}
+                    size="sm"
+                >
+                    {hasReadMemory ? "Remove" : "Add"} Read Memory
+                </Button>
+                <Button
+                    onClick={toggleWriteMemory}
+                    colorScheme={hasWriteMemory ? "purple" : "gray"}
+                    variant={hasWriteMemory ? "solid" : "outline"}
+                    size="sm"
+                >
+                    {hasWriteMemory ? "Remove" : "Add"} Write Memory
+                </Button>
             </Flex>
 
             <Text fontWeight="bold">Description</Text>
