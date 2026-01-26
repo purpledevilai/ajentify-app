@@ -25,6 +25,7 @@ import { WebSearchTools } from "./components/WebSearchTools";
 import { GmailTools } from "./components/GmailTools";
 import { OutlookTools } from "./components/OutlookTools";
 import { GoogleCalendarTools } from "./components/GoogleCalendarTools";
+import { GoogleMapsTools } from "./components/GoogleMapsTools";
 import { UtilityTools } from "./components/UtilityTools";
 import { toolsStore } from "@/store/ToolsStore";
 
@@ -190,6 +191,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 return <OutlookTools />;
             case 'google_calendar':
                 return <GoogleCalendarTools />;
+            case 'google_maps':
+                return <GoogleMapsTools />;
             case 'utility':
                 return <UtilityTools />;
             default:

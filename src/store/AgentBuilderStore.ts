@@ -35,6 +35,8 @@ const DEFAULT_AJENTIFY_TOOLS: string[] = [
     "pass_event",
     // Utility tools
     "get_time", "think",
+    // Google Maps tools
+    "search_places", "get_place_details", "compute_routes",
 ];
 
 interface AgentStringFields {
@@ -89,6 +91,7 @@ class AgentBuilderStore {
         'gmail',
         'outlook',
         'google_calendar',
+        'google_maps',
         'custom_code',
         'pass_event'
     ]
