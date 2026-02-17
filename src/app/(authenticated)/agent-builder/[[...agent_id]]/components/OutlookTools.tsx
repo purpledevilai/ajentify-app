@@ -13,8 +13,8 @@ export const OutlookTools = observer(() => {
     // Use-case based tool groupings (cumulative)
     const readOnlyTools = ["list_outlook_emails", "get_outlook_email", "list_outlook_folders"];
     const basicManageTools = ["set_outlook_email_read_status", "archive_outlook_email", "move_outlook_email", "modify_outlook_email_categories"];
-    const sendTools = ["send_outlook_email"];
-    const draftTools = ["create_outlook_draft", "list_outlook_drafts", "get_outlook_draft", "update_outlook_draft", "send_outlook_draft", "delete_outlook_draft"];
+    const sendTools = ["send_outlook_email", "reply_outlook_email", "reply_all_outlook_email"];
+    const draftTools = ["create_outlook_draft", "list_outlook_drafts", "get_outlook_draft", "update_outlook_draft", "send_outlook_draft", "delete_outlook_draft", "create_outlook_reply_draft", "create_outlook_reply_all_draft"];
     const fullManageTools = ["trash_outlook_email", "untrash_outlook_email", "delete_outlook_email", "create_outlook_folder", "delete_outlook_folder"];
 
     // Check if each tool group is enabled
@@ -90,10 +90,10 @@ export const OutlookTools = observer(() => {
             capabilities.push("mark emails as read/unread, archive emails, move emails between folders, and modify categories");
         }
         if (hasSend) {
-            capabilities.push("send emails");
+            capabilities.push("send emails and reply to emails");
         }
         if (hasDrafts) {
-            capabilities.push("create, manage, and send draft emails");
+            capabilities.push("create, manage, and send draft emails including reply drafts");
         }
         if (hasFullManage) {
             capabilities.push("trash, restore, permanently delete emails, and manage folders");
@@ -237,12 +237,12 @@ When using Outlook tools, always use the integration_id: ${selectedIntegration.i
                     )}
                     {hasSend && (
                         <Text>
-                            <strong>Send:</strong> send_outlook_email
+                            <strong>Send:</strong> send_outlook_email, reply_outlook_email, reply_all_outlook_email
                         </Text>
                     )}
                     {hasDrafts && (
                         <Text>
-                            <strong>Drafts:</strong> create_outlook_draft, list_outlook_drafts, get_outlook_draft, update_outlook_draft, send_outlook_draft, delete_outlook_draft
+                            <strong>Drafts:</strong> create_outlook_draft, list_outlook_drafts, get_outlook_draft, update_outlook_draft, send_outlook_draft, delete_outlook_draft, create_outlook_reply_draft, create_outlook_reply_all_draft
                         </Text>
                     )}
                     {hasFullManage && (
