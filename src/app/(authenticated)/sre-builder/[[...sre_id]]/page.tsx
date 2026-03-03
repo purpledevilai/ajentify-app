@@ -16,6 +16,7 @@ import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore"
 import { structuredResponseEndpointsStore } from "@/store/StructuredResponseEndpointStore";
 import { ParameterView } from "./components/Parameter";
 import { Parameter } from "@/types/parameterdefinition";
+import { ModelSelector } from "@/app/components/ModelSelector";
 
 type Params = Promise<{ sre_id?: string[] }>;
 
@@ -199,6 +200,18 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
             ))}
           </Flex>
         )}
+
+        {/* Model Selection */}
+        <FormControl>
+          <FormLabelToolTip
+            label="Model"
+            tooltip="Select the LLM model this endpoint will use. Default is gpt-4.1."
+          />
+          <ModelSelector
+            value={sreBuilderStore.sre.model_id}
+            onChange={(modelId) => sreBuilderStore.setModelId(modelId)}
+          />
+        </FormControl>
 
         {/* SRE Is Public */}
         <FormControl>

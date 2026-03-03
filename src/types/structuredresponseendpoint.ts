@@ -9,6 +9,7 @@ export interface StructuredResponseEndpoint {
      * Supports variables wrapped in curly braces e.g. {variable}.
      */
     prompt_template?: string;
+    model_id?: string | null;
     is_public: boolean;
     created_at: number;
     updated_at: number;

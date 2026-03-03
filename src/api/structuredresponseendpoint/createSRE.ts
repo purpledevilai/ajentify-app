@@ -8,6 +8,7 @@ interface CreateSREPayload {
     pd_id: string;
     is_public?: boolean;
     prompt_template?: string;
+    model_id?: string | null;
 }
 
 export async function createSRE(payload: CreateSREPayload): Promise<StructuredResponseEndpoint> {

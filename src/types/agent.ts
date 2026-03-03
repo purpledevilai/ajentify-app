@@ -8,6 +8,7 @@ export interface Agent {
     uses_prompt_args?: boolean;
     prompt_arg_names?: string[];
     initialize_tool_id?: string | null;
+    model_id?: string | null;
     prompt: string;
     tools?:  string[];
 }

@@ -13,6 +13,7 @@ interface CreateAgentPayload {
     uses_prompt_args?: boolean;
     prompt_arg_names?: string[];
     initialize_tool_id?: string | null;
+    model_id?: string | null;
 }
 
 export async function createAgent(payload: CreateAgentPayload): Promise<Agent> {
