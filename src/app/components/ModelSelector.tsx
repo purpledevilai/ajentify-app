@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import {
     Flex, Text, Spinner, Badge, useColorModeValue,
-    Box, Collapse,
+    Box,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { observer } from "mobx-react-lite";
@@ -89,7 +89,7 @@ export const ModelSelector = observer(({ value, onChange }: ModelSelectorProps) 
             </Box>
 
             {/* Expandable model list */}
-            <Collapse in={isOpen} animateOpacity>
+            {isOpen && (
                 <Flex direction="column" gap={2} mt={2}>
                     {/* Default option */}
                     <Box
@@ -165,7 +165,7 @@ export const ModelSelector = observer(({ value, onChange }: ModelSelectorProps) 
                         );
                     })}
                 </Flex>
-            </Collapse>
+            )}
         </Flex>
     );
 });
