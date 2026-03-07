@@ -69,6 +69,7 @@ class AgentBuilderStore {
         uses_prompt_args: false,
         prompt_arg_names: [],
         initialize_tool_id: null,
+        model_id: null,
         prompt: '',
         tools: [],
     };
@@ -129,6 +130,7 @@ class AgentBuilderStore {
             uses_prompt_args: false,
             prompt_arg_names: [],
             initialize_tool_id: null,
+            model_id: null,
             prompt: '',
             tools: [],
         };
@@ -284,6 +286,7 @@ class AgentBuilderStore {
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
                 prompt_arg_names: this.currentAgent.prompt_arg_names,
                 initialize_tool_id: this.currentAgent.initialize_tool_id,
+                model_id: this.currentAgent.model_id,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -319,6 +322,7 @@ class AgentBuilderStore {
                 uses_prompt_args: this.currentAgent.uses_prompt_args,
                 prompt_arg_names: this.currentAgent.prompt_arg_names,
                 initialize_tool_id: this.currentAgent.initialize_tool_id,
+                model_id: this.currentAgent.model_id,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;
@@ -470,6 +474,11 @@ class AgentBuilderStore {
 
     setInitializeToolId(toolId: string | null) {
         this.currentAgent.initialize_tool_id = toolId;
+        this.hasUpdates = true;
+    }
+
+    setModelId(modelId: string | null) {
+        this.currentAgent.model_id = modelId;
         this.hasUpdates = true;
     }
 }

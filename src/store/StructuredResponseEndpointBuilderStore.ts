@@ -172,6 +172,11 @@ class StructuredResponseEndpointBuilderStore {
         this.hasUpdatedSRE = true;
     }
 
+    setModelId = (modelId: string | null) => {
+        this.sre.model_id = modelId;
+        this.hasUpdatedSRE = true;
+    }
+
     get hasSREId() {
         return this.sre.sre_id !== '';
     }

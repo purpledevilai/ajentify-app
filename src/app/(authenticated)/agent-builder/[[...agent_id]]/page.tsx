@@ -7,7 +7,7 @@ import {
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
     Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner, Select,
-    useBreakpointValue
+    useBreakpointValue, useToast
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon, HamburgerIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
@@ -29,6 +29,8 @@ import { GoogleCalendarTools } from "./components/GoogleCalendarTools";
 import { GoogleMapsTools } from "./components/GoogleMapsTools";
 import { UtilityTools } from "./components/UtilityTools";
 import { toolsStore } from "@/store/ToolsStore";
+import { modelsStore } from "@/store/ModelsStore";
+import { ModelSelector } from "@/app/components/ModelSelector";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -49,6 +51,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const { isOpen: isToolNavDrawerOpen, onOpen: onOpenToolNavDrawer, onClose: onCloseToolNavDrawer } = useDisclosure();
     const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
     const { showAlert } = useAlert();
+    const toast = useToast();
     const isMobile = useBreakpointValue({ base: true, md: false });
 
     useEffect(() => {
@@ -142,8 +145,13 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const onSaveAgent = async () => {
         await agentBuilderStore.onSaveAgentClick();
         agentsStore.loadAgents(true);
-        // Navigate back
-        window.history.back();
+        toast({
+            title: "Saved",
+            status: "success",
+            duration: 3000,
+            isClosable: true,
+            position: "top",
+        });
     }
 
     const onDeleteAgentClick = async () => {
@@ -285,6 +293,23 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={4}>
                     <Heading size="sm">Configuration</Heading>
 
+                    {/* Model Selection */}
+                    <FormControl>
+                        <FormLabelToolTip
+                            label="Model"
+                            tooltip="Select the LLM model this agent will use. Default is gpt-4.1."
+                        />
+                        <ModelSelector
+                            value={agentBuilderStore.currentAgent.model_id}
+                            onChange={(modelId) => {
+                                agentBuilderStore.setModelId(modelId);
+                                if (modelId && modelsStore.isAnthropicModel(modelId) && agentBuilderStore.currentAgent.agent_speaks_first) {
+                                    agentBuilderStore.setBooleanField("agent_speaks_first", false);
+                                }
+                            }}
+                        />
+                    </FormControl>
+
                     {/* Voice ID */}
                     <FormControl>
                         <FormLabelToolTip
@@ -317,13 +342,20 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                             label="Agent Speaks First"
                             tooltip="When a new context with this agent is created, the agent will generate the first message."
                         />
-                        <Switch
-                            mt={2}
-                            colorScheme="purple"
-                            size="lg"
-                            isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
-                            onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
-                        />
+                        <Tooltip
+                            isDisabled={!modelsStore.isAnthropicModel(agentBuilderStore.currentAgent.model_id)}
+                            label="Anthropic models do not support agent speaks first"
+                            fontSize="sm"
+                        >
+                            <Switch
+                                mt={2}
+                                colorScheme="purple"
+                                size="lg"
+                                isChecked={agentBuilderStore.currentAgent.agent_speaks_first}
+                                isDisabled={modelsStore.isAnthropicModel(agentBuilderStore.currentAgent.model_id)}
+                                onChange={(e) => agentBuilderStore.setBooleanField("agent_speaks_first", e.target.checked)}
+                            />
+                        </Tooltip>
                     </FormControl>
 
                     {/* Initialization Tool */}
