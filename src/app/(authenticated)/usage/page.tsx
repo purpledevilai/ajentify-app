@@ -58,8 +58,7 @@ const UsagePage = observer(() => {
         setError(null);
         try {
             const { start_date, end_date } = getMonthDateRange(year, month);
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const data = await getUsage({ start_date, end_date, timezone });
+            const data = await getUsage({ start_date, end_date });
             setUsage(data);
         } catch (err) {
             setError((err as Error).message);
@@ -179,9 +178,14 @@ const UsagePage = observer(() => {
                         shadow="sm"
                         mb={6}
                     >
-                        <Text fontWeight="semibold" mb={4}>
-                            Daily Token Usage
-                        </Text>
+                        <Flex justify="space-between" align="baseline" mb={4}>
+                            <Text fontWeight="semibold">
+                                Daily Token Usage
+                            </Text>
+                            <Text fontSize="xs" color="gray.500">
+                                Times shown in UTC
+                            </Text>
+                        </Flex>
                         <Box overflowX="auto">
                             <Flex
                                 align="flex-end"

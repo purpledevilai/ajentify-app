@@ -4,7 +4,6 @@ import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 export interface UsageParams {
     start_date: string;
     end_date: string;
-    timezone?: string;
     org_id?: string;
 }
 
@@ -32,7 +31,6 @@ export async function getUsage(params: UsageParams): Promise<UsageResponse> {
             start_date: params.start_date,
             end_date: params.end_date,
         });
-        if (params.timezone) searchParams.set('timezone', params.timezone);
         if (params.org_id) searchParams.set('org_id', params.org_id);
 
         const response = await fetch(
