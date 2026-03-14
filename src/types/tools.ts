@@ -9,6 +9,7 @@ export interface Tool {
     code?: string;
     pass_context?: boolean;
     is_async?: boolean;
+    is_client_side_tool?: boolean;
 }
 
 export interface TestInput {

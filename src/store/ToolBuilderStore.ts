@@ -30,6 +30,7 @@ const defaultTool = {
     code: 'def custom_function():\n    # YOUR CODE HERE\n    return "Function was called"',
     pass_context: false,
     is_async: false,
+    is_client_side_tool: false,
 } as Tool;
 
 
@@ -231,6 +232,18 @@ class ToolBuilderStore {
         this.updateCode();
     }
 
+    setIsClientSideTool = (isClientSide: boolean) => {
+        this.tool.is_client_side_tool = isClientSide;
+        if (isClientSide) {
+            this.tool.code = undefined;
+            this.tool.pass_context = false;
+            this.tool.is_async = false;
+        } else {
+            this.tool.code = `def ${getCodeName(this.tool.name)}():\n    # YOUR CODE HERE\n    return "Function was called"`;
+            this.updateCode();
+        }
+    }
+
     getPerameters = (indexArray: number[]): Parameter[] => {
         let perameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
@@ -344,6 +357,13 @@ class ToolBuilderStore {
     }
 
     executeTestInput = async () => {
+        if (this.tool.is_client_side_tool) {
+            this.showAlert({
+                title: 'Whoops',
+                message: 'Testing is not available for client-side tools.',
+            });
+            return;
+        }
         if (this.tool.pass_context) {
             this.showAlert({
                 title: 'Whoops',
@@ -422,6 +442,11 @@ class ToolBuilderStore {
             this.toolSaving = true;
             this.codifyNames();
             this.validateNamesAndDescriptions();
+            if (this.tool.is_client_side_tool) {
+                this.tool.code = undefined;
+                this.tool.pass_context = false;
+                this.tool.is_async = false;
+            }
             if (this.isUpdating) {
                 // if no parameters set pd_id to null
                 if (this.parameters.length === 0) {

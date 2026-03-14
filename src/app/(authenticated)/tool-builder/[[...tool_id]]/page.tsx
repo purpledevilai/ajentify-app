@@ -28,6 +28,7 @@ interface ToolBuilderPageProps {
 const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
 
     const { showAlert } = useAlert();
+    const { colorMode } = useColorMode();
 
     useEffect(() => {
         setShowAlertOnStore();
@@ -150,35 +151,54 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     />
                 </FormControl>
 
-                {/* Pass Context Toggle */}
+                {/* Client Side Tool Toggle */}
                 <FormControl display="flex" alignItems="center">
                     <FormLabelToolTip
-                        label="Pass Context"
-                        tooltip="Include context object as a parameter to this tool call."
+                        label="Client Side Tool"
+                        tooltip="Client-side tools are executed by the calling application, not on the server. They only need a parameter definition — no code."
                     />
                     <Switch
                         ml={2}
                         colorScheme="purple"
                         size="lg"
-                        isChecked={toolBuilderStore.tool.pass_context}
-                        onChange={(e) => toolBuilderStore.setPassContext(e.target.checked)}
+                        isChecked={toolBuilderStore.tool.is_client_side_tool}
+                        onChange={(e) => toolBuilderStore.setIsClientSideTool(e.target.checked)}
                     />
                 </FormControl>
 
-                {/* Is Async Toggle */}
-                <FormControl display="flex" alignItems="center">
-                    <FormLabelToolTip
-                        label="Is Async"
-                        tooltip="Include tool_call_id parameter to this tool call for async operations."
-                    />
-                    <Switch
-                        ml={2}
-                        colorScheme="purple"
-                        size="lg"
-                        isChecked={toolBuilderStore.tool.is_async}
-                        onChange={(e) => toolBuilderStore.setIsAsync(e.target.checked)}
-                    />
-                </FormControl>
+                {!toolBuilderStore.tool.is_client_side_tool && (
+                    <>
+                        {/* Pass Context Toggle */}
+                        <FormControl display="flex" alignItems="center">
+                            <FormLabelToolTip
+                                label="Pass Context"
+                                tooltip="Include context object as a parameter to this tool call."
+                            />
+                            <Switch
+                                ml={2}
+                                colorScheme="purple"
+                                size="lg"
+                                isChecked={toolBuilderStore.tool.pass_context}
+                                onChange={(e) => toolBuilderStore.setPassContext(e.target.checked)}
+                            />
+                        </FormControl>
+
+                        {/* Is Async Toggle */}
+                        <FormControl display="flex" alignItems="center">
+                            <FormLabelToolTip
+                                label="Is Async"
+                                tooltip="Include tool_call_id parameter to this tool call for async operations."
+                            />
+                            <Switch
+                                ml={2}
+                                colorScheme="purple"
+                                size="lg"
+                                isChecked={toolBuilderStore.tool.is_async}
+                                onChange={(e) => toolBuilderStore.setIsAsync(e.target.checked)}
+                            />
+                        </FormControl>
+                    </>
+                )}
 
 
                 {/* Parameters */}
@@ -206,52 +226,56 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     variant={'outline'}
                 >Add Parameter</Button>
 
-                {/* Code editor */}
-                <Heading size="md">Code</Heading>
-                <MonacoEditor
-                    height="70vh"
-                    defaultLanguage="python"
-                    value={toolBuilderStore.tool.code}
-                    onChange={handleEditorChange}
-                    onMount={handleEditorDidMount}
-                    theme={useColorMode().colorMode === 'dark' ? 'vs-dark' : 'vs'}
-                    options={{
-                        minimap: { enabled: false },
-                        fontSize: 16,
-                        lineNumbersMinChars: 1,
-                        wordWrap: "on",
-                        scrollBeyondLastLine: false,
-                        scrollbar: {
-                            alwaysConsumeMouseWheel: false
-                        },
-                    }}
-                />
+                {!toolBuilderStore.tool.is_client_side_tool && (
+                    <>
+                        {/* Code editor */}
+                        <Heading size="md">Code</Heading>
+                        <MonacoEditor
+                            height="70vh"
+                            defaultLanguage="python"
+                            value={toolBuilderStore.tool.code}
+                            onChange={handleEditorChange}
+                            onMount={handleEditorDidMount}
+                            theme={colorMode === 'dark' ? 'vs-dark' : 'vs'}
+                            options={{
+                                minimap: { enabled: false },
+                                fontSize: 16,
+                                lineNumbersMinChars: 1,
+                                wordWrap: "on",
+                                scrollBeyondLastLine: false,
+                                scrollbar: {
+                                    alwaysConsumeMouseWheel: false
+                                },
+                            }}
+                        />
 
-                {/* Test Input */}
-                <Flex direction="column" w="100%" gap={6}>
-                    <Heading size="md">Test parameters</Heading>
-                    {toolBuilderStore.testInputs.map((testInput: TestInput, index: number) => (
-                        <div key={index}>
-                            <TestInputView indexArray={[index]} testInput={testInput} />
-                        </div>
-                    ))}
-                </Flex>
+                        {/* Test Input */}
+                        <Flex direction="column" w="100%" gap={6}>
+                            <Heading size="md">Test parameters</Heading>
+                            {toolBuilderStore.testInputs.map((testInput: TestInput, index: number) => (
+                                <div key={index}>
+                                    <TestInputView indexArray={[index]} testInput={testInput} />
+                                </div>
+                            ))}
+                        </Flex>
 
-                {/* Test Input Button */}
-                <Tooltip
-                    isDisabled={!toolBuilderStore.tool.pass_context}
-                    label="Currently the test feature is only available when pass context is disabled"
-                    fontSize="md"
-                >
-                    <Button
-                        onClick={() => toolBuilderStore.executeTestInput()}
-                        colorScheme="purple"
-                        size="lg"
-                        variant={'outline'}
-                        isLoading={toolBuilderStore.toolExecuting}
-                        isDisabled={toolBuilderStore.tool.pass_context}
-                    >Test</Button>
-                </Tooltip>
+                        {/* Test Input Button */}
+                        <Tooltip
+                            isDisabled={!toolBuilderStore.tool.pass_context}
+                            label="Currently the test feature is only available when pass context is disabled"
+                            fontSize="md"
+                        >
+                            <Button
+                                onClick={() => toolBuilderStore.executeTestInput()}
+                                colorScheme="purple"
+                                size="lg"
+                                variant={'outline'}
+                                isLoading={toolBuilderStore.toolExecuting}
+                                isDisabled={toolBuilderStore.tool.pass_context}
+                            >Test</Button>
+                        </Tooltip>
+                    </>
+                )}
 
                 {/* Save Button */}
                 <Tooltip

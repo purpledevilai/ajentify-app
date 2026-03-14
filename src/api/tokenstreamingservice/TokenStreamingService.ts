@@ -2,6 +2,17 @@
 import { JSONRPCPeer } from '../../lib/JSONRPCPeer';
 import { SimpleWebSocketClient } from '../../lib/SimpleWebSocketClient';
 
+export interface ClientSideToolCall {
+    tool_call_id: string;
+    tool_name: string;
+    tool_input: Record<string, any>;
+}
+
+export interface ClientSideToolResponse {
+    tool_call_id: string;
+    response: string;
+}
+
 export class TokenStreamingService {
     private tokenStreamingUrl: string;
     private contextId: string;
@@ -13,6 +24,7 @@ export class TokenStreamingService {
     private onToolCallCallback?: (id: string, name: string, input: string) => void;
     private onToolResponseCallback?: (id: string, name: string, output: string) => void;
     private onEventsCallback?: (events: any[], responseId: string) => void;
+    private onClientSideToolCallsCallback?: (toolCalls: ClientSideToolCall[], responseId: string) => void;
 
     constructor(tokenStreamingUrl: string, contextId: string, accessToken: string) {
         this.tokenStreamingUrl = tokenStreamingUrl;
@@ -30,6 +42,7 @@ export class TokenStreamingService {
         this.tokenStreamingService.on('on_tool_call', this._onToolCall.bind(this));
         this.tokenStreamingService.on('on_tool_response', this._onToolResponse.bind(this));
         this.tokenStreamingService.on('on_events', this._onEvents.bind(this));
+        this.tokenStreamingService.on('on_client_side_tool_calls', this._onClientSideToolCalls.bind(this));
 
         this.websocket.setOnMessage((msg) => {
             this.tokenStreamingService!.handleMessage(msg);
@@ -60,6 +73,10 @@ export class TokenStreamingService {
         this.onEventsCallback = cb;
     }
 
+    setOnClientSideToolCalls(cb: (toolCalls: ClientSideToolCall[], responseId: string) => void) {
+        this.onClientSideToolCallsCallback = cb;
+    }
+
     setOnClose(cb: () => void) {
         this.websocket?.setOnClose(cb);
     }
@@ -80,8 +97,16 @@ export class TokenStreamingService {
         this.onEventsCallback?.(events, responseId);
     }
 
+    private async _onClientSideToolCalls(toolCalls: ClientSideToolCall[], responseId: string): Promise<void> {
+        this.onClientSideToolCallsCallback?.(toolCalls, responseId);
+    }
+
     async addMessage(message: string): Promise<void> {
         await this.tokenStreamingService?.call('add_message', { message });
+    }
+
+    async sendClientSideToolResponses(toolResponses: ClientSideToolResponse[]): Promise<void> {
+        await this.tokenStreamingService?.call('client_side_tool_responses', { tool_responses: toolResponses });
     }
 
     close(): void {

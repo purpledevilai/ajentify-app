@@ -9,6 +9,8 @@ interface UpdateToolPayload {
     pd_id?: string;
     code?: string;
     pass_context?: boolean;
+    is_async?: boolean;
+    is_client_side_tool?: boolean;
 }
 
 export async function updateTool(payload: UpdateToolPayload): Promise<Tool> {
