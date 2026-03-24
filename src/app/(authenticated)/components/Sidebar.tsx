@@ -174,6 +174,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                             <MenuList>
                                 <MenuItem onClick={() => router.push('/profile')}>Profile</MenuItem>
                                 <MenuItem onClick={() => router.push('/usage')}>Usage</MenuItem>
+                                <MenuItem onClick={() => router.push('/api-keys')}>API Keys</MenuItem>
                                 <MenuDivider />
                                 <MenuItem onClick={() => authStore.signOut()}>Logout</MenuItem>
                             </MenuList>

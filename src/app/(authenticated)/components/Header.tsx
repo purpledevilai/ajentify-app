@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Flex, Text, Spacer, IconButton, useColorMode } from '@chakra-ui/react';
+import { Flex, Text, Spacer, IconButton, Button, useColorMode } from '@chakra-ui/react';
 import { HamburgerIcon, SunIcon, MoonIcon } from '@chakra-ui/icons';
 
 interface HeaderProps {
@@ -40,6 +40,18 @@ const Header = ({ onMenuClick }: HeaderProps) => {
       </Text>
 
       <Spacer />
+
+      <Button
+        as="a"
+        href="https://api.ajentify.com/docs"
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="ghost"
+        _hover={{ bg: 'gray.200', _dark: { bg: 'gray.700' } }}
+        mr={2}
+      >
+        Docs
+      </Button>
 
       {/* Light/Dark Mode Toggle */}
       <IconButton

@@ -15,6 +15,15 @@ export default function Header() {
                 </Box>
                 <Spacer />
                 <Flex align="center" gap="4">
+                    <Button
+                        as="a"
+                        href="https://api.ajentify.com/docs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="ghost"
+                    >
+                        Docs
+                    </Button>
                     <IconButton
                         aria-label="Toggle color mode"
                         icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />} 
