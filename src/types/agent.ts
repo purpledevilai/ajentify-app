@@ -10,5 +10,7 @@ export interface Agent {
     initialize_tool_id?: string | null;
     model_id?: string | null;
     prompt: string;
-    tools?:  string[];
+    tools?: string[];
+    created_at?: number;
+    updated_at?: number;
 }
