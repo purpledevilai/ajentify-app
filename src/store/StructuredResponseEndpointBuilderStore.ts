@@ -21,6 +21,7 @@ const defaultSRE: StructuredResponseEndpoint = {
     description: '',
     pd_id: '',
     prompt_template: '',
+    variable_names: [],
     is_public: false,
     created_at: 0,
     updated_at: 0,
@@ -51,15 +52,38 @@ class StructuredResponseEndpointBuilderStore {
     runResult: AnyType | undefined = undefined;
     hasUpdatedSRE = false;
     hasUpdatedParameterDefinition = false;
+
+    // Legacy SRE toggle: when true, the user has opted into using variable_names for a legacy SRE
+    useVariableNames = false;
+
+    // Test section inputs for new-style SREs (keyed by variable_names entries)
+    variableNamesInput: Record<string, string> = {};
+
+    // Test section inputs for legacy SREs (keyed by {variable} placeholders parsed from template)
     templateArgsInput: Record<string, string> = {};
+
+    // Parsed {variable} placeholders from the prompt template — used only for legacy SRE testing
     get templateArgs(): string[] {
         const matches = this.sre.prompt_template?.match(/\{([^}]+)\}/g) || [];
         return matches.map((m) => m.replace(/[{}]/g, ""));
     }
 
+    // True when we are editing an existing SRE that has no variable_names (pre-refactor SRE)
+    get isLegacySRE(): boolean {
+        return !!this.sre.sre_id && (this.sre.variable_names == null || this.sre.variable_names.length === 0);
+    }
+
+    // Whether the variable names UI should be shown
+    get showVariableNamesUI(): boolean {
+        if (!this.isLegacySRE) return true;
+        return this.useVariableNames;
+    }
+
     constructor() {
         makeAutoObservable(this, {
             templateArgs: computed,
+            isLegacySRE: computed,
+            showVariableNamesUI: computed,
         });
         this.syncTemplateArgsInput();
     }
@@ -70,6 +94,14 @@ class StructuredResponseEndpointBuilderStore {
             filtered[arg] = this.templateArgsInput[arg] ?? '';
         }
         this.templateArgsInput = filtered;
+    }
+
+    syncVariableNamesInput = () => {
+        const filtered: Record<string, string> = {};
+        for (const name of (this.sre.variable_names ?? [])) {
+            filtered[name] = this.variableNamesInput[name] ?? '';
+        }
+        this.variableNamesInput = filtered;
     }
 
     reset = () => {
@@ -85,6 +117,8 @@ class StructuredResponseEndpointBuilderStore {
         this.runResult = undefined;
         this.hasUpdatedSRE = false;
         this.hasUpdatedParameterDefinition = false;
+        this.useVariableNames = false;
+        this.variableNamesInput = {};
         this.templateArgsInput = {};
         this.syncTemplateArgsInput();
     }
@@ -99,6 +133,7 @@ class StructuredResponseEndpointBuilderStore {
             org_id: authStore.user?.organizations[0].id || '',
         };
         this.syncTemplateArgsInput();
+        this.syncVariableNamesInput();
     }
 
     setIsNewSme = (isNewSme: boolean) => {
@@ -109,10 +144,20 @@ class StructuredResponseEndpointBuilderStore {
         this.useClickedSave = clickedSave;
     }
 
+    setUseVariableNames = (value: boolean) => {
+        this.useVariableNames = value;
+        if (value && (!this.sre.variable_names || this.sre.variable_names.length === 0)) {
+            this.sre.variable_names = [];
+        }
+        this.syncVariableNamesInput();
+        this.hasUpdatedSRE = true;
+    }
+
     setSRE = (sre: StructuredResponseEndpoint) => {
         this.sre = sre;
         this.loadParameterDefinition(sre.pd_id);
         this.syncTemplateArgsInput();
+        this.syncVariableNamesInput();
     }
 
     setSREWithId = async (sreId: string) => {
@@ -200,6 +245,18 @@ class StructuredResponseEndpointBuilderStore {
             throw new Error("At least one parameter is required.");
         }
         this.validateParameterNamesAndDescriptions(this.parameters);
+
+        // Variable names are required for new SREs, or for legacy SREs where the user has enabled them
+        const needsVariableNames = !this.isLegacySRE || this.useVariableNames;
+        if (needsVariableNames) {
+            const names = this.sre.variable_names ?? [];
+            if (names.length === 0) {
+                throw new Error("At least one variable name is required.");
+            }
+            if (names.some((n) => !n.trim())) {
+                throw new Error("All variable names must be non-empty.");
+            }
+        }
     }
 
     validateParameterNamesAndDescriptions = (parameters: Parameter[], isChildOfEnum: boolean = false) => {
@@ -210,6 +267,37 @@ class StructuredResponseEndpointBuilderStore {
             }
             this.validateParameterNamesAndDescriptions(param.parameters, param.type === 'enum');
         });
+    }
+
+    // VARIABLE NAME MANAGEMENT
+
+    addVariableName = () => {
+        if (!this.sre.variable_names) {
+            this.sre.variable_names = [];
+        }
+        this.sre.variable_names.push('');
+        this.syncVariableNamesInput();
+        this.hasUpdatedSRE = true;
+    }
+
+    removeVariableName = (index: number) => {
+        if (this.sre.variable_names) {
+            this.sre.variable_names.splice(index, 1);
+            this.syncVariableNamesInput();
+            this.hasUpdatedSRE = true;
+        }
+    }
+
+    updateVariableName = (index: number, value: string) => {
+        if (this.sre.variable_names) {
+            this.sre.variable_names[index] = value;
+            this.syncVariableNamesInput();
+            this.hasUpdatedSRE = true;
+        }
+    }
+
+    updateVariableNameInput = (key: string, value: string) => {
+        this.variableNamesInput[key] = value;
     }
 
     // PARAMETER MANAGEMENT
@@ -299,12 +387,18 @@ class StructuredResponseEndpointBuilderStore {
             // Create or update SRE
             if (this.hasUpdatedSRE) {
                 if (this.hasSREId) {
-                    this.sre = await updateSRE(this.sre);
+                    // When a legacy SRE user has enabled variable names, include them in the update
+                    const updatePayload = {
+                        ...this.sre,
+                        variable_names: this.showVariableNamesUI ? (this.sre.variable_names ?? []) : this.sre.variable_names,
+                    };
+                    this.sre = await updateSRE(updatePayload);
                 } else {
                     const srePayload = {
                         ...this.sre,
-                        org_id: undefined
-                    }
+                        org_id: undefined,
+                        variable_names: this.sre.variable_names ?? [],
+                    };
                     this.sre = await createSRE(srePayload);
                 }
                 this.hasUpdatedSRE = false;
@@ -349,9 +443,15 @@ class StructuredResponseEndpointBuilderStore {
     runSRE = async (): Promise<void> => {
         try {
             this.isRunningSRE = true;
+
+            // New-style SREs use variableNamesInput; legacy SREs use templateArgsInput
+            const prompt_args = this.showVariableNamesUI
+                ? this.variableNamesInput
+                : this.templateArgsInput;
+
             const result = await runSRE({
                 sre_id: this.sre.sre_id,
-                prompt_args: this.templateArgsInput,
+                prompt_args,
             });
             this.runResult = result;
         } catch (error) {

@@ -5,10 +5,9 @@ import { useNavigationGuard } from "next-navigation-guard";
 import {
   Flex, FormControl, Heading, IconButton, Input, Button, Tooltip, Textarea, Box, Switch,
   Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
-  useColorMode, Text,
-  FormLabel
+  useColorMode, Text, FormLabel
 } from "@chakra-ui/react";
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, AddIcon, SmallCloseIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { useAlert } from "@/app/components/AlertProvider";
 import { observer } from "mobx-react-lite";
@@ -54,17 +53,6 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
       }
 
       const leavePage = async () => {
-        // If the SRE is new and the user has not clicked save, delete the SRE
-        // NOTE: Commenting this out because it has lead to accidental deletions
-        /*
-        if (
-          sreBuilderStore.isNewSme && 
-          sreBuilderStore.sre.sre_id && 
-          !sreBuilderStore.useClickedSave
-        ) {
-          await sreBuilderStore.deleteSRE();
-        }
-        */
         navGuard.accept();
       }
 
@@ -177,29 +165,71 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           />
         </FormControl>
 
+        {/* Variable Names — shown for new SREs always, for legacy SREs behind a toggle */}
+        {sreBuilderStore.isLegacySRE && (
+          <FormControl>
+            <FormLabelToolTip
+              label="Use Variable Names"
+              tooltip="Enable to define explicit variable names for this endpoint's prompt template. This upgrades it to the new variable-based system."
+            />
+            <Switch
+              mt={2}
+              colorScheme="purple"
+              size="lg"
+              isChecked={sreBuilderStore.useVariableNames}
+              onChange={(e) => sreBuilderStore.setUseVariableNames(e.target.checked)}
+            />
+          </FormControl>
+        )}
+
+        {sreBuilderStore.showVariableNamesUI && (
+          <Flex direction="column" w="100%" gap={4}>
+            <FormLabelToolTip
+              label="Variable Names"
+              tooltip="Define the variable name strings that appear in your prompt template. Each name will be replaced at runtime with the value you supply when calling this endpoint."
+            />
+            {(sreBuilderStore.sre.variable_names ?? []).map((varName, index) => (
+              <Flex key={index} direction="row" align="center" gap={2}>
+                <Input
+                  placeholder="CUSTOMER_MESSAGE"
+                  value={varName}
+                  onChange={(e) => sreBuilderStore.updateVariableName(index, e.target.value)}
+                />
+                <IconButton
+                  aria-label="Remove variable"
+                  icon={<SmallCloseIcon />}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => sreBuilderStore.removeVariableName(index)}
+                />
+              </Flex>
+            ))}
+            <Button
+              size="sm"
+              leftIcon={<AddIcon />}
+              variant="outline"
+              onClick={() => sreBuilderStore.addVariableName()}
+              w="fit-content"
+            >
+              Add Variable
+            </Button>
+          </Flex>
+        )}
+
         {/* Prompt Template */}
         <FormControl>
           <FormLabelToolTip
             label="Prompt Template"
-            tooltip="Template used when calling this endpoint. Variables should be wrapped in curly braces."
+            tooltip="The prompt sent to the LLM. Include your variable names as plain text strings — they will be replaced with the values you provide when running this endpoint."
           />
           <Textarea
             mt={2}
-            placeholder="Extract order details from the following text: {message}"
+            placeholder="Extract order details from the following text: CUSTOMER_MESSAGE"
             value={sreBuilderStore.sre.prompt_template}
             onChange={(e) => sreBuilderStore.setPromptTemplate(e.target.value)}
             rows={5}
           />
         </FormControl>
-
-        {sreBuilderStore.templateArgs.length > 0 && (
-          <Flex direction="column" w="100%" mt={2} gap={2}>
-            <Heading size="sm">Template Args</Heading>
-            {sreBuilderStore.templateArgs.map((arg, idx) => (
-              <Text key={idx}>- {arg}</Text>
-            ))}
-          </Flex>
-        )}
 
         {/* Model Selection */}
         <FormControl>
@@ -252,8 +282,25 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
         {/* Run SRE Test */}
         <Heading size="md">Test Structured Response Endpoint</Heading>
 
-        {sreBuilderStore.templateArgs.length > 0 && (
-          <Flex direction="column" gap={4} mt={4} w="100%">
+        {/* Test inputs for new-style SREs (variable_names) */}
+        {sreBuilderStore.showVariableNamesUI && (sreBuilderStore.sre.variable_names ?? []).length > 0 && (
+          <Flex direction="column" gap={4} w="100%">
+            {(sreBuilderStore.sre.variable_names ?? []).map((varName, idx) => (
+              <FormControl key={idx}>
+                <FormLabel>{varName || `Variable ${idx + 1}`}</FormLabel>
+                <Input
+                  placeholder="Value"
+                  value={sreBuilderStore.variableNamesInput[varName] ?? ''}
+                  onChange={(e) => sreBuilderStore.updateVariableNameInput(varName, e.target.value)}
+                />
+              </FormControl>
+            ))}
+          </Flex>
+        )}
+
+        {/* Test inputs for legacy SREs ({variable} placeholders) */}
+        {!sreBuilderStore.showVariableNamesUI && sreBuilderStore.templateArgs.length > 0 && (
+          <Flex direction="column" gap={4} w="100%">
             {sreBuilderStore.templateArgs.map((arg, idx) => (
               <FormControl key={idx}>
                 <FormLabel>{arg}</FormLabel>
@@ -265,6 +312,13 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
               </FormControl>
             ))}
           </Flex>
+        )}
+
+        {/* No variables defined yet (new SRE, no names added) */}
+        {sreBuilderStore.showVariableNamesUI && (sreBuilderStore.sre.variable_names ?? []).length === 0 && (
+          <Text color="gray.500" fontSize="sm">
+            Add at least one variable name above to test this endpoint.
+          </Text>
         )}
 
         <Button

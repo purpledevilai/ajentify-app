@@ -8,6 +8,7 @@ interface CreateSREPayload {
     pd_id: string;
     is_public?: boolean;
     prompt_template?: string;
+    variable_names?: string[];
     model_id?: string | null;
 }
 

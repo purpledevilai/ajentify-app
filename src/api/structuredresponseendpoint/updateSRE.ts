@@ -8,6 +8,7 @@ interface UpdateSREPayload {
     description?: string;
     is_public?: boolean;
     prompt_template?: string;
+    variable_names?: string[] | null;
     model_id?: string | null;
 }
 

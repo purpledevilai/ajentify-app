@@ -5,10 +5,15 @@ export interface StructuredResponseEndpoint {
     description?: string;
     pd_id: string;
     /**
-     * Prompt template used when generating the structured response.
-     * Supports variables wrapped in curly braces e.g. {variable}.
+     * Prompt template containing the variable name strings that will be replaced at runtime.
      */
     prompt_template?: string;
+    /**
+     * Explicit variable names used in the prompt template. When set (new-style SRE), each name
+     * is replaced in the prompt template via direct string replacement at run time.
+     * When absent (legacy SRE), the old {variable} placeholder syntax is used instead.
+     */
+    variable_names?: string[] | null;
     model_id?: string | null;
     is_public: boolean;
     created_at: number;
