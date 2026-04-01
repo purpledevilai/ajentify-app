@@ -10,6 +10,8 @@ export interface Tool {
     pass_context?: boolean;
     is_async?: boolean;
     is_client_side_tool?: boolean;
+    created_at?: number;
+    updated_at?: number;
 }
 
 export interface TestInput {

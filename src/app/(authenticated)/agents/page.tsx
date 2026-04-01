@@ -30,17 +30,21 @@ import {
   Td,
   TableContainer,
   Icon,
+  Input,
+  InputGroup,
+  InputLeftElement,
 } from '@chakra-ui/react';
-import { CopyIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import { CopyIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@chakra-ui/icons';
 import { useAlert } from '@/app/components/AlertProvider';
 import { authStore } from '@/store/AuthStore';
 
-type SortField = 'name' | 'model' | 'created_at' | 'updated_at';
+type SortField = 'name' | 'model' | 'is_public' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
 
 const DEFAULT_DIR: Record<SortField, SortDir> = {
   name: 'asc',
   model: 'asc',
+  is_public: 'desc',
   created_at: 'desc',
   updated_at: 'desc',
 };
@@ -140,6 +144,11 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
       onClick={onClick}
       transition="background 0.15s"
     >
+      {/* Name */}
+      <Td fontWeight="semibold" maxW="200px">
+        <Text noOfLines={1}>{agent.agent_name}</Text>
+      </Td>
+
       {/* ID */}
       <Td w="1px" whiteSpace="nowrap">
         <Flex
@@ -165,11 +174,6 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
         </Flex>
       </Td>
 
-      {/* Name */}
-      <Td fontWeight="semibold" maxW="200px">
-        <Text noOfLines={1}>{agent.agent_name}</Text>
-      </Td>
-
       {/* Description */}
       <Td maxW="300px">
         <Text fontSize="sm" color={subtextColor} noOfLines={1}>
@@ -181,6 +185,17 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
       <Td w="1px" whiteSpace="nowrap">
         <Badge colorScheme={modelColor} fontSize="xs" textTransform="none">
           {modelLabel}
+        </Badge>
+      </Td>
+
+      {/* Public */}
+      <Td w="1px" whiteSpace="nowrap">
+        <Badge
+          colorScheme={agent.is_public ? 'green' : 'gray'}
+          fontSize="xs"
+          variant={agent.is_public ? 'solid' : 'subtle'}
+        >
+          {agent.is_public ? 'Public' : 'Private'}
         </Badge>
       </Td>
 
@@ -245,6 +260,7 @@ const AgentsPage = observer(() => {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [search, setSearch] = useState('');
   const { showAlert } = useAlert();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
@@ -277,8 +293,14 @@ const AgentsPage = observer(() => {
     router.push(`/agent-builder/${agent.agent_id}`);
   };
 
-  const sortedAgents = agentsStore.agents
-    ? [...agentsStore.agents].sort((a, b) => {
+  const filteredAgents = agentsStore.agents
+    ? agentsStore.agents.filter((a) =>
+        a.agent_name.toLowerCase().includes(search.toLowerCase())
+      )
+    : [];
+
+  const sortedAgents = filteredAgents.length > 0 || search
+    ? [...filteredAgents].sort((a, b) => {
         let aVal: string | number = 0;
         let bVal: string | number = 0;
 
@@ -288,6 +310,9 @@ const AgentsPage = observer(() => {
         } else if (sortField === 'model') {
           aVal = (a.model_id ?? 'default').toLowerCase();
           bVal = (b.model_id ?? 'default').toLowerCase();
+        } else if (sortField === 'is_public') {
+          aVal = a.is_public ? 1 : 0;
+          bVal = b.is_public ? 1 : 0;
         } else if (sortField === 'created_at') {
           aVal = a.created_at ?? 0;
           bVal = b.created_at ?? 0;
@@ -306,7 +331,7 @@ const AgentsPage = observer(() => {
 
   return (
     <Box p={{ base: 4, md: 6 }}>
-      <Flex align="center" mb={6}>
+      <Flex align="center" mb={4}>
         <Heading as="h1" size="xl">
           Agents
         </Heading>
@@ -319,6 +344,18 @@ const AgentsPage = observer(() => {
           + Add Agent
         </Button>
       </Flex>
+      <InputGroup mb={4}>
+        <InputLeftElement pointerEvents="none">
+          <SearchIcon color="gray.400" />
+        </InputLeftElement>
+        <Input
+          placeholder="Search agents..."
+          size="md"
+          borderRadius="md"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </InputGroup>
 
       {agentsStore.agentsLoading ? (
         <Flex justify="center" align="center" height="200px">
@@ -336,13 +373,16 @@ const AgentsPage = observer(() => {
               <Table variant="simple" size="md">
                 <Thead>
                   <Tr>
-                    <Th>ID</Th>
                     <SortableTh field="name" {...thProps}>
                       Name
                     </SortableTh>
+                    <Th>ID</Th>
                     <Th>Description</Th>
                     <SortableTh field="model" {...thProps}>
                       Model
+                    </SortableTh>
+                    <SortableTh field="is_public" {...thProps}>
+                      Visibility
                     </SortableTh>
                     <Th>Tools</Th>
                     <SortableTh field="created_at" {...thProps} isNumeric>
@@ -368,7 +408,7 @@ const AgentsPage = observer(() => {
 
           {sortedAgents.length === 0 && (
             <Text color={subtextColor} fontSize="sm" mt={2} textAlign="center">
-              No agents yet. Create one to get started.
+              {search ? `No agents matching "${search}"` : 'No agents yet. Create one to get started.'}
             </Text>
           )}
         </Flex>
