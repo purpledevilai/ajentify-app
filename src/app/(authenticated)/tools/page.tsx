@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { toolsStore } from '@/store/ToolsStore';
@@ -8,6 +8,7 @@ import { toolBuilderStore } from '@/store/ToolBuilderStore';
 import { Tool } from '@/types/tools';
 import { Parameter, ParameterDefinition } from '@/types/parameterdefinition';
 import { getParameterDefinitions } from '@/api/parameterdefinition/getParameterDefinitions';
+import { deleteTool } from '@/api/tool/deleteTool';
 import {
   Box,
   Heading,
@@ -28,8 +29,15 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  Checkbox,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
 } from '@chakra-ui/react';
-import { ChevronUpIcon, ChevronDownIcon, SearchIcon } from '@chakra-ui/icons';
+import { ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useAlert } from '@/app/components/AlertProvider';
 import { authStore } from '@/store/AuthStore';
 
@@ -121,12 +129,19 @@ const ToolRow = ({
   tool,
   params,
   onClick,
+  selectMode,
+  isSelected,
+  onToggle,
 }: {
   tool: Tool;
   params: Parameter[];
   onClick: () => void;
+  selectMode: boolean;
+  isSelected: boolean;
+  onToggle: (e: React.MouseEvent) => void;
 }) => {
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const selectedBg = useColorModeValue('blue.50', 'blue.900');
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const codeColor = useColorModeValue('purple.700', 'purple.300');
 
@@ -135,10 +150,21 @@ const ToolRow = ({
   return (
     <Tr
       cursor="pointer"
-      _hover={{ bg: hoverBg }}
-      onClick={onClick}
+      bg={isSelected ? selectedBg : undefined}
+      _hover={{ bg: isSelected ? selectedBg : hoverBg }}
+      onClick={selectMode ? onToggle : onClick}
       transition="background 0.15s"
     >
+      {selectMode && (
+        <Td w="1px" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            isChecked={isSelected}
+            onChange={(e) => onToggle(e as unknown as React.MouseEvent)}
+            colorScheme="blue"
+          />
+        </Td>
+      )}
+
       {/* Function Declaration */}
       <Td maxW="320px">
         <Flex
@@ -174,16 +200,12 @@ const ToolRow = ({
 
       {/* Created At */}
       <Td w="1px" whiteSpace="nowrap" isNumeric>
-        <Text fontSize="xs" color={subtextColor}>
-          {formatTimestamp(tool.created_at)}
-        </Text>
+        <Text fontSize="xs" color={subtextColor}>{formatTimestamp(tool.created_at)}</Text>
       </Td>
 
       {/* Updated At */}
       <Td w="1px" whiteSpace="nowrap" isNumeric>
-        <Text fontSize="xs" color={subtextColor}>
-          {formatTimestamp(tool.updated_at)}
-        </Text>
+        <Text fontSize="xs" color={subtextColor}>{formatTimestamp(tool.updated_at)}</Text>
       </Td>
     </Tr>
   );
@@ -195,6 +217,12 @@ const ToolsPage = observer(() => {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [pdMap, setPdMap] = useState<Record<string, Parameter[]>>({});
   const [search, setSearch] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cancelRef = useRef<any>(null);
   const { showAlert } = useAlert();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
@@ -227,6 +255,46 @@ const ToolsPage = observer(() => {
   const handleToolClick = (tool: Tool) => {
     toolBuilderStore.setTool({ ...tool });
     router.push(`/tool-builder/${tool.tool_id}`);
+  };
+
+  const toggleSelectMode = () => {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  };
+
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === sortedTools.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedTools.map((t) => t.tool_id)));
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    setIsDeleting(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => deleteTool(id)));
+      await toolsStore.loadTools(true);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      setIsConfirmOpen(false);
+      showAlert({
+        title: 'Deleted',
+        message: `${selectedIds.size} tool${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
+      });
+    } catch {
+      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const getParams = (tool: Tool): Parameter[] =>
@@ -263,18 +331,43 @@ const ToolsPage = observer(() => {
       })
     : [];
 
+  const allSelected = sortedTools.length > 0 && selectedIds.size === sortedTools.length;
+  const someSelected = selectedIds.size > 0 && !allSelected;
   const thProps = { sortField, sortDir, onSort: handleSort };
 
   return (
     <Box p={{ base: 4, md: 6 }}>
-      <Flex align="center" mb={4}>
-        <Heading as="h1" size="xl">
+      <Flex align="center" mb={4} gap={2} wrap="wrap">
+        <Heading as="h1" size="xl" flex="1">
           Tools
         </Heading>
-        <Button ml="auto" colorScheme="brand" size="sm" onClick={handleAddToolClick}>
-          + Add Tool
-        </Button>
+        <Flex gap={2} align="center" flexShrink={0}>
+          {selectMode && (
+            <Button
+              size="sm"
+              colorScheme="red"
+              variant="outline"
+              leftIcon={<DeleteIcon />}
+              isDisabled={selectedIds.size === 0}
+              onClick={() => setIsConfirmOpen(true)}
+            >
+              Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant={selectMode ? 'solid' : 'outline'}
+            colorScheme={selectMode ? 'blue' : 'gray'}
+            onClick={toggleSelectMode}
+          >
+            {selectMode ? 'Cancel' : 'Select'}
+          </Button>
+          <Button size="sm" colorScheme="brand" onClick={handleAddToolClick}>
+            + Add Tool
+          </Button>
+        </Flex>
       </Flex>
+
       <InputGroup mb={4}>
         <InputLeftElement pointerEvents="none">
           <SearchIcon color="gray.400" />
@@ -304,19 +397,21 @@ const ToolsPage = observer(() => {
               <Table variant="simple" size="md">
                 <Thead>
                   <Tr>
-                    <SortableTh field="function" {...thProps}>
-                      Function
-                    </SortableTh>
+                    {selectMode && (
+                      <Th w="1px">
+                        <Checkbox
+                          isChecked={allSelected}
+                          isIndeterminate={someSelected}
+                          onChange={toggleAll}
+                          colorScheme="blue"
+                        />
+                      </Th>
+                    )}
+                    <SortableTh field="function" {...thProps}>Function</SortableTh>
                     <Th>Description</Th>
-                    <SortableTh field="language" {...thProps}>
-                      Language
-                    </SortableTh>
-                    <SortableTh field="created_at" {...thProps} isNumeric>
-                      Created
-                    </SortableTh>
-                    <SortableTh field="updated_at" {...thProps} isNumeric>
-                      Updated
-                    </SortableTh>
+                    <SortableTh field="language" {...thProps}>Language</SortableTh>
+                    <SortableTh field="created_at" {...thProps} isNumeric>Created</SortableTh>
+                    <SortableTh field="updated_at" {...thProps} isNumeric>Updated</SortableTh>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -326,6 +421,9 @@ const ToolsPage = observer(() => {
                       tool={tool}
                       params={getParams(tool)}
                       onClick={() => handleToolClick(tool)}
+                      selectMode={selectMode}
+                      isSelected={selectedIds.has(tool.tool_id)}
+                      onToggle={(e) => { e.stopPropagation(); toggleRow(tool.tool_id); }}
                     />
                   ))}
                 </Tbody>
@@ -340,6 +438,40 @@ const ToolsPage = observer(() => {
           )}
         </Flex>
       )}
+
+      <AlertDialog
+        isOpen={isConfirmOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsConfirmOpen(false)}
+        isCentered
+      >
+        <AlertDialogOverlay />
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            Delete {selectedIds.size} Tool{selectedIds.size !== 1 ? 's' : ''}
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            This will permanently delete{' '}
+            <Text as="span" fontWeight="semibold">
+              {selectedIds.size} tool{selectedIds.size !== 1 ? 's' : ''}
+            </Text>
+            . This action cannot be undone.
+          </AlertDialogBody>
+          <AlertDialogFooter gap={3}>
+            <Button ref={cancelRef} onClick={() => setIsConfirmOpen(false)} isDisabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={handleDeleteConfirmed}
+              isLoading={isDeleting}
+              loadingText="Deleting…"
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Box>
   );
 });

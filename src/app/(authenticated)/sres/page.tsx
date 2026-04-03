@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { structuredResponseEndpointsStore } from '@/store/StructuredResponseEndpointStore';
 import { sreBuilderStore } from '@/store/StructuredResponseEndpointBuilderStore';
 import { modelsStore } from '@/store/ModelsStore';
 import { StructuredResponseEndpoint } from '@/types/structuredresponseendpoint';
+import { deleteSRE } from '@/api/structuredresponseendpoint/deleteSRE';
 import {
   Box,
   Heading,
@@ -30,8 +31,15 @@ import {
   InputLeftElement,
   Wrap,
   WrapItem,
+  Checkbox,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
 } from '@chakra-ui/react';
-import { CopyIcon, ChevronUpIcon, ChevronDownIcon, SearchIcon } from '@chakra-ui/icons';
+import { CopyIcon, ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useAlert } from '@/app/components/AlertProvider';
 import { authStore } from '@/store/AuthStore';
 
@@ -115,11 +123,24 @@ const SortableTh = ({
 };
 
 const SRERow = observer(
-  ({ sre, onClick }: { sre: StructuredResponseEndpoint; onClick: () => void }) => {
+  ({
+    sre,
+    onClick,
+    selectMode,
+    isSelected,
+    onToggle,
+  }: {
+    sre: StructuredResponseEndpoint;
+    onClick: () => void;
+    selectMode: boolean;
+    isSelected: boolean;
+    onToggle: (e: React.MouseEvent) => void;
+  }) => {
     const [idHovered, setIdHovered] = useState(false);
     const { showAlert } = useAlert();
 
     const hoverBg = useColorModeValue('gray.50', 'gray.700');
+    const selectedBg = useColorModeValue('blue.50', 'blue.900');
     const subtextColor = useColorModeValue('gray.500', 'gray.400');
     const tagBg = useColorModeValue('gray.100', 'gray.600');
 
@@ -142,10 +163,25 @@ const SRERow = observer(
     return (
       <Tr
         cursor="pointer"
-        _hover={{ bg: hoverBg }}
-        onClick={onClick}
+        bg={isSelected ? selectedBg : undefined}
+        _hover={{ bg: isSelected ? selectedBg : hoverBg }}
+        onClick={selectMode ? onToggle : onClick}
         transition="background 0.15s"
       >
+        {/* Checkbox — select mode only */}
+        {selectMode && (
+          <Td w="1px" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              isChecked={isSelected}
+              onChange={(e) => {
+                const syntheticEvent = e as unknown as React.MouseEvent;
+                onToggle(syntheticEvent);
+              }}
+              colorScheme="blue"
+            />
+          </Td>
+        )}
+
         {/* Name */}
         <Td fontWeight="semibold" maxW="180px">
           <Text noOfLines={1}>{sre.name}</Text>
@@ -252,6 +288,12 @@ const SREsPage = observer(() => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cancelRef = useRef<any>(null);
   const { showAlert } = useAlert();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
@@ -283,51 +325,118 @@ const SREsPage = observer(() => {
     router.push(`/sre-builder/${sre.sre_id}`);
   };
 
+  const toggleSelectMode = () => {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  };
+
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === sortedSREs.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedSREs.map((s) => s.sre_id)));
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    setIsDeleting(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => deleteSRE(id)));
+      await structuredResponseEndpointsStore.loadSREs(true);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      setIsConfirmOpen(false);
+      showAlert({
+        title: 'Deleted',
+        message: `${selectedIds.size} SRE${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
+      });
+    } catch {
+      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const filteredSREs = structuredResponseEndpointsStore.sres
     ? structuredResponseEndpointsStore.sres.filter((s) =>
         s.name.toLowerCase().includes(search.toLowerCase())
       )
     : [];
 
-  const sortedSREs = filteredSREs.length > 0 || search
-    ? [...filteredSREs].sort((a, b) => {
-        let aVal: string | number = 0;
-        let bVal: string | number = 0;
+  const sortedSREs =
+    filteredSREs.length > 0 || search
+      ? [...filteredSREs].sort((a, b) => {
+          let aVal: string | number = 0;
+          let bVal: string | number = 0;
 
-        if (sortField === 'name') {
-          aVal = a.name.toLowerCase();
-          bVal = b.name.toLowerCase();
-        } else if (sortField === 'model') {
-          aVal = (a.model_id ?? 'default').toLowerCase();
-          bVal = (b.model_id ?? 'default').toLowerCase();
-        } else if (sortField === 'is_public') {
-          aVal = a.is_public ? 1 : 0;
-          bVal = b.is_public ? 1 : 0;
-        } else if (sortField === 'created_at') {
-          aVal = a.created_at ?? 0;
-          bVal = b.created_at ?? 0;
-        } else if (sortField === 'updated_at') {
-          aVal = a.updated_at ?? 0;
-          bVal = b.updated_at ?? 0;
-        }
+          if (sortField === 'name') {
+            aVal = a.name.toLowerCase();
+            bVal = b.name.toLowerCase();
+          } else if (sortField === 'model') {
+            aVal = (a.model_id ?? 'default').toLowerCase();
+            bVal = (b.model_id ?? 'default').toLowerCase();
+          } else if (sortField === 'is_public') {
+            aVal = a.is_public ? 1 : 0;
+            bVal = b.is_public ? 1 : 0;
+          } else if (sortField === 'created_at') {
+            aVal = a.created_at ?? 0;
+            bVal = b.created_at ?? 0;
+          } else if (sortField === 'updated_at') {
+            aVal = a.updated_at ?? 0;
+            bVal = b.updated_at ?? 0;
+          }
 
-        if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-      })
-    : [];
+          if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+          if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+          return 0;
+        })
+      : [];
 
+  const allSelected = sortedSREs.length > 0 && selectedIds.size === sortedSREs.length;
+  const someSelected = selectedIds.size > 0 && !allSelected;
   const thProps = { sortField, sortDir, onSort: handleSort };
 
   return (
     <Box p={{ base: 4, md: 6 }}>
-      <Flex align="center" mb={4}>
-        <Heading as="h1" size="xl">
+      {/* Header */}
+      <Flex align="center" mb={4} gap={2} wrap="wrap">
+        <Heading as="h1" size="xl" flex="1">
           Structured Response Endpoints
         </Heading>
-        <Button ml="auto" colorScheme="brand" size="sm" onClick={handleAddSREClick} flexShrink={0}>
-          + Add SRE
-        </Button>
+        <Flex gap={2} align="center" flexShrink={0}>
+          {/* Bulk action buttons — always visible in select mode, hidden otherwise */}
+          {selectMode && (
+            <Button
+              size="sm"
+              colorScheme="red"
+              variant="outline"
+              leftIcon={<DeleteIcon />}
+              isDisabled={selectedIds.size === 0}
+              onClick={() => setIsConfirmOpen(true)}
+            >
+              Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant={selectMode ? 'solid' : 'outline'}
+            colorScheme={selectMode ? 'blue' : 'gray'}
+            onClick={toggleSelectMode}
+          >
+            {selectMode ? 'Cancel' : 'Select'}
+          </Button>
+          <Button size="sm" colorScheme="brand" onClick={handleAddSREClick}>
+            + Add SRE
+          </Button>
+        </Flex>
       </Flex>
 
       <InputGroup mb={4}>
@@ -359,6 +468,16 @@ const SREsPage = observer(() => {
               <Table variant="simple" size="md">
                 <Thead>
                   <Tr>
+                    {selectMode && (
+                      <Th w="1px">
+                        <Checkbox
+                          isChecked={allSelected}
+                          isIndeterminate={someSelected}
+                          onChange={toggleAll}
+                          colorScheme="blue"
+                        />
+                      </Th>
+                    )}
                     <SortableTh field="name" {...thProps}>
                       Name
                     </SortableTh>
@@ -385,6 +504,12 @@ const SREsPage = observer(() => {
                       key={sre.sre_id}
                       sre={sre}
                       onClick={() => handleSREClick(sre)}
+                      selectMode={selectMode}
+                      isSelected={selectedIds.has(sre.sre_id)}
+                      onToggle={(e) => {
+                        e.stopPropagation();
+                        toggleRow(sre.sre_id);
+                      }}
                     />
                   ))}
                 </Tbody>
@@ -401,6 +526,41 @@ const SREsPage = observer(() => {
           )}
         </Flex>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog
+        isOpen={isConfirmOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsConfirmOpen(false)}
+        isCentered
+      >
+        <AlertDialogOverlay />
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            Delete {selectedIds.size} SRE{selectedIds.size !== 1 ? 's' : ''}
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            This will permanently delete{' '}
+            <Text as="span" fontWeight="semibold">
+              {selectedIds.size} structured response endpoint{selectedIds.size !== 1 ? 's' : ''}
+            </Text>
+            . This action cannot be undone.
+          </AlertDialogBody>
+          <AlertDialogFooter gap={3}>
+            <Button ref={cancelRef} onClick={() => setIsConfirmOpen(false)} isDisabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={handleDeleteConfirmed}
+              isLoading={isDeleting}
+              loadingText="Deleting…"
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Box>
   );
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { agentsStore } from '@/store/AgentsStore';
@@ -8,6 +8,7 @@ import { agentBuilderStore } from '@/store/AgentBuilderStore';
 import { toolsStore } from '@/store/ToolsStore';
 import { modelsStore } from '@/store/ModelsStore';
 import { Agent } from '@/types/agent';
+import { deleteAgent } from '@/api/agent/deleteAgent';
 import {
   Box,
   Heading,
@@ -33,8 +34,15 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  Checkbox,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
 } from '@chakra-ui/react';
-import { CopyIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon } from '@chakra-ui/icons';
+import { CopyIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useAlert } from '@/app/components/AlertProvider';
 import { authStore } from '@/store/AuthStore';
 
@@ -58,9 +66,8 @@ const formatTimestamp = (ts: number | undefined): string => {
   });
 };
 
-const truncateId = (id: string): string => {
-  return id.length > 8 ? `${id.substring(0, 8)}…` : id;
-};
+const truncateId = (id: string): string =>
+  id.length > 8 ? `${id.substring(0, 8)}…` : id;
 
 const SortableTh = ({
   field,
@@ -110,20 +117,31 @@ const SortableTh = ({
   );
 };
 
-const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => void }) => {
+const AgentRow = observer(({
+  agent,
+  onClick,
+  selectMode,
+  isSelected,
+  onToggle,
+}: {
+  agent: Agent;
+  onClick: () => void;
+  selectMode: boolean;
+  isSelected: boolean;
+  onToggle: (e: React.MouseEvent) => void;
+}) => {
   const [idHovered, setIdHovered] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const { showAlert } = useAlert();
 
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const selectedBg = useColorModeValue('blue.50', 'blue.900');
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
 
   const model = agent.model_id ? modelsStore.getModelByName(agent.model_id) : null;
   const modelLabel = model ? model.model : 'Default';
   const modelColor = model
-    ? model.model_provider === 'anthropic'
-      ? 'orange'
-      : 'teal'
+    ? model.model_provider === 'anthropic' ? 'orange' : 'teal'
     : 'gray';
 
   const toolNames = (agent.tools || []).map((toolId) => {
@@ -140,10 +158,21 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
   return (
     <Tr
       cursor="pointer"
-      _hover={{ bg: hoverBg }}
-      onClick={onClick}
+      bg={isSelected ? selectedBg : undefined}
+      _hover={{ bg: isSelected ? selectedBg : hoverBg }}
+      onClick={selectMode ? onToggle : onClick}
       transition="background 0.15s"
     >
+      {selectMode && (
+        <Td w="1px" onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            isChecked={isSelected}
+            onChange={(e) => onToggle(e as unknown as React.MouseEvent)}
+            colorScheme="blue"
+          />
+        </Td>
+      )}
+
       {/* Name */}
       <Td fontWeight="semibold" maxW="200px">
         <Text noOfLines={1}>{agent.agent_name}</Text>
@@ -188,7 +217,7 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
         </Badge>
       </Td>
 
-      {/* Public */}
+      {/* Visibility */}
       <Td w="1px" whiteSpace="nowrap">
         <Badge
           colorScheme={agent.is_public ? 'green' : 'gray'}
@@ -202,11 +231,7 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
       {/* Tools */}
       <Td w="1px" whiteSpace="nowrap">
         {toolNames.length > 0 ? (
-          <Popover
-            isOpen={toolsOpen}
-            onClose={() => setToolsOpen(false)}
-            placement="bottom-start"
-          >
+          <Popover isOpen={toolsOpen} onClose={() => setToolsOpen(false)} placement="bottom-start">
             <PopoverTrigger>
               <Button
                 size="xs"
@@ -224,33 +249,25 @@ const AgentRow = observer(({ agent, onClick }: { agent: Agent; onClick: () => vo
               <PopoverBody p={2}>
                 <Flex direction="column" gap={1}>
                   {toolNames.map((name, i) => (
-                    <Text key={i} fontSize="sm" px={2} py={0.5}>
-                      {name}
-                    </Text>
+                    <Text key={i} fontSize="sm" px={2} py={0.5}>{name}</Text>
                   ))}
                 </Flex>
               </PopoverBody>
             </PopoverContent>
           </Popover>
         ) : (
-          <Text fontSize="xs" color={subtextColor}>
-            —
-          </Text>
+          <Text fontSize="xs" color={subtextColor}>—</Text>
         )}
       </Td>
 
       {/* Created At */}
       <Td w="1px" whiteSpace="nowrap" isNumeric>
-        <Text fontSize="xs" color={subtextColor}>
-          {formatTimestamp(agent.created_at)}
-        </Text>
+        <Text fontSize="xs" color={subtextColor}>{formatTimestamp(agent.created_at)}</Text>
       </Td>
 
       {/* Updated At */}
       <Td w="1px" whiteSpace="nowrap" isNumeric>
-        <Text fontSize="xs" color={subtextColor}>
-          {formatTimestamp(agent.updated_at)}
-        </Text>
+        <Text fontSize="xs" color={subtextColor}>{formatTimestamp(agent.updated_at)}</Text>
       </Td>
     </Tr>
   );
@@ -261,6 +278,12 @@ const AgentsPage = observer(() => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cancelRef = useRef<any>(null);
   const { showAlert } = useAlert();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
@@ -291,6 +314,46 @@ const AgentsPage = observer(() => {
   const handleAgentClick = (agent: Agent) => {
     agentBuilderStore.setCurrentAgent({ ...agent });
     router.push(`/agent-builder/${agent.agent_id}`);
+  };
+
+  const toggleSelectMode = () => {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  };
+
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === sortedAgents.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedAgents.map((a) => a.agent_id)));
+    }
+  };
+
+  const handleDeleteConfirmed = async () => {
+    setIsDeleting(true);
+    try {
+      await Promise.all([...selectedIds].map((id) => deleteAgent(id)));
+      await agentsStore.loadAgents(true);
+      setSelectedIds(new Set());
+      setSelectMode(false);
+      setIsConfirmOpen(false);
+      showAlert({
+        title: 'Deleted',
+        message: `${selectedIds.size} agent${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
+      });
+    } catch {
+      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredAgents = agentsStore.agents
@@ -327,23 +390,43 @@ const AgentsPage = observer(() => {
       })
     : [];
 
+  const allSelected = sortedAgents.length > 0 && selectedIds.size === sortedAgents.length;
+  const someSelected = selectedIds.size > 0 && !allSelected;
   const thProps = { sortField, sortDir, onSort: handleSort };
 
   return (
     <Box p={{ base: 4, md: 6 }}>
-      <Flex align="center" mb={4}>
-        <Heading as="h1" size="xl">
+      <Flex align="center" mb={4} gap={2} wrap="wrap">
+        <Heading as="h1" size="xl" flex="1">
           Agents
         </Heading>
-        <Button
-          ml="auto"
-          colorScheme="brand"
-          size="sm"
-          onClick={handleAddAgentClick}
-        >
-          + Add Agent
-        </Button>
+        <Flex gap={2} align="center" flexShrink={0}>
+          {selectMode && (
+            <Button
+              size="sm"
+              colorScheme="red"
+              variant="outline"
+              leftIcon={<DeleteIcon />}
+              isDisabled={selectedIds.size === 0}
+              onClick={() => setIsConfirmOpen(true)}
+            >
+              Delete{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant={selectMode ? 'solid' : 'outline'}
+            colorScheme={selectMode ? 'blue' : 'gray'}
+            onClick={toggleSelectMode}
+          >
+            {selectMode ? 'Cancel' : 'Select'}
+          </Button>
+          <Button size="sm" colorScheme="brand" onClick={handleAddAgentClick}>
+            + Add Agent
+          </Button>
+        </Flex>
       </Flex>
+
       <InputGroup mb={4}>
         <InputLeftElement pointerEvents="none">
           <SearchIcon color="gray.400" />
@@ -373,24 +456,24 @@ const AgentsPage = observer(() => {
               <Table variant="simple" size="md">
                 <Thead>
                   <Tr>
-                    <SortableTh field="name" {...thProps}>
-                      Name
-                    </SortableTh>
+                    {selectMode && (
+                      <Th w="1px">
+                        <Checkbox
+                          isChecked={allSelected}
+                          isIndeterminate={someSelected}
+                          onChange={toggleAll}
+                          colorScheme="blue"
+                        />
+                      </Th>
+                    )}
+                    <SortableTh field="name" {...thProps}>Name</SortableTh>
                     <Th>ID</Th>
                     <Th>Description</Th>
-                    <SortableTh field="model" {...thProps}>
-                      Model
-                    </SortableTh>
-                    <SortableTh field="is_public" {...thProps}>
-                      Visibility
-                    </SortableTh>
+                    <SortableTh field="model" {...thProps}>Model</SortableTh>
+                    <SortableTh field="is_public" {...thProps}>Visibility</SortableTh>
                     <Th>Tools</Th>
-                    <SortableTh field="created_at" {...thProps} isNumeric>
-                      Created
-                    </SortableTh>
-                    <SortableTh field="updated_at" {...thProps} isNumeric>
-                      Updated
-                    </SortableTh>
+                    <SortableTh field="created_at" {...thProps} isNumeric>Created</SortableTh>
+                    <SortableTh field="updated_at" {...thProps} isNumeric>Updated</SortableTh>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -399,6 +482,9 @@ const AgentsPage = observer(() => {
                       key={agent.agent_id}
                       agent={agent}
                       onClick={() => handleAgentClick(agent)}
+                      selectMode={selectMode}
+                      isSelected={selectedIds.has(agent.agent_id)}
+                      onToggle={(e) => { e.stopPropagation(); toggleRow(agent.agent_id); }}
                     />
                   ))}
                 </Tbody>
@@ -413,6 +499,40 @@ const AgentsPage = observer(() => {
           )}
         </Flex>
       )}
+
+      <AlertDialog
+        isOpen={isConfirmOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setIsConfirmOpen(false)}
+        isCentered
+      >
+        <AlertDialogOverlay />
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            Delete {selectedIds.size} Agent{selectedIds.size !== 1 ? 's' : ''}
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            This will permanently delete{' '}
+            <Text as="span" fontWeight="semibold">
+              {selectedIds.size} agent{selectedIds.size !== 1 ? 's' : ''}
+            </Text>
+            . This action cannot be undone.
+          </AlertDialogBody>
+          <AlertDialogFooter gap={3}>
+            <Button ref={cancelRef} onClick={() => setIsConfirmOpen(false)} isDisabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="red"
+              onClick={handleDeleteConfirmed}
+              isLoading={isDeleting}
+              loadingText="Deleting…"
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Box>
   );
 });
