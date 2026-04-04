@@ -132,6 +132,7 @@ const AgentRow = observer(({
 }) => {
   const [idHovered, setIdHovered] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { showAlert } = useAlert();
 
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
@@ -157,11 +158,12 @@ const AgentRow = observer(({
 
   return (
     <Tr
-      cursor="pointer"
+      cursor={isNavigating ? 'progress' : 'pointer'}
       bg={isSelected ? selectedBg : undefined}
       _hover={{ bg: isSelected ? selectedBg : hoverBg }}
-      onClick={selectMode ? onToggle : onClick}
-      transition="background 0.15s"
+      onClick={selectMode ? onToggle : () => { setIsNavigating(true); onClick(); }}
+      opacity={isNavigating ? 0.6 : 1}
+      transition="background 0.15s, opacity 0.15s"
     >
       {selectMode && (
         <Td w="1px" onClick={(e) => e.stopPropagation()}>
@@ -175,7 +177,10 @@ const AgentRow = observer(({
 
       {/* Name */}
       <Td fontWeight="semibold" maxW="200px">
-        <Text noOfLines={1}>{agent.agent_name}</Text>
+        <Flex align="center" gap={2}>
+          <Text noOfLines={1}>{agent.agent_name}</Text>
+          {isNavigating && <Spinner size="xs" flexShrink={0} />}
+        </Flex>
       </Td>
 
       {/* ID */}
@@ -291,6 +296,7 @@ const AgentsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
+    router.prefetch('/agent-builder');
     agentsStore.setShowAlert(showAlert);
     agentsStore.loadAgents();
     toolsStore.loadTools();

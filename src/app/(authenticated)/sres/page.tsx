@@ -137,6 +137,7 @@ const SRERow = observer(
     onToggle: (e: React.MouseEvent) => void;
   }) => {
     const [idHovered, setIdHovered] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
     const { showAlert } = useAlert();
 
     const hoverBg = useColorModeValue('gray.50', 'gray.700');
@@ -162,11 +163,12 @@ const SRERow = observer(
 
     return (
       <Tr
-        cursor="pointer"
+        cursor={isNavigating ? 'progress' : 'pointer'}
         bg={isSelected ? selectedBg : undefined}
         _hover={{ bg: isSelected ? selectedBg : hoverBg }}
-        onClick={selectMode ? onToggle : onClick}
-        transition="background 0.15s"
+        onClick={selectMode ? onToggle : () => { setIsNavigating(true); onClick(); }}
+        opacity={isNavigating ? 0.6 : 1}
+        transition="background 0.15s, opacity 0.15s"
       >
         {/* Checkbox — select mode only */}
         {selectMode && (
@@ -184,7 +186,10 @@ const SRERow = observer(
 
         {/* Name */}
         <Td fontWeight="semibold" maxW="180px">
-          <Text noOfLines={1}>{sre.name}</Text>
+          <Flex align="center" gap={2}>
+            <Text noOfLines={1}>{sre.name}</Text>
+            {isNavigating && <Spinner size="xs" flexShrink={0} />}
+          </Flex>
         </Td>
 
         {/* ID */}
@@ -301,6 +306,7 @@ const SREsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
+    router.prefetch('/sre-builder');
     structuredResponseEndpointsStore.setShowAlert(showAlert);
     structuredResponseEndpointsStore.loadSREs();
     modelsStore.loadModels();

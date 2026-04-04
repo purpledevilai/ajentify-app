@@ -140,6 +140,7 @@ const ToolRow = ({
   isSelected: boolean;
   onToggle: (e: React.MouseEvent) => void;
 }) => {
+  const [isNavigating, setIsNavigating] = useState(false);
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const selectedBg = useColorModeValue('blue.50', 'blue.900');
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
@@ -149,11 +150,12 @@ const ToolRow = ({
 
   return (
     <Tr
-      cursor="pointer"
+      cursor={isNavigating ? 'progress' : 'pointer'}
       bg={isSelected ? selectedBg : undefined}
       _hover={{ bg: isSelected ? selectedBg : hoverBg }}
-      onClick={selectMode ? onToggle : onClick}
-      transition="background 0.15s"
+      onClick={selectMode ? onToggle : () => { setIsNavigating(true); onClick(); }}
+      opacity={isNavigating ? 0.6 : 1}
+      transition="background 0.15s, opacity 0.15s"
     >
       {selectMode && (
         <Td w="1px" onClick={(e) => e.stopPropagation()}>
@@ -181,6 +183,7 @@ const ToolRow = ({
           <Text fontFamily="mono" fontSize="xs" fontWeight="normal" color={codeColor} noOfLines={1}>
             {args}
           </Text>
+          {isNavigating && <Spinner size="xs" flexShrink={0} ml={2} alignSelf="center" />}
         </Flex>
       </Td>
 
@@ -230,6 +233,7 @@ const ToolsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
+    router.prefetch('/tool-builder');
     toolsStore.setShowAlert(showAlert);
     toolsStore.loadTools();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
