@@ -26,7 +26,10 @@ interface SREBuilderPageProps {
 const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
   // Nav Guard to detect page navigation - Really dump NextJS limitiation
-  const navGuard = useNavigationGuard({});
+  const hasUnsavedChanges = sreBuilderStore.hasUpdatedParameterDefinition || sreBuilderStore.hasUpdatedSRE;
+  const isNewButDidNotClickSave = sreBuilderStore.isNewSme && !sreBuilderStore.useClickedSave;
+  const shouldGuardNavigation = hasUnsavedChanges || isNewButDidNotClickSave;
+  const navGuard = useNavigationGuard({ enabled: shouldGuardNavigation });
   const isShowingNavAlert = useRef(false);
 
   const { showAlert } = useAlert();
