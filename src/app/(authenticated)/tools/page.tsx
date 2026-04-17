@@ -241,7 +241,7 @@ const ToolsPage = observer(() => {
       pds.forEach((pd) => { map[pd.pd_id] = pd.parameters; });
       setPdMap(map);
     }).catch(() => {});
-  });
+  }, []);
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {

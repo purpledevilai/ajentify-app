@@ -13,6 +13,13 @@ import { agentBuilderStore } from './AgentBuilderStore';
 import { chatPageBuilderStore } from './ChatPageBuilderStore';
 import { chatPagesStore } from './ChatPagesStore';
 import { chatPageStore } from './ChatPageStore';
+import { structuredResponseEndpointsStore } from './StructuredResponseEndpointStore';
+import { sreBuilderStore } from './StructuredResponseEndpointBuilderStore';
+import { jsonDocumentsStore } from './JsonDocumentsStore';
+import { jsonDocumentBuilderStore } from './JsonDocumentBuilderStore';
+import { integrationsStore } from './IntegrationsStore';
+import { toolsStore } from './ToolsStore';
+import { toolBuilderStore } from './ToolBuilderStore';
 
 
 class AuthStore {
@@ -96,6 +103,13 @@ class AuthStore {
             chatPageBuilderStore.reset();
             chatPagesStore.reset();
             chatPageStore.reset();
+            structuredResponseEndpointsStore.reset();
+            sreBuilderStore.reset();
+            jsonDocumentsStore.reset();
+            jsonDocumentBuilderStore.reset();
+            integrationsStore.reset();
+            toolsStore.reset();
+            toolBuilderStore.reset();
             this.reset();
             this.signedIn = false;
         } catch (error) {
