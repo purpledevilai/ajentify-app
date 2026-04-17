@@ -40,7 +40,7 @@ const getCodeName = (name: string): string => {
 
 class StructuredResponseEndpointBuilderStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
-    isNewSme = true;
+    isNewSme = false;
     useClickedSave = false;
     sre: StructuredResponseEndpoint = defaultSRE;
     parameters: Parameter[] = [];
@@ -105,7 +105,7 @@ class StructuredResponseEndpointBuilderStore {
     }
 
     reset = () => {
-        this.isNewSme = true;
+        this.isNewSme = false;
         this.useClickedSave = false;
         this.sre = defaultSRE;
         this.parameters = [];
@@ -128,6 +128,7 @@ class StructuredResponseEndpointBuilderStore {
     }
 
     initiateNew = () => {
+        this.isNewSme = true;
         this.sre = {
             ...defaultSRE,
             org_id: authStore.user?.organizations[0].id || '',

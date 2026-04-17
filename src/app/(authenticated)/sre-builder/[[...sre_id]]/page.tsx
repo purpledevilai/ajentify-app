@@ -26,10 +26,7 @@ interface SREBuilderPageProps {
 const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
   // Nav Guard to detect page navigation - Really dump NextJS limitiation
-  const hasUnsavedChanges = sreBuilderStore.hasUpdatedParameterDefinition || sreBuilderStore.hasUpdatedSRE;
-  const isNewButDidNotClickSave = sreBuilderStore.isNewSme && !sreBuilderStore.useClickedSave;
-  const shouldGuardNavigation = hasUnsavedChanges || isNewButDidNotClickSave;
-  const navGuard = useNavigationGuard({ enabled: shouldGuardNavigation });
+  const navGuard = useNavigationGuard({});
   const isShowingNavAlert = useRef(false);
 
   const { showAlert } = useAlert();
@@ -89,6 +86,9 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
       if (sreBuilderStore.sre.sre_id !== sre_id) {
         sreBuilderStore.setSREWithId(sre_id);
       }
+    } else if (!sreBuilderStore.sre.sre_id) {
+      // Direct URL access to /sre-builder with no id — mark as new
+      sreBuilderStore.initiateNew();
     }
   };
 
