@@ -1,18 +1,20 @@
 import { Box } from '@chakra-ui/react';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
-import FeaturesSection from './components/FeaturesSection';
-import BenefitsSection from './components/BenefitsSection';
-import StructuredResponsesSection from './components/StructuredResponsesSection';
+import SixPrimitivesSection from './components/SixPrimitivesSection';
+import ForCodingAgentsSection from './components/ForCodingAgentsSection';
+import WhyAjentifySection from './components/WhyAjentifySection';
+import Footer from './components/Footer';
 
 export default function LandingPage() {
     return (
         <Box>
             <Header />
             <HeroSection />
-            <FeaturesSection />
-            <BenefitsSection />
-            <StructuredResponsesSection />
+            <SixPrimitivesSection />
+            <ForCodingAgentsSection />
+            <WhyAjentifySection />
+            <Footer />
         </Box>
     );
-} 
+}
