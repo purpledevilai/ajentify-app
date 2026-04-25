@@ -1,10 +1,10 @@
-import { ParameterDefinition, Parameter } from "@/types/parameterdefinition";
+import { ParameterDefinition, JsonSchema } from "@/types/parameterdefinition";
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 interface UpdateParameterDefinitionPayload {
     pd_id: string;
-    parameters: Parameter[];
+    schema: JsonSchema;
 }
 
 export async function updateParameterDefinition(payload: UpdateParameterDefinitionPayload): Promise<ParameterDefinition> {
@@ -15,7 +15,7 @@ export async function updateParameterDefinition(payload: UpdateParameterDefiniti
             'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ schema: payload.schema }),
     });
     return await checkResponseAndGetJson(response) as unknown as ParameterDefinition;
   } catch (error) {

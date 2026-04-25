@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { toolsStore } from '@/store/ToolsStore';
 import { toolBuilderStore } from '@/store/ToolBuilderStore';
 import { Tool } from '@/types/tools';
-import { Parameter, ParameterDefinition } from '@/types/parameterdefinition';
+import { JsonSchema, ParameterDefinition } from '@/types/parameterdefinition';
 import { getParameterDefinitions } from '@/api/parameterdefinition/getParameterDefinitions';
 import { deleteTool } from '@/api/tool/deleteTool';
 import {
@@ -53,18 +53,29 @@ const DEFAULT_DIR: Record<SortField, SortDir> = {
 
 const getCodeName = (name: string): string => name.replace(/ /g, '_').toLowerCase();
 
-const buildFunctionParts = (tool: Tool, params: Parameter[]): { name: string; args: string } => {
-  const paramNames = params.map((p) => getCodeName(p.name));
-  if (tool.is_async) paramNames.unshift('tool_call_id');
-  if (tool.pass_context) paramNames.unshift('context');
+/**
+ * Extract the top-level property names (in declaration order) from a root
+ * object JSON Schema. `properties` is intentionally an unordered map per the
+ * spec, but Object.keys preserves insertion order in practice for objects
+ * coming back from JSON.parse, which matches how the backend emits them.
+ */
+const schemaParamNames = (schema: JsonSchema | undefined): string[] => {
+  if (!schema || !schema.properties) return [];
+  return Object.keys(schema.properties);
+};
+
+const buildFunctionParts = (tool: Tool, paramNames: string[]): { name: string; args: string } => {
+  const codedNames = paramNames.map(getCodeName);
+  if (tool.is_async) codedNames.unshift('tool_call_id');
+  if (tool.pass_context) codedNames.unshift('context');
   return {
     name: getCodeName(tool.name),
-    args: `(${paramNames.join(', ')})`,
+    args: `(${codedNames.join(', ')})`,
   };
 };
 
-const buildFunctionDeclaration = (tool: Tool, params: Parameter[]): string => {
-  const { name, args } = buildFunctionParts(tool, params);
+const buildFunctionDeclaration = (tool: Tool, paramNames: string[]): string => {
+  const { name, args } = buildFunctionParts(tool, paramNames);
   return `${name}${args}`;
 };
 
@@ -127,14 +138,14 @@ const SortableTh = ({
 
 const ToolRow = ({
   tool,
-  params,
+  paramNames,
   onClick,
   selectMode,
   isSelected,
   onToggle,
 }: {
   tool: Tool;
-  params: Parameter[];
+  paramNames: string[];
   onClick: () => void;
   selectMode: boolean;
   isSelected: boolean;
@@ -146,7 +157,7 @@ const ToolRow = ({
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const codeColor = useColorModeValue('purple.700', 'purple.300');
 
-  const { name, args } = buildFunctionParts(tool, params);
+  const { name, args } = buildFunctionParts(tool, paramNames);
 
   return (
     <Tr
@@ -218,7 +229,7 @@ const ToolsPage = observer(() => {
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [pdMap, setPdMap] = useState<Record<string, Parameter[]>>({});
+  const [pdMap, setPdMap] = useState<Record<string, string[]>>({});
   const [search, setSearch] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -237,8 +248,8 @@ const ToolsPage = observer(() => {
     toolsStore.setShowAlert(showAlert);
     toolsStore.loadTools();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
-      const map: Record<string, Parameter[]> = {};
-      pds.forEach((pd) => { map[pd.pd_id] = pd.parameters; });
+      const map: Record<string, string[]> = {};
+      pds.forEach((pd) => { map[pd.pd_id] = schemaParamNames(pd.schema); });
       setPdMap(map);
     }).catch(() => {});
   }, []);
@@ -301,7 +312,7 @@ const ToolsPage = observer(() => {
     }
   };
 
-  const getParams = (tool: Tool): Parameter[] =>
+  const getParamNames = (tool: Tool): string[] =>
     (tool.pd_id ? pdMap[tool.pd_id] : undefined) ?? [];
 
   const filteredTools = toolsStore.tools
@@ -316,8 +327,8 @@ const ToolsPage = observer(() => {
         let bVal: string | number = 0;
 
         if (sortField === 'function') {
-          aVal = buildFunctionDeclaration(a, getParams(a)).toLowerCase();
-          bVal = buildFunctionDeclaration(b, getParams(b)).toLowerCase();
+          aVal = buildFunctionDeclaration(a, getParamNames(a)).toLowerCase();
+          bVal = buildFunctionDeclaration(b, getParamNames(b)).toLowerCase();
         } else if (sortField === 'language') {
           aVal = 'python';
           bVal = 'python';
@@ -423,7 +434,7 @@ const ToolsPage = observer(() => {
                     <ToolRow
                       key={tool.tool_id}
                       tool={tool}
-                      params={getParams(tool)}
+                      paramNames={getParamNames(tool)}
                       onClick={() => handleToolClick(tool)}
                       selectMode={selectMode}
                       isSelected={selectedIds.has(tool.tool_id)}

@@ -2,7 +2,8 @@ import { makeAutoObservable } from 'mobx';
 import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
 import { AnyType, TestInput, Tool } from '@/types/tools';
-import { Parameter } from '@/types/parameterdefinition';
+import { UIParameterNode } from '@/types/parameterdefinition';
+import { uiTreeToJsonSchema, jsonSchemaToUiTree } from '@/utils/jsonSchema';
 import { createParameterDefinition } from '@/api/parameterdefinition/createParameterDefinition';
 import { getParameterDefinition } from '@/api/parameterdefinition/getParameterDefinition';
 import { updateParameterDefinition } from '@/api/parameterdefinition/updateParameterDefinition';
@@ -16,6 +17,7 @@ import { toolsStore } from './ToolsStore';
 export const paramTypes = [
     'string',
     'number',
+    'integer',
     'boolean',
     'object',
     'array',
@@ -34,12 +36,13 @@ const defaultTool = {
 } as Tool;
 
 
-const getDefaultParameter = (): Parameter => {
+const getDefaultParameter = (): UIParameterNode => {
     return {
         name: '',
         type: 'string',
         description: '',
         parameters: [],
+        required: true,
     }
 }
 
@@ -47,7 +50,7 @@ const getCodeName = (name: string): string => {
     return name.replace(/ /g, '_').toLowerCase();
 }
 
-const getTestInputFromParam = (parameter: Parameter): TestInput => {
+const getTestInputFromParam = (parameter: UIParameterNode): TestInput => {
     if (parameter.type === "boolean") {
         return {
             name: parameter.name,
@@ -58,14 +61,14 @@ const getTestInputFromParam = (parameter: Parameter): TestInput => {
         return {
             name: parameter.name,
             type: parameter.type,
-            options: parameter.parameters.map((param: Parameter) => param.name),
+            options: parameter.parameters.map((param: UIParameterNode) => param.name),
             value: parameter.parameters[0].name
         }
     } else if (parameter.type === "object") {
         return {
             name: parameter.name,
             type: parameter.type,
-            value: parameter.parameters.map((param: Parameter) => getTestInputFromParam(param))
+            value: parameter.parameters.map((param: UIParameterNode) => getTestInputFromParam(param))
         }
     } else if (parameter.type === "array") {
         return {
@@ -112,7 +115,7 @@ class ToolBuilderStore {
     showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
     tool: Tool = defaultTool;
     isLoadingParameterDefinition = false;
-    parameters: Parameter[] = [];
+    parameters: UIParameterNode[] = [];
     testInputs: TestInput[] = [];
     toolSaving = false;
     toolDeleting = false;
@@ -181,7 +184,7 @@ class ToolBuilderStore {
         try {
             this.isLoadingParameterDefinition = true;
             const parameterDefinition = await getParameterDefinition(pdId);
-            this.parameters = parameterDefinition.parameters;
+            this.parameters = jsonSchemaToUiTree(parameterDefinition.schema);
             this.updateCode();
             this.updateTestInputs();
         } catch (error) {
@@ -200,7 +203,7 @@ class ToolBuilderStore {
     }
 
     getFunctionDeclaration = (): string => {
-        const params = this.parameters.map((param: Parameter) => {
+        const params = this.parameters.map((param: UIParameterNode) => {
             return `${getCodeName(param.name)}`;
         });
         if (this.tool.is_async) {
@@ -244,7 +247,7 @@ class ToolBuilderStore {
         }
     }
 
-    getPerameters = (indexArray: number[]): Parameter[] => {
+    getPerameters = (indexArray: number[]): UIParameterNode[] => {
         let perameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
             perameters = perameters[indexArray[i]].parameters;
@@ -269,7 +272,7 @@ class ToolBuilderStore {
         this.updateTestInputs()
     }
 
-    getParameter = (indexArray: number[]): Parameter => {
+    getParameter = (indexArray: number[]): UIParameterNode => {
         let parameter = null;
         let parameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
@@ -289,7 +292,7 @@ class ToolBuilderStore {
         this.updateTestInputs()
     }
 
-    setParameterType = (indexArray: number[], type: "string" | "number" | "boolean" | "object" | "array" | "enum") => {
+    setParameterType = (indexArray: number[], type: UIParameterNode['type']) => {
         const parameter = this.getParameter(indexArray);
         parameter.type = type;
         if (type === 'object' || type === 'array' || type === 'enum') {
@@ -301,6 +304,16 @@ class ToolBuilderStore {
     setParameterDescription = (indexArray: number[], description: string) => {
         const parameter = this.getParameter(indexArray);
         parameter.description = description;
+    }
+
+    setParameterRequired = (indexArray: number[], required: boolean) => {
+        const parameter = this.getParameter(indexArray);
+        parameter.required = required;
+    }
+
+    setParameterDefaultValue = (indexArray: number[], defaultValue: string | number | boolean | undefined) => {
+        const parameter = this.getParameter(indexArray);
+        parameter.defaultValue = defaultValue;
     }
 
     setCode = (code: string) => {
@@ -318,7 +331,7 @@ class ToolBuilderStore {
     }
 
     updateTestInputs = () => {
-        this.testInputs = this.parameters.map((param: Parameter) => getTestInputFromParam(param))
+        this.testInputs = this.parameters.map((param: UIParameterNode) => getTestInputFromParam(param))
     }
 
     getTestInput = (indexArray: number[]): TestInput => {
@@ -400,10 +413,10 @@ class ToolBuilderStore {
         }
     }
 
-    codifyParameterNames = (parameters: Parameter[]) => {
-        parameters.forEach((param: Parameter) => {
+    codifyParameterNames = (parameters: UIParameterNode[]) => {
+        parameters.forEach((param: UIParameterNode) => {
             param.name = getCodeName(param.name);
-            param.parameters.forEach((param: Parameter) => {
+            param.parameters.forEach((param: UIParameterNode) => {
                 this.codifyParameterNames(param.parameters);
             });
         });
@@ -414,13 +427,37 @@ class ToolBuilderStore {
         this.codifyParameterNames(this.parameters);
     }
 
-    validateParameteNamesAndDescriptions = (parameters: Parameter[], is_child_of_enum: boolean = false) => {
-        parameters.forEach((param: Parameter) => {
+    validateParameteNamesAndDescriptions = (parameters: UIParameterNode[], is_child_of_enum: boolean = false) => {
+        parameters.forEach((param: UIParameterNode) => {
             if (!param.name) {
                 throw new Error('Names for all parameters are required. The AI must know what the parameters are called.');
             }
             if (!param.description && !is_child_of_enum) {
                 throw new Error(`Description for parameter ${param.name} is required. The AI must know what the parameter does.`);
+            }
+            if (param.type === 'object') {
+                const seen = new Set<string>();
+                param.parameters.forEach((child) => {
+                    if (seen.has(child.name)) {
+                        throw new Error(`Duplicate property name "${child.name}" in object "${param.name}".`);
+                    }
+                    seen.add(child.name);
+                });
+            }
+            if (param.type === 'enum' && param.parameters.length === 0) {
+                throw new Error(`Enum parameter "${param.name}" must have at least one option.`);
+            }
+            if (param.type === 'enum') {
+                const seen = new Set<string>();
+                param.parameters.forEach((opt) => {
+                    if (seen.has(opt.name)) {
+                        throw new Error(`Duplicate enum option "${opt.name}" in "${param.name}".`);
+                    }
+                    seen.add(opt.name);
+                });
+            }
+            if (param.type === 'array' && param.parameters.length !== 1) {
+                throw new Error(`Array parameter "${param.name}" must define exactly one item type.`);
             }
             this.validateParameteNamesAndDescriptions(param.parameters, param.type === 'enum');
         });
@@ -455,17 +492,15 @@ class ToolBuilderStore {
                     }
                     this.tool.pd_id = undefined;
                 } else if (!this.tool.pd_id) {
-                    // Create Parameter Definition
                     const parameterDefinitionPayload = {
-                        parameters: this.parameters,
+                        schema: uiTreeToJsonSchema(this.parameters),
                     }
                     const parameterDefinition = await createParameterDefinition(parameterDefinitionPayload);
                     this.tool.pd_id = parameterDefinition.pd_id;
                 } else {
-                    // Update Parameter Definition
                     const parameterDefinitionPayload = {
                         pd_id: this.tool.pd_id,
-                        parameters: this.parameters,
+                        schema: uiTreeToJsonSchema(this.parameters),
                     }
                     await updateParameterDefinition(parameterDefinitionPayload);
                 }
@@ -476,9 +511,8 @@ class ToolBuilderStore {
                 await updateTool(toolPayload);
             } else {
                 if (this.parameters.length > 0) {
-                    // Create Parameter Definition
                     const parameterDefinitionPayload = {
-                        parameters: this.parameters,
+                        schema: uiTreeToJsonSchema(this.parameters),
                     }
                     const parameterDefinition = await createParameterDefinition(parameterDefinitionPayload);
                     this.tool.pd_id = parameterDefinition.pd_id;

@@ -14,7 +14,7 @@ import { observer } from "mobx-react-lite";
 import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore";
 import { structuredResponseEndpointsStore } from "@/store/StructuredResponseEndpointStore";
 import { ParameterView } from "./components/Parameter";
-import { Parameter } from "@/types/parameterdefinition";
+import { UIParameterNode } from "@/types/parameterdefinition";
 import { ModelSelector } from "@/app/components/ModelSelector";
 
 type Params = Promise<{ sre_id?: string[] }>;
@@ -266,7 +266,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
         {/* Parameters */}
         <Heading size="md">Response Structure</Heading>
-        {sreBuilderStore.parameters.map((param: Parameter, index: number) => (
+        {sreBuilderStore.parameters.map((param: UIParameterNode, index: number) => (
           <div key={index}>
             <ParameterView indexArray={[index]} param={param} />
           </div>

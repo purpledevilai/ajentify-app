@@ -1,9 +1,9 @@
-import { ParameterDefinition, Parameter } from "@/types/parameterdefinition";
+import { ParameterDefinition, JsonSchema } from "@/types/parameterdefinition";
 import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 interface CreateParameterDefinitionPayload {
-    parameters: Parameter[];
+    schema: JsonSchema;
 }
 
 export async function createParameterDefinition(payload: CreateParameterDefinitionPayload): Promise<ParameterDefinition> {

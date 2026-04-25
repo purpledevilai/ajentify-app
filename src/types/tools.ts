@@ -1,4 +1,4 @@
-import { Parameter } from "./parameterdefinition";
+import { UIParameterNode } from "./parameterdefinition";
 
 export interface Tool {
     tool_id: string;
@@ -16,10 +16,10 @@ export interface Tool {
 
 export interface TestInput {
     name: string;
-    type: "string" | "number" | "boolean" | "object" | "array" | "enum";
+    type: "string" | "number" | "integer" | "boolean" | "object" | "array" | "enum";
     value: string | number | boolean | TestInput[];
     options?: string[];
-    arrayTypeParameter?: Parameter;
+    arrayTypeParameter?: UIParameterNode;
 }
 
 export type AnyType = string | number | boolean | { [key: string]: AnyType } | AnyType[];

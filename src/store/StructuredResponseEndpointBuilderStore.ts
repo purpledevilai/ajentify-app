@@ -1,7 +1,8 @@
 import { makeAutoObservable, computed } from "mobx";
 import { ShowAlertParams } from "@/app/components/AlertProvider";
 import { authStore } from "./AuthStore";
-import { Parameter } from "@/types/parameterdefinition";
+import { UIParameterNode } from "@/types/parameterdefinition";
+import { uiTreeToJsonSchema, jsonSchemaToUiTree } from "@/utils/jsonSchema";
 import { StructuredResponseEndpoint } from "@/types/structuredresponseendpoint";
 import { createParameterDefinition } from "@/api/parameterdefinition/createParameterDefinition";
 import { updateParameterDefinition } from "@/api/parameterdefinition/updateParameterDefinition";
@@ -27,11 +28,12 @@ const defaultSRE: StructuredResponseEndpoint = {
     updated_at: 0,
 };
 
-const getDefaultParameter = (): Parameter => ({
+const getDefaultParameter = (): UIParameterNode => ({
     name: '',
     type: 'string',
     description: '',
     parameters: [],
+    required: true,
 });
 
 const getCodeName = (name: string): string => {
@@ -43,7 +45,7 @@ class StructuredResponseEndpointBuilderStore {
     isNewSme = false;
     useClickedSave = false;
     sre: StructuredResponseEndpoint = defaultSRE;
-    parameters: Parameter[] = [];
+    parameters: UIParameterNode[] = [];
     isLoadingParameterDefinition = false;
     isLoadingSRE = false;
     sreSaving = false;
@@ -186,7 +188,7 @@ class StructuredResponseEndpointBuilderStore {
         try {
             this.isLoadingParameterDefinition = true;
             const parameterDefinition = await getParameterDefinition(pdId);
-            this.parameters = parameterDefinition.parameters;
+            this.parameters = jsonSchemaToUiTree(parameterDefinition.schema);
         } catch (error) {
             this.showAlert({
                 title: 'Whoops',
@@ -232,8 +234,8 @@ class StructuredResponseEndpointBuilderStore {
         this.codifyParameterNames(this.parameters);
     }
 
-    codifyParameterNames = (parameters: Parameter[]) => {
-        parameters.forEach((param: Parameter) => {
+    codifyParameterNames = (parameters: UIParameterNode[]) => {
+        parameters.forEach((param: UIParameterNode) => {
             param.name = getCodeName(param.name);
             this.codifyParameterNames(param.parameters);
         });
@@ -260,11 +262,35 @@ class StructuredResponseEndpointBuilderStore {
         }
     }
 
-    validateParameterNamesAndDescriptions = (parameters: Parameter[], isChildOfEnum: boolean = false) => {
-        parameters.forEach((param: Parameter) => {
+    validateParameterNamesAndDescriptions = (parameters: UIParameterNode[], isChildOfEnum: boolean = false) => {
+        parameters.forEach((param: UIParameterNode) => {
             if (!param.name) throw new Error("All parameters must have a name.");
             if (!param.description && !isChildOfEnum) {
                 throw new Error(`Description is required for parameter "${param.name}".`);
+            }
+            if (param.type === 'object') {
+                const seen = new Set<string>();
+                param.parameters.forEach((child) => {
+                    if (seen.has(child.name)) {
+                        throw new Error(`Duplicate property name "${child.name}" in object "${param.name}".`);
+                    }
+                    seen.add(child.name);
+                });
+            }
+            if (param.type === 'enum' && param.parameters.length === 0) {
+                throw new Error(`Enum parameter "${param.name}" must have at least one option.`);
+            }
+            if (param.type === 'enum') {
+                const seen = new Set<string>();
+                param.parameters.forEach((opt) => {
+                    if (seen.has(opt.name)) {
+                        throw new Error(`Duplicate enum option "${opt.name}" in "${param.name}".`);
+                    }
+                    seen.add(opt.name);
+                });
+            }
+            if (param.type === 'array' && param.parameters.length !== 1) {
+                throw new Error(`Array parameter "${param.name}" must define exactly one item type.`);
             }
             this.validateParameterNamesAndDescriptions(param.parameters, param.type === 'enum');
         });
@@ -303,7 +329,7 @@ class StructuredResponseEndpointBuilderStore {
 
     // PARAMETER MANAGEMENT
 
-    getPerameters = (indexArray: number[]): Parameter[] => {
+    getPerameters = (indexArray: number[]): UIParameterNode[] => {
         let perameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
             perameters = perameters[indexArray[i]].parameters;
@@ -326,7 +352,7 @@ class StructuredResponseEndpointBuilderStore {
         this.hasUpdatedParameterDefinition = true;
     }
 
-    getParameter = (indexArray: number[]): Parameter => {
+    getParameter = (indexArray: number[]): UIParameterNode => {
         let parameter = null;
         let parameters = this.parameters;
         for (let i = 0; i < indexArray.length; i++) {
@@ -345,7 +371,7 @@ class StructuredResponseEndpointBuilderStore {
         this.hasUpdatedParameterDefinition = true;
     }
 
-    setParameterType = (indexArray: number[], type: "string" | "number" | "boolean" | "object" | "array" | "enum") => {
+    setParameterType = (indexArray: number[], type: UIParameterNode['type']) => {
         const parameter = this.getParameter(indexArray);
         parameter.type = type;
         if (type === 'object' || type === 'array' || type === 'enum') {
@@ -359,6 +385,18 @@ class StructuredResponseEndpointBuilderStore {
     setParameterDescription = (indexArray: number[], description: string) => {
         const parameter = this.getParameter(indexArray);
         parameter.description = description;
+        this.hasUpdatedParameterDefinition = true;
+    }
+
+    setParameterRequired = (indexArray: number[], required: boolean) => {
+        const parameter = this.getParameter(indexArray);
+        parameter.required = required;
+        this.hasUpdatedParameterDefinition = true;
+    }
+
+    setParameterDefaultValue = (indexArray: number[], defaultValue: string | number | boolean | undefined) => {
+        const parameter = this.getParameter(indexArray);
+        parameter.defaultValue = defaultValue;
         this.hasUpdatedParameterDefinition = true;
     }
 
@@ -376,10 +414,11 @@ class StructuredResponseEndpointBuilderStore {
 
             // Create or update parameter definition
             if (this.hasUpdatedParameterDefinition) {
+                const schema = uiTreeToJsonSchema(this.parameters);
                 if (this.sre.pd_id) {
-                    await updateParameterDefinition({ pd_id: this.sre.pd_id, parameters: this.parameters });
+                    await updateParameterDefinition({ pd_id: this.sre.pd_id, schema });
                 } else {
-                    const pd = await createParameterDefinition({ parameters: this.parameters });
+                    const pd = await createParameterDefinition({ schema });
                     this.sre.pd_id = pd.pd_id;
                 }
                 this.hasUpdatedParameterDefinition = false;
