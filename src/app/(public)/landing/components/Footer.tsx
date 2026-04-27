@@ -21,6 +21,9 @@ const FOOTER_LINKS = {
     follow: [
         { label: 'YouTube', href: 'https://www.youtube.com/@Ajentify', external: true },
     ],
+    legal: [
+        { label: 'Data Usage Policy', href: '/privacy', external: false },
+    ],
 };
 
 export default function Footer() {
@@ -106,6 +109,18 @@ export default function Footer() {
                                 Follow
                             </Text>
                             {FOOTER_LINKS.follow.map(renderLink)}
+                        </Stack>
+                        <Stack spacing="3" minW="32">
+                            <Text
+                                fontSize="xs"
+                                fontWeight="semibold"
+                                color={labelColor}
+                                textTransform="uppercase"
+                                letterSpacing="wider"
+                            >
+                                Legal
+                            </Text>
+                            {FOOTER_LINKS.legal.map(renderLink)}
                         </Stack>
                     </Flex>
                 </Flex>
