@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { RiRobot3Fill } from "react-icons/ri";
-import { MdChatBubble } from "react-icons/md";
+import { MdChatBubble, MdHistory } from "react-icons/md";
 import { BiDotsVerticalRounded } from 'react-icons/bi';
 import { MdOutlineWebAsset } from "react-icons/md";
 import { FiTool, FiFileText, FiLink } from "react-icons/fi";
@@ -51,6 +51,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
         { icon: MdChatBubble, title: 'Chat', route: '/chat' },
         { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
         { icon: FiLink, title: 'Integrations', route: '/integrations' },
+        { icon: MdHistory, title: 'Contexts', route: '/contexts' },
     ];
 
     return (
