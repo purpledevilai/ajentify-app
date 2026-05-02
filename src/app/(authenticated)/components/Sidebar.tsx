@@ -18,10 +18,9 @@ import {
     Spinner,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { RiRobot3Fill } from "react-icons/ri";
-import { MdChatBubble, MdHistory } from "react-icons/md";
+import { RiRobot3Fill, RiStackFill } from "react-icons/ri";
+import { MdHistory } from "react-icons/md";
 import { BiDotsVerticalRounded } from 'react-icons/bi';
-import { MdOutlineWebAsset } from "react-icons/md";
 import { FiTool, FiFileText, FiLink } from "react-icons/fi";
 import { VscJson } from "react-icons/vsc";
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
@@ -42,16 +41,14 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
     const [orgMenuOpen, setOrgMenuOpen] = useState(false);
     const hoverColor = useColorModeValue('gray.200', 'gray.700');
 
-    // Tabs for the navigation
     const tabs = [
         { icon: RiRobot3Fill, title: 'Agents', route: '/agents' },
         { icon: FiTool, title: 'Agent Tools', route: '/tools' },
-        { icon: FiFileText, title: 'Documents', route: '/documents' },
-        { icon: VscJson, title: 'Structured Responses', route: '/sres' },
-        { icon: MdChatBubble, title: 'Chat', route: '/chat' },
-        { icon: MdOutlineWebAsset, title: 'Chat Pages', route: '/chat-pages' },
-        { icon: FiLink, title: 'Integrations', route: '/integrations' },
         { icon: MdHistory, title: 'Contexts', route: '/contexts' },
+        { icon: VscJson, title: 'Structured Responses', route: '/sres' },
+        { icon: FiFileText, title: 'Documents', route: '/documents' },
+        { icon: RiStackFill, title: 'Stages', route: '/stages' },
+        { icon: FiLink, title: 'Integrations', route: '/integrations' },
     ];
 
     return (

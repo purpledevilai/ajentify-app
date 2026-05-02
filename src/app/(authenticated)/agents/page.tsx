@@ -7,8 +7,12 @@ import { agentsStore } from '@/store/AgentsStore';
 import { agentBuilderStore } from '@/store/AgentBuilderStore';
 import { toolsStore } from '@/store/ToolsStore';
 import { modelsStore } from '@/store/ModelsStore';
+import { stagesStore } from '@/store/StagesStore';
+import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
+import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { Agent } from '@/types/agent';
 import { deleteAgent } from '@/api/agent/deleteAgent';
+import { updateAgent } from '@/api/agent/updateAgent';
 import {
   Box,
   Heading,
@@ -123,12 +127,16 @@ const AgentRow = observer(({
   selectMode,
   isSelected,
   onToggle,
+  showStageColumns,
+  onAssigned,
 }: {
   agent: Agent;
   onClick: () => void;
   selectMode: boolean;
   isSelected: boolean;
   onToggle: (e: React.MouseEvent) => void;
+  showStageColumns: boolean;
+  onAssigned: () => void;
 }) => {
   const [idHovered, setIdHovered] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -215,6 +223,17 @@ const AgentRow = observer(({
         </Text>
       </Td>
 
+      {showStageColumns && (
+        <>
+          <Td w="1px" whiteSpace="nowrap">
+            <LogicalNameCell logicalName={agent.logical_name} />
+          </Td>
+          <Td w="1px" whiteSpace="nowrap">
+            <StageCell stageId={agent.stage_id} />
+          </Td>
+        </>
+      )}
+
       {/* Model */}
       <Td w="1px" whiteSpace="nowrap">
         <Badge colorScheme={modelColor} fontSize="xs" textTransform="none">
@@ -274,6 +293,25 @@ const AgentRow = observer(({
       <Td w="1px" whiteSpace="nowrap" isNumeric>
         <Text fontSize="xs" color={subtextColor}>{formatTimestamp(agent.updated_at)}</Text>
       </Td>
+
+      {showStageColumns && (
+        <StageBindingActionCell
+          value={{
+            stage_id: agent.stage_id ?? null,
+            logical_name: agent.logical_name ?? null,
+          }}
+          resourceDisplayName={agent.agent_name}
+          resourceKind="agent"
+          onSave={async (next) => {
+            await updateAgent({
+              agent_id: agent.agent_id,
+              stage_id: next.stage_id,
+              logical_name: next.logical_name,
+            });
+          }}
+          onSaved={onAssigned}
+        />
+      )}
     </Tr>
   );
 });
@@ -298,10 +336,14 @@ const AgentsPage = observer(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/agent-builder');
     agentsStore.setShowAlert(showAlert);
+    stagesStore.setShowAlert(showAlert);
     agentsStore.loadAgents();
     toolsStore.loadTools();
     modelsStore.loadModels();
+    stagesStore.loadStages();
   });
+
+  const showStageColumns = stagesStore.hasAnyStage;
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -475,11 +517,14 @@ const AgentsPage = observer(() => {
                     <SortableTh field="name" {...thProps}>Name</SortableTh>
                     <Th>ID</Th>
                     <Th>Description</Th>
+                    {showStageColumns && <Th>Logical name</Th>}
+                    {showStageColumns && <Th>Stage</Th>}
                     <SortableTh field="model" {...thProps}>Model</SortableTh>
                     <SortableTh field="is_public" {...thProps}>Visibility</SortableTh>
                     <Th>Tools</Th>
                     <SortableTh field="created_at" {...thProps} isNumeric>Created</SortableTh>
                     <SortableTh field="updated_at" {...thProps} isNumeric>Updated</SortableTh>
+                    {showStageColumns && <Th w="1px" />}
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -491,6 +536,8 @@ const AgentsPage = observer(() => {
                       selectMode={selectMode}
                       isSelected={selectedIds.has(agent.agent_id)}
                       onToggle={(e) => { e.stopPropagation(); toggleRow(agent.agent_id); }}
+                      showStageColumns={showStageColumns}
+                      onAssigned={() => agentsStore.loadAgents(true)}
                     />
                   ))}
                 </Tbody>

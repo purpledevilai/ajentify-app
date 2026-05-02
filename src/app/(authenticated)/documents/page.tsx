@@ -5,8 +5,12 @@ import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { jsonDocumentsStore } from '@/store/JsonDocumentsStore';
 import { jsonDocumentBuilderStore } from '@/store/JsonDocumentBuilderStore';
+import { stagesStore } from '@/store/StagesStore';
+import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
+import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { JsonDocument } from '@/types/jsondocument';
 import { deleteJsonDocument } from '@/api/jsondocument/deleteJsonDocument';
+import { updateJsonDocument } from '@/api/jsondocument/updateJsonDocument';
 import {
   Box,
   Heading,
@@ -119,12 +123,16 @@ const DocumentRow = ({
   selectMode,
   isSelected,
   onToggle,
+  showStageColumns,
+  onAssigned,
 }: {
   doc: JsonDocument;
   onClick: () => void;
   selectMode: boolean;
   isSelected: boolean;
   onToggle: (e: React.MouseEvent) => void;
+  showStageColumns: boolean;
+  onAssigned: () => void;
 }) => {
   const [idHovered, setIdHovered] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -194,6 +202,17 @@ const DocumentRow = ({
         </Flex>
       </Td>
 
+      {showStageColumns && (
+        <>
+          <Td w="1px" whiteSpace="nowrap">
+            <LogicalNameCell logicalName={doc.logical_name} />
+          </Td>
+          <Td w="1px" whiteSpace="nowrap">
+            <StageCell stageId={doc.stage_id} />
+          </Td>
+        </>
+      )}
+
       {/* Fields */}
       <Td w="1px" whiteSpace="nowrap" isNumeric>
         <Badge colorScheme="purple" fontSize="xs" variant="subtle">
@@ -210,6 +229,25 @@ const DocumentRow = ({
       <Td w="1px" whiteSpace="nowrap" isNumeric>
         <Text fontSize="xs" color={subtextColor}>{formatTimestamp(doc.updated_at)}</Text>
       </Td>
+
+      {showStageColumns && (
+        <StageBindingActionCell
+          value={{
+            stage_id: doc.stage_id ?? null,
+            logical_name: doc.logical_name ?? null,
+          }}
+          resourceDisplayName={doc.name || 'Untitled'}
+          resourceKind="document"
+          onSave={async (next) => {
+            await updateJsonDocument({
+              document_id: doc.document_id,
+              stage_id: next.stage_id,
+              logical_name: next.logical_name,
+            });
+          }}
+          onSaved={onAssigned}
+        />
+      )}
     </Tr>
   );
 };
@@ -234,8 +272,12 @@ const DocumentsPage = observer(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/json-document-builder');
     jsonDocumentsStore.setShowAlert(showAlert);
+    stagesStore.setShowAlert(showAlert);
     jsonDocumentsStore.loadDocuments();
+    stagesStore.loadStages();
   }, []);
+
+  const showStageColumns = stagesStore.hasAnyStage;
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -406,9 +448,12 @@ const DocumentsPage = observer(() => {
                     )}
                     <SortableTh field="name" {...thProps}>Name</SortableTh>
                     <Th>ID</Th>
+                    {showStageColumns && <Th>Logical name</Th>}
+                    {showStageColumns && <Th>Stage</Th>}
                     <SortableTh field="fields" {...thProps} isNumeric>Fields</SortableTh>
                     <SortableTh field="created_at" {...thProps} isNumeric>Created</SortableTh>
                     <SortableTh field="updated_at" {...thProps} isNumeric>Updated</SortableTh>
+                    {showStageColumns && <Th w="1px" />}
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -420,6 +465,8 @@ const DocumentsPage = observer(() => {
                       selectMode={selectMode}
                       isSelected={selectedIds.has(doc.document_id)}
                       onToggle={(e) => { e.stopPropagation(); toggleRow(doc.document_id); }}
+                      showStageColumns={showStageColumns}
+                      onAssigned={() => jsonDocumentsStore.loadDocuments(true)}
                     />
                   ))}
                 </Tbody>

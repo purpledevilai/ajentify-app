@@ -20,6 +20,7 @@ import { jsonDocumentBuilderStore } from './JsonDocumentBuilderStore';
 import { integrationsStore } from './IntegrationsStore';
 import { toolsStore } from './ToolsStore';
 import { toolBuilderStore } from './ToolBuilderStore';
+import { stagesStore } from './StagesStore';
 
 
 class AuthStore {
@@ -110,6 +111,7 @@ class AuthStore {
             integrationsStore.reset();
             toolsStore.reset();
             toolBuilderStore.reset();
+            stagesStore.reset();
             this.reset();
             this.signedIn = false;
         } catch (error) {

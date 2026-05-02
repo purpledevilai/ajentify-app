@@ -3,9 +3,18 @@ import { authStore } from "@/store/AuthStore";
 import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 
 
-export async function getAgents(): Promise<Agent[]> {
+interface GetAgentsOptions {
+    /** Stage name (e.g. "frontend-staging") to scope the listing to deploy-managed agents. */
+    stage?: string;
+}
+
+export async function getAgents(options: GetAgentsOptions = {}): Promise<Agent[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/agents`, {
+    const params = new URLSearchParams();
+    if (options.stage) params.set('stage', options.stage);
+    const qs = params.toString();
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/agents${qs ? `?${qs}` : ''}`;
+    const response = await fetch(url, {
         headers: {
             'Authorization': await authStore.getAccessToken() || '',
             'Content-Type': 'application/json'

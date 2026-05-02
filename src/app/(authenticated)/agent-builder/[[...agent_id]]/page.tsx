@@ -31,6 +31,7 @@ import { UtilityTools } from "./components/UtilityTools";
 import { toolsStore } from "@/store/ToolsStore";
 import { modelsStore } from "@/store/ModelsStore";
 import { ModelSelector } from "@/app/components/ModelSelector";
+import StageAssignmentField from "@/app/(authenticated)/stages/components/StageAssignmentField";
 
 type Params = Promise<{ agent_id: string[] }>;
 
@@ -288,6 +289,26 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         onChange={(e) => agentBuilderStore.setStringField("agent_description", e.target.value)}
                     />
                 </FormControl>
+
+                {/* Stage assignment — only relevant once the agent has been created.
+                    Attaching to a stage makes this agent reachable via runtime
+                    addressing (POST /context with `(stage, agent)`) and includes
+                    it in the stage's exported manifest. */}
+                {agentBuilderStore.currentAgent.agent_id && (
+                    <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={2}>
+                        <Heading size="sm">Stage assignment</Heading>
+                        <StageAssignmentField
+                            value={{
+                                stage_id: agentBuilderStore.currentAgent.stage_id ?? null,
+                                logical_name: agentBuilderStore.currentAgent.logical_name ?? null,
+                            }}
+                            onChange={(next) =>
+                                agentBuilderStore.setStageAssignment(next.stage_id, next.logical_name)
+                            }
+                            resourceDisplayName={agentBuilderStore.currentAgent.agent_name}
+                        />
+                    </Flex>
+                )}
 
                 {/* Configuration */}
                 <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={4}>

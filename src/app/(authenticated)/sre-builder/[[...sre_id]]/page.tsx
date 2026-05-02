@@ -16,6 +16,7 @@ import { structuredResponseEndpointsStore } from "@/store/StructuredResponseEndp
 import { ParameterView } from "./components/Parameter";
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { ModelSelector } from "@/app/components/ModelSelector";
+import StageAssignmentField from "@/app/(authenticated)/stages/components/StageAssignmentField";
 
 type Params = Promise<{ sre_id?: string[] }>;
 
@@ -167,6 +168,25 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
             onChange={(e) => sreBuilderStore.setDescription(e.target.value)}
           />
         </FormControl>
+
+        {/* Stage assignment — only relevant once the SRE exists. Attaching to a
+            stage adds it to the stage's exported manifest and the next /deploy
+            reconcile cycle. */}
+        {sreBuilderStore.sre.sre_id && (
+          <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={2}>
+            <Heading size="sm">Stage assignment</Heading>
+            <StageAssignmentField
+              value={{
+                stage_id: sreBuilderStore.sre.stage_id ?? null,
+                logical_name: sreBuilderStore.sre.logical_name ?? null,
+              }}
+              onChange={(next) =>
+                sreBuilderStore.setStageAssignment(next.stage_id, next.logical_name)
+              }
+              resourceDisplayName={sreBuilderStore.sre.name}
+            />
+          </Flex>
+        )}
 
         {/* Variable Names — shown for new SREs always, for legacy SREs behind a toggle */}
         {sreBuilderStore.isLegacySRE && (

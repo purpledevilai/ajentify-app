@@ -48,6 +48,10 @@ export interface ParameterDefinition {
     pd_id: string;
     org_id: string;
     schema: JsonSchema;
+    /** Stage that owns this PD (when deploy-managed via AjDK). null for dashboard-created PDs. */
+    stage_id?: string | null;
+    /** Stable logical name within the stage (the manifest key). null for dashboard-created PDs. */
+    logical_name?: string | null;
     created_at: number;
     updated_at: number;
 }

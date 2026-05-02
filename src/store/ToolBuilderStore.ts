@@ -225,6 +225,15 @@ class ToolBuilderStore {
         this.tool.description = description;
     }
 
+    setStageAssignment = (stageId: string | null, logicalName: string | null) => {
+        // Always carry the explicit value (including null) so JSON.stringify
+        // serializes them and the backend's model_fields_set picks them up.
+        // Without this a "detach" would arrive as omitted fields and the
+        // backend would leave the binding intact.
+        this.tool.stage_id = stageId;
+        this.tool.logical_name = logicalName;
+    }
+
     setPassContext = (passContext: boolean) => {
         this.tool.pass_context = passContext;
         this.updateCode();
@@ -485,12 +494,16 @@ class ToolBuilderStore {
                 this.tool.is_async = false;
             }
             if (this.isUpdating) {
-                // if no parameters set pd_id to null
+                // If the user removed every parameter, drop the linked PD and
+                // tell the server to clear `pd_id` on the tool. Use explicit
+                // null (not undefined) so JSON.stringify keeps the field on
+                // the wire — the backend's PATCH semantics treat omitted as
+                // "leave unchanged" and explicit-null as "clear".
                 if (this.parameters.length === 0) {
                     if (this.tool.pd_id) {
                         await deleteParameterDefinition(this.tool.pd_id);
                     }
-                    this.tool.pd_id = undefined;
+                    this.tool.pd_id = null;
                 } else if (!this.tool.pd_id) {
                     const parameterDefinitionPayload = {
                         schema: uiTreeToJsonSchema(this.parameters),

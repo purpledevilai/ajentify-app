@@ -226,6 +226,13 @@ class AgentBuilderStore {
         this.hasUpdates = true;
     }
 
+    setStageAssignment(stageId: string | null, logicalName: string | null) {
+        // Mutate both fields together so the dirty-check observes one change.
+        this.currentAgent.stage_id = stageId;
+        this.currentAgent.logical_name = logicalName;
+        this.hasUpdates = true;
+    }
+
     setBooleanField(field: keyof AgentBooleanFields, value: boolean) {
         this.currentAgent[field] = value;
         this.hasUpdates = true;
@@ -323,6 +330,8 @@ class AgentBuilderStore {
                 prompt_arg_names: this.currentAgent.prompt_arg_names,
                 initialize_tool_id: this.currentAgent.initialize_tool_id,
                 model_id: this.currentAgent.model_id,
+                stage_id: this.currentAgent.stage_id ?? null,
+                logical_name: this.currentAgent.logical_name ?? null,
             });
             this.currentAgent = agent;
             this.hasUpdates = false;

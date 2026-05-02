@@ -5,7 +5,7 @@ import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 interface CreateToolPayload {
     name?: string;
     description?: string;
-    pd_id?: string;
+    pd_id?: string | null;
     code?: string;
     pass_context?: boolean;
     is_async?: boolean;

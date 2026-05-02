@@ -20,6 +20,7 @@ import {
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import MonacoEditor from '@monaco-editor/react';
 import { useAlert } from '@/app/components/AlertProvider';
+import StageAssignmentField from '@/app/(authenticated)/stages/components/StageAssignmentField';
 
 type Params = Promise<{ document_id: string[] }>;
 
@@ -104,6 +105,29 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
                         onChange={(e) => jsonDocumentBuilderStore.setName(e.target.value)}
                     />
                 </FormControl>
+
+                {/* Stage assignment — only relevant once the document exists.
+                    Attaching a document to a stage adds it to the stage's
+                    exported manifest. */}
+                {jsonDocumentBuilderStore.document.document_id && (
+                    <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={2}>
+                        <Heading size="sm">Stage assignment</Heading>
+                        <StageAssignmentField
+                            value={{
+                                stage_id: jsonDocumentBuilderStore.document.stage_id ?? null,
+                                logical_name: jsonDocumentBuilderStore.document.logical_name ?? null,
+                            }}
+                            onChange={(next) =>
+                                jsonDocumentBuilderStore.setStageAssignment(
+                                    next.stage_id,
+                                    next.logical_name,
+                                )
+                            }
+                            resourceDisplayName={jsonDocumentBuilderStore.document.name}
+                        />
+                    </Flex>
+                )}
+
                 <FormControl>
                     <FormLabel>Data</FormLabel>
                     <MonacoEditor

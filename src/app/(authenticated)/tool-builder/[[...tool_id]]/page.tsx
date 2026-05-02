@@ -18,6 +18,7 @@ import type monaco from 'monaco-editor';
 import { TestInputView } from "./components/TestInput";
 import { TestInput } from "@/types/tools";
 import { UIParameterNode } from "@/types/parameterdefinition";
+import StageAssignmentField from "@/app/(authenticated)/stages/components/StageAssignmentField";
 
 type Params = Promise<{ tool_id: string[] }>;
 
@@ -150,6 +151,25 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                         onChange={(e) => toolBuilderStore.setDescription(e.target.value)}
                     />
                 </FormControl>
+
+                {/* Stage assignment — only relevant once the tool exists. Attaching
+                    to a stage adds the tool to the stage's exported manifest and
+                    makes it part of the next /deploy reconcile cycle. */}
+                {toolBuilderStore.tool.tool_id && (
+                    <Flex direction="column" borderWidth="1px" borderRadius="md" p={4} gap={2}>
+                        <Heading size="sm">Stage assignment</Heading>
+                        <StageAssignmentField
+                            value={{
+                                stage_id: toolBuilderStore.tool.stage_id ?? null,
+                                logical_name: toolBuilderStore.tool.logical_name ?? null,
+                            }}
+                            onChange={(next) =>
+                                toolBuilderStore.setStageAssignment(next.stage_id, next.logical_name)
+                            }
+                            resourceDisplayName={toolBuilderStore.tool.name}
+                        />
+                    </Flex>
+                )}
 
                 {/* Client Side Tool Toggle */}
                 <FormControl display="flex" alignItems="center">

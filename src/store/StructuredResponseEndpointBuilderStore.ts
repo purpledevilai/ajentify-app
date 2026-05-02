@@ -209,6 +209,15 @@ class StructuredResponseEndpointBuilderStore {
         this.hasUpdatedSRE = true;
     }
 
+    setStageAssignment = (stageId: string | null, logicalName: string | null) => {
+        // Always carry an explicit value (incl. null) so the update payload
+        // serializes them; backend uses model_fields_set to tell omitted from
+        // explicit-null (the latter detaches).
+        this.sre.stage_id = stageId;
+        this.sre.logical_name = logicalName;
+        this.hasUpdatedSRE = true;
+    }
+
     setPromptTemplate = (template: string) => {
         this.sre.prompt_template = template;
         this.hasUpdatedSRE = true;

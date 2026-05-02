@@ -51,6 +51,13 @@ class JsonDocumentBuilderStore {
         this.document.name = name;
     }
 
+    setStageAssignment(stageId: string | null, logicalName: string | null) {
+        // Carry explicit values (incl. null) so the next save serializes them
+        // and the backend's model_fields_set treats explicit-null as a detach.
+        this.document.stage_id = stageId;
+        this.document.logical_name = logicalName;
+    }
+
     setDataString(value: string) {
         this.dataString = value;
         try {
@@ -86,6 +93,8 @@ class JsonDocumentBuilderStore {
                 document_id: this.document.document_id,
                 name: this.document.name,
                 data: this.document.data,
+                stage_id: this.document.stage_id ?? null,
+                logical_name: this.document.logical_name ?? null,
             });
             this.document = doc;
         } catch (error) {

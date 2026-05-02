@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import { toolsStore } from '@/store/ToolsStore';
 import { toolBuilderStore } from '@/store/ToolBuilderStore';
+import { stagesStore } from '@/store/StagesStore';
+import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
+import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { Tool } from '@/types/tools';
 import { JsonSchema, ParameterDefinition } from '@/types/parameterdefinition';
 import { getParameterDefinitions } from '@/api/parameterdefinition/getParameterDefinitions';
 import { deleteTool } from '@/api/tool/deleteTool';
+import { updateTool } from '@/api/tool/updateTool';
 import {
   Box,
   Heading,
@@ -143,6 +147,8 @@ const ToolRow = ({
   selectMode,
   isSelected,
   onToggle,
+  showStageColumns,
+  onAssigned,
 }: {
   tool: Tool;
   paramNames: string[];
@@ -150,6 +156,8 @@ const ToolRow = ({
   selectMode: boolean;
   isSelected: boolean;
   onToggle: (e: React.MouseEvent) => void;
+  showStageColumns: boolean;
+  onAssigned: () => void;
 }) => {
   const [isNavigating, setIsNavigating] = useState(false);
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
@@ -205,6 +213,17 @@ const ToolRow = ({
         </Text>
       </Td>
 
+      {showStageColumns && (
+        <>
+          <Td w="1px" whiteSpace="nowrap">
+            <LogicalNameCell logicalName={tool.logical_name} />
+          </Td>
+          <Td w="1px" whiteSpace="nowrap">
+            <StageCell stageId={tool.stage_id} />
+          </Td>
+        </>
+      )}
+
       {/* Language */}
       <Td w="1px" whiteSpace="nowrap">
         <Badge colorScheme="blue" fontSize="xs" textTransform="none">
@@ -221,6 +240,25 @@ const ToolRow = ({
       <Td w="1px" whiteSpace="nowrap" isNumeric>
         <Text fontSize="xs" color={subtextColor}>{formatTimestamp(tool.updated_at)}</Text>
       </Td>
+
+      {showStageColumns && (
+        <StageBindingActionCell
+          value={{
+            stage_id: tool.stage_id ?? null,
+            logical_name: tool.logical_name ?? null,
+          }}
+          resourceDisplayName={tool.name}
+          resourceKind="tool"
+          onSave={async (next) => {
+            await updateTool({
+              tool_id: tool.tool_id,
+              stage_id: next.stage_id,
+              logical_name: next.logical_name,
+            });
+          }}
+          onSaved={onAssigned}
+        />
+      )}
     </Tr>
   );
 };
@@ -246,13 +284,17 @@ const ToolsPage = observer(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/tool-builder');
     toolsStore.setShowAlert(showAlert);
+    stagesStore.setShowAlert(showAlert);
     toolsStore.loadTools();
+    stagesStore.loadStages();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
       const map: Record<string, string[]> = {};
       pds.forEach((pd) => { map[pd.pd_id] = schemaParamNames(pd.schema); });
       setPdMap(map);
     }).catch(() => {});
   }, []);
+
+  const showStageColumns = stagesStore.hasAnyStage;
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -424,9 +466,12 @@ const ToolsPage = observer(() => {
                     )}
                     <SortableTh field="function" {...thProps}>Function</SortableTh>
                     <Th>Description</Th>
+                    {showStageColumns && <Th>Logical name</Th>}
+                    {showStageColumns && <Th>Stage</Th>}
                     <SortableTh field="language" {...thProps}>Language</SortableTh>
                     <SortableTh field="created_at" {...thProps} isNumeric>Created</SortableTh>
                     <SortableTh field="updated_at" {...thProps} isNumeric>Updated</SortableTh>
+                    {showStageColumns && <Th w="1px" />}
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -439,6 +484,8 @@ const ToolsPage = observer(() => {
                       selectMode={selectMode}
                       isSelected={selectedIds.has(tool.tool_id)}
                       onToggle={(e) => { e.stopPropagation(); toggleRow(tool.tool_id); }}
+                      showStageColumns={showStageColumns}
+                      onAssigned={() => toolsStore.loadTools(true)}
                     />
                   ))}
                 </Tbody>

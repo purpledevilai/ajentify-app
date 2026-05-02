@@ -11,6 +11,10 @@ export interface Agent {
     model_id?: string | null;
     prompt: string;
     tools?: string[];
+    /** Stage that owns this agent (when deploy-managed via AjDK). null for dashboard-created agents. */
+    stage_id?: string | null;
+    /** Stable logical name within the stage (the manifest key). null for dashboard-created agents. */
+    logical_name?: string | null;
     created_at?: number;
     updated_at?: number;
 }

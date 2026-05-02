@@ -6,8 +6,12 @@ import { observer } from 'mobx-react-lite';
 import { structuredResponseEndpointsStore } from '@/store/StructuredResponseEndpointStore';
 import { sreBuilderStore } from '@/store/StructuredResponseEndpointBuilderStore';
 import { modelsStore } from '@/store/ModelsStore';
+import { stagesStore } from '@/store/StagesStore';
+import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
+import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { StructuredResponseEndpoint } from '@/types/structuredresponseendpoint';
 import { deleteSRE } from '@/api/structuredresponseendpoint/deleteSRE';
+import { updateSRE } from '@/api/structuredresponseendpoint/updateSRE';
 import {
   Box,
   Heading,
@@ -129,12 +133,16 @@ const SRERow = observer(
     selectMode,
     isSelected,
     onToggle,
+    showStageColumns,
+    onAssigned,
   }: {
     sre: StructuredResponseEndpoint;
     onClick: () => void;
     selectMode: boolean;
     isSelected: boolean;
     onToggle: (e: React.MouseEvent) => void;
+    showStageColumns: boolean;
+    onAssigned: () => void;
   }) => {
     const [idHovered, setIdHovered] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
@@ -224,6 +232,17 @@ const SRERow = observer(
           </Text>
         </Td>
 
+        {showStageColumns && (
+          <>
+            <Td w="1px" whiteSpace="nowrap">
+              <LogicalNameCell logicalName={sre.logical_name} />
+            </Td>
+            <Td w="1px" whiteSpace="nowrap">
+              <StageCell stageId={sre.stage_id} />
+            </Td>
+          </>
+        )}
+
         {/* Variables */}
         <Td maxW="220px">
           {variables.length > 0 ? (
@@ -283,6 +302,25 @@ const SRERow = observer(
             {formatTimestamp(sre.updated_at)}
           </Text>
         </Td>
+
+        {showStageColumns && (
+          <StageBindingActionCell
+            value={{
+              stage_id: sre.stage_id ?? null,
+              logical_name: sre.logical_name ?? null,
+            }}
+            resourceDisplayName={sre.name}
+            resourceKind="SRE"
+            onSave={async (next) => {
+              await updateSRE({
+                sre_id: sre.sre_id,
+                stage_id: next.stage_id,
+                logical_name: next.logical_name,
+              });
+            }}
+            onSaved={onAssigned}
+          />
+        )}
       </Tr>
     );
   }
@@ -308,9 +346,13 @@ const SREsPage = observer(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/sre-builder');
     structuredResponseEndpointsStore.setShowAlert(showAlert);
+    stagesStore.setShowAlert(showAlert);
     structuredResponseEndpointsStore.loadSREs();
     modelsStore.loadModels();
+    stagesStore.loadStages();
   });
+
+  const showStageColumns = stagesStore.hasAnyStage;
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -489,6 +531,8 @@ const SREsPage = observer(() => {
                     </SortableTh>
                     <Th>ID</Th>
                     <Th>Description</Th>
+                    {showStageColumns && <Th>Logical name</Th>}
+                    {showStageColumns && <Th>Stage</Th>}
                     <Th>Variables</Th>
                     <SortableTh field="model" {...thProps}>
                       Model
@@ -502,6 +546,7 @@ const SREsPage = observer(() => {
                     <SortableTh field="updated_at" {...thProps} isNumeric>
                       Updated
                     </SortableTh>
+                    {showStageColumns && <Th w="1px" />}
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -516,6 +561,8 @@ const SREsPage = observer(() => {
                         e.stopPropagation();
                         toggleRow(sre.sre_id);
                       }}
+                      showStageColumns={showStageColumns}
+                      onAssigned={() => structuredResponseEndpointsStore.loadSREs(true)}
                     />
                   ))}
                 </Tbody>
