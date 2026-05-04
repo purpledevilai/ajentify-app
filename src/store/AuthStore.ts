@@ -21,6 +21,7 @@ import { integrationsStore } from './IntegrationsStore';
 import { toolsStore } from './ToolsStore';
 import { toolBuilderStore } from './ToolBuilderStore';
 import { stagesStore } from './StagesStore';
+import { contextsStore } from './ContextsStore';
 
 
 class AuthStore {
@@ -112,6 +113,7 @@ class AuthStore {
             toolsStore.reset();
             toolBuilderStore.reset();
             stagesStore.reset();
+            contextsStore.reset();
             this.reset();
             this.signedIn = false;
         } catch (error) {

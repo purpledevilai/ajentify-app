@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import {
@@ -28,12 +28,9 @@ import {
 import { RepeatIcon, SearchIcon } from '@chakra-ui/icons';
 import { agentsStore } from '@/store/AgentsStore';
 import { authStore } from '@/store/AuthStore';
-import { getOrgContexts } from '@/api/context/getOrgContexts';
-import { OrgContextSummary } from '@/types/context';
+import { contextsStore } from '@/store/ContextsStore';
 import { useAlert } from '@/app/components/AlertProvider';
 import { CopyButton } from './CopyButton';
-
-const PAGE_SIZE = 25;
 
 const formatTimestamp = (ts: number | undefined | null): string => {
     if (!ts) return '—';
@@ -53,23 +50,17 @@ const ContextsPage = observer(() => {
     const router = useRouter();
     const { showAlert } = useAlert();
 
-    const [contexts, setContexts] = useState<OrgContextSummary[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [nextCursor, setNextCursor] = useState<string | null>(null);
-
-    // Applied filters (these drive the actual fetch).
-    const [appliedAgentId, setAppliedAgentId] = useState<string>('');
-    const [appliedClientId, setAppliedClientId] = useState<string>('');
-
-    // Draft filter inputs (typed but not yet applied).
-    const [agentDraft, setAgentDraft] = useState<string>('');
-    const [clientDraft, setClientDraft] = useState<string>('');
+    // Draft filter inputs (typed but not yet applied). Initialised from the
+    // store's currently-applied filters so the inputs reflect the data the
+    // user is looking at when they navigate back from a context detail page.
+    const [agentDraft, setAgentDraft] = useState<string>(contextsStore.appliedAgentId);
+    const [clientDraft, setClientDraft] = useState<string>(contextsStore.appliedClientId);
+    const [contextIdDraft, setContextIdDraft] = useState<string>(contextsStore.appliedContextId);
 
     // `showAlert` from AlertProvider is recreated on every render of the
     // provider (e.g. when an alert opens/closes), so we keep a ref to it to
-    // avoid invalidating `fetchPage`'s memoization and triggering a reload
-    // every time the user copies an ID.
+    // avoid invalidating effects and re-running them every time the user
+    // copies an ID.
     const showAlertRef = useRef(showAlert);
     useEffect(() => {
         showAlertRef.current = showAlert;
@@ -79,71 +70,51 @@ const ContextsPage = observer(() => {
     const tableBorder = useColorModeValue('gray.200', 'gray.700');
     const hoverBg = useColorModeValue('gray.50', 'gray.700');
 
-    const fetchPage = useCallback(async (
-        opts: { reset?: boolean; cursor?: string } = {}
-    ) => {
-        const { reset = false, cursor } = opts;
-        if (reset) {
-            setLoading(true);
-        } else {
-            setLoadingMore(true);
-        }
-        try {
-            const response = await getOrgContexts({
-                agent_id: appliedAgentId || undefined,
-                client_id: appliedClientId || undefined,
-                limit: PAGE_SIZE,
-                cursor: cursor || undefined,
-            });
-            setNextCursor(response.next_cursor ?? null);
-            setContexts((prev) =>
-                reset ? response.contexts : [...prev, ...response.contexts]
-            );
-        } catch (error) {
-            showAlertRef.current({
-                title: 'Failed to load contexts',
-                message: (error as Error).message || 'Unknown error',
-            });
-        } finally {
-            if (reset) {
-                setLoading(false);
-            } else {
-                setLoadingMore(false);
-            }
-        }
-    }, [appliedAgentId, appliedClientId]);
-
     useEffect(() => {
         if (!authStore.signedIn) return;
         agentsStore.setShowAlert(showAlertRef.current);
         agentsStore.loadAgents();
+        contextsStore.setShowAlert(showAlertRef.current);
+        // Honours the cache: only fetches if the store hasn't been loaded yet
+        // in this session, so navigating into a context and back doesn't
+        // trigger a refetch.
+        contextsStore.loadContexts();
         router.prefetch('/contexts');
     }, [router]);
 
-    // Refetch the first page whenever applied filters change.
-    useEffect(() => {
-        if (!authStore.signedIn) return;
-        fetchPage({ reset: true });
-    }, [fetchPage]);
-
     const handleApplyFilters = () => {
-        setAppliedAgentId(agentDraft);
-        setAppliedClientId(clientDraft.trim());
+        contextsStore.setFilters({
+            agentId: agentDraft,
+            clientId: clientDraft.trim(),
+            contextId: contextIdDraft.trim(),
+        });
+        contextsStore.loadContexts(true);
     };
 
     const handleClearFilters = () => {
+        const hadAppliedFilters =
+            !!contextsStore.appliedAgentId ||
+            !!contextsStore.appliedClientId ||
+            !!contextsStore.appliedContextId;
         setAgentDraft('');
         setClientDraft('');
-        setAppliedAgentId('');
-        setAppliedClientId('');
+        setContextIdDraft('');
+        contextsStore.setFilters({ agentId: '', clientId: '', contextId: '' });
+        if (hadAppliedFilters) {
+            contextsStore.loadContexts(true);
+        }
     };
 
     const handleRefresh = () => {
-        fetchPage({ reset: true });
+        contextsStore.loadContexts(true);
     };
 
     const handleRowClick = (context_id: string) => {
         router.push(`/contexts/${context_id}`);
+    };
+
+    const handleLoadMore = () => {
+        contextsStore.loadMore();
     };
 
     const agentNameById = useMemo(() => {
@@ -153,6 +124,16 @@ const ContextsPage = observer(() => {
         }
         return map;
     }, [agentsStore.agents]);
+
+    const { contexts, loading, loadingMore, nextCursor, appliedAgentId, appliedClientId, appliedContextId } = contextsStore;
+    const hasAnyDraftOrApplied =
+        !!appliedAgentId ||
+        !!appliedClientId ||
+        !!appliedContextId ||
+        !!agentDraft ||
+        !!clientDraft ||
+        !!contextIdDraft;
+    const hasAnyAppliedFilter = !!appliedAgentId || !!appliedClientId || !!appliedContextId;
 
     return (
         <Box p={{ base: 4, md: 6 }} h="100%" overflowY="auto">
@@ -211,6 +192,24 @@ const ContextsPage = observer(() => {
                     </InputGroup>
                 </Box>
 
+                <Box flex="1" minW="220px">
+                    <Text fontSize="sm" mb={1} color={subtextColor}>Context ID</Text>
+                    <InputGroup size="sm">
+                        <InputLeftElement pointerEvents="none">
+                            <SearchIcon color="gray.400" />
+                        </InputLeftElement>
+                        <Input
+                            placeholder="Exact context_id..."
+                            value={contextIdDraft}
+                            onChange={(e) => setContextIdDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleApplyFilters();
+                            }}
+                            fontFamily="mono"
+                        />
+                    </InputGroup>
+                </Box>
+
                 <Flex gap={2} flexShrink={0}>
                     <Button size="sm" colorScheme="brand" onClick={handleApplyFilters}>
                         Apply
@@ -219,7 +218,7 @@ const ContextsPage = observer(() => {
                         size="sm"
                         variant="outline"
                         onClick={handleClearFilters}
-                        isDisabled={!appliedAgentId && !appliedClientId && !agentDraft && !clientDraft}
+                        isDisabled={!hasAnyDraftOrApplied}
                     >
                         Clear
                     </Button>
@@ -323,7 +322,7 @@ const ContextsPage = observer(() => {
                             textAlign="center"
                         >
                             <Text color={subtextColor}>
-                                {appliedAgentId || appliedClientId
+                                {hasAnyAppliedFilter
                                     ? 'No contexts match the current filters.'
                                     : 'No API-key or public contexts in this organization yet.'}
                             </Text>
@@ -335,7 +334,7 @@ const ContextsPage = observer(() => {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => fetchPage({ cursor: nextCursor })}
+                                onClick={handleLoadMore}
                                 isLoading={loadingMore}
                                 loadingText="Loading more..."
                             >
