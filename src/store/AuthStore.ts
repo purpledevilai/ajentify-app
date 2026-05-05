@@ -77,7 +77,6 @@ class AuthStore {
     checkAuth = async () => {
         this.isDeterminingAuth = true;
         const token = await this.getAccessToken();
-        console.log('Token:', token);
         this.signedIn = token !== undefined;
         this.isDeterminingAuth = false;
     }
