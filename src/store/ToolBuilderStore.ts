@@ -157,7 +157,7 @@ class ToolBuilderStore {
             this.updateCode();
             return;
         }
-        this.loadParameterDefinition(tool.pd_id);
+        void this.loadParameterDefinition(tool.pd_id);
     }
 
     setToolWithId = async (toolId: string) => {

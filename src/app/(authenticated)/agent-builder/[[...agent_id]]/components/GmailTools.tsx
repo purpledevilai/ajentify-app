@@ -41,7 +41,7 @@ export const GmailTools = observer(() => {
     const hasAnyGmailTools = hasReadOnly || hasBasicManage || hasSend || hasDrafts || hasFullManage;
 
     useEffect(() => {
-        loadIntegrations();
+        void loadIntegrations();
     }, []);
 
     const loadIntegrations = async () => {

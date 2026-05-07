@@ -59,7 +59,7 @@ export const ConversationRow = observer(({ contextHistory }: ConversationRowProp
                 _hover={{ bg: "transparent", color: deleteButtonHoverColor }}
                 onClick={(e) => {
                     e.stopPropagation();
-                    chatPageStore.deleteContext(contextHistory.context_id);
+                    void chatPageStore.deleteContext(contextHistory.context_id);
                 }}
             />
         </Flex>

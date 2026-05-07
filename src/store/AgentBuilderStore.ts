@@ -218,7 +218,7 @@ class AgentBuilderStore {
             })
             return;
         }
-        this.setCurrentAgent(agent);
+        void this.setCurrentAgent(agent);
     }
 
     setStringField(field: keyof AgentStringFields, value: string) {
@@ -422,7 +422,7 @@ class AgentBuilderStore {
 
     onPromptArgsSubmit() {
         this.showPromptArgsInput = false;
-        this.createAgentContext(this.promptArgsInput);
+        void this.createAgentContext(this.promptArgsInput);
     }
 
     async onSaveAgentClick() {

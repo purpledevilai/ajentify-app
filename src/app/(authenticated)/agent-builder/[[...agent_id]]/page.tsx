@@ -57,8 +57,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
 
     useEffect(() => {
         setShowAlertOnStore();
-        loadAgentId();
-        toolsStore.loadTools();
+        void loadAgentId();
+        void toolsStore.loadTools();
 
         return () => {
             agentBuilderStore.reset();
@@ -74,7 +74,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
         const agent_id = paramArray ? paramArray[0] : undefined;
         if (agent_id) {
             if (agentBuilderStore.currentAgent.agent_id !== agent_id) {
-                agentBuilderStore.setCurrentAgentWithId(agent_id)
+                void agentBuilderStore.setCurrentAgentWithId(agent_id)
             }
         }
     }
@@ -91,7 +91,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 if (agentBuilderStore.isNewAgent && agentBuilderStore.currentAgent.agent_id) {
                     // Delete the agent if it's new and not saved
                     await agentBuilderStore.deleteAgent();
-                    agentsStore.loadAgents(true);
+                    void agentsStore.loadAgents(true);
                 }
                 if (agentBuilderStore.agentContext) {
                     // Delete the agent context if it exists
@@ -114,13 +114,13 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     ]
                 })
             } else {
-                leavePage();
+                void leavePage();
             }
         }
     }, [navGuard, showAlert]);
 
     const onOpenPromptEngineerClick = () => {
-        agentBuilderStore.createPromptEngineerContext();
+        void agentBuilderStore.createPromptEngineerContext();
         onOpenPromptEngineerModal();
     }
 
@@ -140,12 +140,12 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
 
     const onTestAgent = async () => {
         onOpenTestingAgentModal();
-        agentBuilderStore.onTestAgentClick();
+        void agentBuilderStore.onTestAgentClick();
     };
 
     const onSaveAgent = async () => {
         await agentBuilderStore.onSaveAgentClick();
-        agentsStore.loadAgents(true);
+        void agentsStore.loadAgents(true);
         toast({
             title: "Saved",
             status: "success",
@@ -164,7 +164,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 {
                     label: "Delete", onClick: async () => {
                         await agentBuilderStore.deleteAgent();
-                        agentsStore.loadAgents(true);
+                        void agentsStore.loadAgents(true);
                         // Navigate back
                         window.history.back();
                     }
@@ -174,12 +174,12 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     }
 
     const beforeCloseTestAgentModal = () => {
-        agentBuilderStore.deleteAgentContext();
+        void agentBuilderStore.deleteAgentContext();
         onCloseTesingAgentModal();
     }
 
     const beforeClosePromptEngineerModal = () => {
-        agentBuilderStore.deletePromptEngineerContext();
+        void agentBuilderStore.deletePromptEngineerContext();
         onClosePromptEngineerModal();
     }
 

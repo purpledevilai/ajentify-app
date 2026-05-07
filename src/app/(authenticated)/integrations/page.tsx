@@ -73,7 +73,7 @@ const IntegrationsPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     setShowAlertOnStore();
-    integrationsStore.loadIntegrations();
+    void integrationsStore.loadIntegrations();
   });
 
   const setShowAlertOnStore = () => {

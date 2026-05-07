@@ -69,7 +69,7 @@ const UsagePage = observer(() => {
     }, []);
 
     useEffect(() => {
-        fetchUsage(selectedYear, selectedMonth);
+        void fetchUsage(selectedYear, selectedMonth);
     }, [selectedYear, selectedMonth, fetchUsage]);
 
     const handleCurrentMonth = () => {

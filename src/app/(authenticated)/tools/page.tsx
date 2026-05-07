@@ -285,8 +285,8 @@ const ToolsPage = observer(() => {
     router.prefetch('/tool-builder');
     toolsStore.setShowAlert(showAlert);
     stagesStore.setShowAlert(showAlert);
-    toolsStore.loadTools();
-    stagesStore.loadStages();
+    void toolsStore.loadTools();
+    void stagesStore.loadStages();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
       const map: Record<string, string[]> = {};
       pds.forEach((pd) => { map[pd.pd_id] = schemaParamNames(pd.schema); });

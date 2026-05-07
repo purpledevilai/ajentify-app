@@ -228,7 +228,7 @@ export default function ContextDetailPage() {
                 if (!cancelled) setLoading(false);
             }
         };
-        load();
+        void load();
         return () => { cancelled = true; };
     }, [contextId]);
 

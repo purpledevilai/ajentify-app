@@ -35,7 +35,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
   useEffect(() => {
     setShowAlertOnStore();
-    loadSREId();
+    void loadSREId();
 
     return () => {
       sreBuilderStore.reset();
@@ -53,7 +53,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
         navGuard.reject();
       }
 
-      const leavePage = async () => {
+      const leavePage = () => {
         navGuard.accept();
       }
 
@@ -85,7 +85,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
     const sre_id = paramArray ? paramArray[0] : undefined;
     if (sre_id) {
       if (sreBuilderStore.sre.sre_id !== sre_id) {
-        sreBuilderStore.setSREWithId(sre_id);
+        void sreBuilderStore.setSREWithId(sre_id);
       }
     } else if (!sreBuilderStore.sre.sre_id) {
       // Direct URL access to /sre-builder with no id — mark as new
@@ -97,7 +97,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
     sreBuilderStore.useClickedSave = true;
     const success = await sreBuilderStore.saveSRE();
     if (!success) return;
-    structuredResponseEndpointsStore.loadSREs(true);
+    void structuredResponseEndpointsStore.loadSREs(true);
     window.history.back();
   };
 
@@ -110,7 +110,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
         {
           label: "Delete", onClick: async () => {
             await sreBuilderStore.deleteSRE();
-            structuredResponseEndpointsStore.loadSREs(true);
+            void structuredResponseEndpointsStore.loadSREs(true);
             window.history.back();
           }
         }

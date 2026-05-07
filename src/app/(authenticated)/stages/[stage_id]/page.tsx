@@ -121,7 +121,7 @@ const StageDetailPage = observer(() => {
         stagesStore.setShowAlert(showAlert);
 
         let cancelled = false;
-        (async () => {
+        void (async () => {
             try {
                 const fresh = await getStage(stageId);
                 if (!cancelled) setStage(fresh);
@@ -139,7 +139,7 @@ const StageDetailPage = observer(() => {
         if (!stage) return;
         let cancelled = false;
         setResourcesLoading(true);
-        Promise.all([
+        void Promise.all([
             // Resources currently attached to this stage.
             getAgents({ stage: stage.name }).catch(() => [] as Agent[]),
             getTools(undefined, { stage: stage.name }).catch(() => [] as Tool[]),
@@ -189,7 +189,7 @@ const StageDetailPage = observer(() => {
 
     const handleCopyId = () => {
         if (!stage) return;
-        navigator.clipboard.writeText(stage.stage_id);
+        void navigator.clipboard.writeText(stage.stage_id);
         showAlert({ title: 'Copied', message: 'Stage ID copied to clipboard' });
     };
 

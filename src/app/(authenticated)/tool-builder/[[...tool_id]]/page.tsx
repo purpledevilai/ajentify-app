@@ -33,7 +33,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
 
     useEffect(() => {
         setShowAlertOnStore();
-        loadToolId(); // Load tool id from URL
+        void loadToolId();
 
         return () => {
             toolBuilderStore.reset();
@@ -49,7 +49,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
         const tool_id = paramArray ? paramArray[0] : undefined;
         if (tool_id) {
             if (toolBuilderStore.tool['tool_id'] !== tool_id) {
-                toolBuilderStore.setToolWithId(tool_id);
+                void toolBuilderStore.setToolWithId(tool_id);
             }
         }
     }
@@ -57,8 +57,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
     const onSaveTool = async () => {
         const success = await toolBuilderStore.saveTool();
         if (!success) return;
-        toolsStore.loadTools(true);
-        // Navigate back
+        void toolsStore.loadTools(true);
         window.history.back();
     }
 
@@ -71,8 +70,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 {
                     label: "Delete", onClick: async () => {
                         await toolBuilderStore.deleteTool();
-                        toolsStore.loadTools(true);
-                        // Navigate back
+                        void toolsStore.loadTools(true);
                         window.history.back();
                     }
                 }

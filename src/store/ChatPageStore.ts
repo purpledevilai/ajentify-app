@@ -52,8 +52,8 @@ class ChatPageStore {
             return;
         }
         this.hasInitiatedLoad = true;
-        this.loadAgents(force);
-        this.loadContextHistory(force);
+        void this.loadAgents(force);
+        void this.loadContextHistory(force);
     }
 
     async loadAgents(force: boolean = false) {
@@ -92,7 +92,7 @@ class ChatPageStore {
             }            
             if (this.contextHistory.length > 0 && this.currentContext === undefined) { // in the case of the first load
                 const lastContext = this.contextHistory[0];
-                this.loadAndSetCurrentContext(lastContext.context_id);
+                void this.loadAndSetCurrentContext(lastContext.context_id);
                 this.currentAgentName = lastContext.agent.agent_name;
             }
         } catch (error) {
@@ -115,7 +115,7 @@ class ChatPageStore {
 
     async selectContext(context_id: string, agent_name: string) {
         this.currentAgentName = agent_name;
-        this.loadAndSetCurrentContext(context_id);
+        void this.loadAndSetCurrentContext(context_id);
     }
 
     async startNewConversation(agent: Agent) {
@@ -124,7 +124,7 @@ class ChatPageStore {
             const newContext = await createContext({ agent_id: agent.agent_id });
             this.currentAgentName = agent.agent_name;
             this.currentContext = newContext;
-            this.loadContextHistory(true);
+            void this.loadContextHistory(true);
         } catch (error) {
             this.showAlertMessage('Failed to start new conversation', (error as Error).message);
         } finally {
@@ -141,7 +141,7 @@ class ChatPageStore {
                 await deleteContext({ context_id });
                 await this.loadContextHistory(true);
             } else {
-                deleteContext({ context_id });
+                void deleteContext({ context_id });
                 const contextIndex = this.contextHistory?.findIndex((context) => context.context_id === context_id) ?? -1;
                 if (contextIndex > -1) {
                     this.contextHistory?.splice(contextIndex, 1);

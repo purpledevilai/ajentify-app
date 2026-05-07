@@ -66,7 +66,7 @@ const APIKeysPage = observer(() => {
     }, []);
 
     useEffect(() => {
-        fetchKeys();
+        void fetchKeys();
     }, [fetchKeys]);
 
     const handleCreate = async () => {

@@ -75,7 +75,7 @@ const StageRow = observer(({
 
     const handleCopyId = (e: React.MouseEvent) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(stage.stage_id);
+        void navigator.clipboard.writeText(stage.stage_id);
         showAlert({ title: 'Copied', message: 'Stage ID copied to clipboard' });
     };
 
@@ -156,7 +156,7 @@ const StagesPage = observer(() => {
     useEffect(() => {
         if (!authStore.signedIn) return;
         stagesStore.setShowAlert(showAlert);
-        stagesStore.loadStages();
+        void stagesStore.loadStages();
     });
 
     const filtered = (stagesStore.stages ?? []).filter((s) =>
