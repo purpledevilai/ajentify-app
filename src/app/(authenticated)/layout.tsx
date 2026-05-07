@@ -2,15 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Flex, Box } from '@chakra-ui/react';
-import { useBreakpointValue } from '@chakra-ui/react';
+import { Flex, Box, useBreakpointValue } from '@chakra-ui/react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { authStore } from '@/store/AuthStore';
 import { reaction } from 'mobx';
+import AuthenticatedProviders from './providers';
 
-const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode }) => {
+const AuthenticatedLayoutBody = observer(({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -20,7 +20,7 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
             return;
         }
         if (!authStore.user) {
-            authStore.loadUser();
+            void authStore.loadUser();
         }
     }
 
@@ -39,35 +39,30 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
         };
     });
 
-    // Determine if the sidebar should always be visible based on screen size
     const isWideScreen = useBreakpointValue({ base: false, lg: true });
     useEffect(() => {
         if (isWideScreen) {
-            setSidebarOpen(true); // Open sidebar on wide screens
+            setSidebarOpen(true);
         }
     }, [isWideScreen]);
 
-    // Toggle the sidebar state
     const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
     return (
         <Flex height="100vh" flexDirection="column">
-            {/* Header */}
             <Header onMenuClick={toggleSidebar} />
 
             <Flex flex="1" position="relative">
-                {/* Sidebar */}
                 <Sidebar
                     isMobile={!isWideScreen}
                     isOpen={isSidebarOpen}
                     onClose={() => {
                         if (!isWideScreen) {
-                            setSidebarOpen(false); // Close sidebar on mobile
+                            setSidebarOpen(false);
                         }
                     }}
                 />
 
-                {/* Main Content with click-to-close sidebar */}
                 <Box
                     flex="1"
                     p={4}
@@ -76,10 +71,10 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
                     _dark={{ bg: 'gray.900' }}
                     onClick={() => {
                         if (!isWideScreen && isSidebarOpen) {
-                            setSidebarOpen(false); // Close sidebar on content click for mobile
+                            setSidebarOpen(false);
                         }
                     }}
-                    style={{ cursor: isSidebarOpen && !isWideScreen ? 'pointer' : 'default' }} // Indicate clickable area
+                    style={{ cursor: isSidebarOpen && !isWideScreen ? 'pointer' : 'default' }}
                 >
                     {children}
                 </Box>
@@ -88,4 +83,10 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
     );
 });
 
-export default AuthenticatedLayout;
+export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <AuthenticatedProviders>
+            <AuthenticatedLayoutBody>{children}</AuthenticatedLayoutBody>
+        </AuthenticatedProviders>
+    );
+}
