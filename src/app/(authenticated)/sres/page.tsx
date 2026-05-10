@@ -165,7 +165,7 @@ const SRERow = observer(
 
     const handleCopyId = (e: React.MouseEvent) => {
       e.stopPropagation();
-      navigator.clipboard.writeText(sre.sre_id);
+      void navigator.clipboard.writeText(sre.sre_id);
       showAlert({ title: 'Copied', message: 'SRE ID copied to clipboard' });
     };
 
@@ -347,9 +347,9 @@ const SREsPage = observer(() => {
     router.prefetch('/sre-builder');
     structuredResponseEndpointsStore.setShowAlert(showAlert);
     stagesStore.setShowAlert(showAlert);
-    structuredResponseEndpointsStore.loadSREs();
-    modelsStore.loadModels();
-    stagesStore.loadStages();
+    void structuredResponseEndpointsStore.loadSREs();
+    void modelsStore.loadModels();
+    void stagesStore.loadStages();
   });
 
   const showStageColumns = stagesStore.hasAnyStage;

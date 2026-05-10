@@ -27,7 +27,7 @@ export const MemoryTools = observer(() => {
     );
 
     useEffect(() => {
-        loadDocuments();
+        void loadDocuments();
     }, []);
 
     const loadDocuments = async () => {

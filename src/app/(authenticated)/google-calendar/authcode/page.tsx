@@ -43,8 +43,7 @@ function GoogleCalendarAuthCallbackContent() {
       return;
     }
 
-    // Exchange the code for tokens
-    exchangeCode(code, state);
+    void exchangeCode(code, state);
   }, [searchParams]);
 
   async function exchangeCode(code: string, orgId: string | null) {

@@ -160,7 +160,7 @@ const AgentRow = observer(({
 
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(agent.agent_id);
+    void navigator.clipboard.writeText(agent.agent_id);
     showAlert({ title: 'Copied', message: 'Agent ID copied to clipboard' });
   };
 
@@ -337,10 +337,10 @@ const AgentsPage = observer(() => {
     router.prefetch('/agent-builder');
     agentsStore.setShowAlert(showAlert);
     stagesStore.setShowAlert(showAlert);
-    agentsStore.loadAgents();
-    toolsStore.loadTools();
-    modelsStore.loadModels();
-    stagesStore.loadStages();
+    void agentsStore.loadAgents();
+    void toolsStore.loadTools();
+    void modelsStore.loadModels();
+    void stagesStore.loadStages();
   });
 
   const showStageColumns = stagesStore.hasAnyStage;
@@ -360,7 +360,7 @@ const AgentsPage = observer(() => {
   };
 
   const handleAgentClick = (agent: Agent) => {
-    agentBuilderStore.setCurrentAgent({ ...agent });
+    void agentBuilderStore.setCurrentAgent({ ...agent });
     router.push(`/agent-builder/${agent.agent_id}`);
   };
 

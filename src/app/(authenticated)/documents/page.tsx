@@ -146,7 +146,7 @@ const DocumentRow = ({
 
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(doc.document_id);
+    void navigator.clipboard.writeText(doc.document_id);
     showAlert({ title: 'Copied', message: 'Document ID copied to clipboard' });
   };
 
@@ -273,8 +273,8 @@ const DocumentsPage = observer(() => {
     router.prefetch('/json-document-builder');
     jsonDocumentsStore.setShowAlert(showAlert);
     stagesStore.setShowAlert(showAlert);
-    jsonDocumentsStore.loadDocuments();
-    stagesStore.loadStages();
+    void jsonDocumentsStore.loadDocuments();
+    void stagesStore.loadStages();
   }, []);
 
   const showStageColumns = stagesStore.hasAnyStage;

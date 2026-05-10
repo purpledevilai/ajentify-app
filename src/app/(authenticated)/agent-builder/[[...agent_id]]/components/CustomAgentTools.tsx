@@ -8,7 +8,7 @@ import { Tool } from "@/types/tools";
 export const CustomAgentTools = observer(() => {
 
     useEffect(() => {
-        toolsStore.loadTools();
+        void toolsStore.loadTools();
     }, []);
 
     const addOrRemoveTool = (tool: Tool) => {

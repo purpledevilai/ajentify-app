@@ -20,7 +20,7 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
             return;
         }
         if (!authStore.user) {
-            authStore.loadUser();
+            void authStore.loadUser();
         }
     }
 

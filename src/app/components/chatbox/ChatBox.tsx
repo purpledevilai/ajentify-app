@@ -133,7 +133,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
             }
         };
 
-        init();
+        void init();
 
         return () => {
             tokenStreamingServiceRef.current?.close();

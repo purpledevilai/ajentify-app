@@ -34,7 +34,7 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
 
     useEffect(() => {
         jsonDocumentBuilderStore.setShowAlert(showAlert);
-        loadDocumentId();
+        void loadDocumentId();
         return () => {
             jsonDocumentBuilderStore.reset();
         }
@@ -62,7 +62,7 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
 
     const onSaveDocument = async () => {
         await jsonDocumentBuilderStore.onSaveDocumentClick();
-        jsonDocumentsStore.loadDocuments(true);
+        void jsonDocumentsStore.loadDocuments(true);
         window.history.back();
     }
 
@@ -76,7 +76,7 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
                     label: 'Delete',
                     onClick: async () => {
                         await jsonDocumentBuilderStore.deleteDocument();
-                        jsonDocumentsStore.loadDocuments(true);
+                        void jsonDocumentsStore.loadDocuments(true);
                         window.history.back();
                     }
                 }

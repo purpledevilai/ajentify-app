@@ -73,12 +73,12 @@ const ContextsPage = observer(() => {
     useEffect(() => {
         if (!authStore.signedIn) return;
         agentsStore.setShowAlert(showAlertRef.current);
-        agentsStore.loadAgents();
+        void agentsStore.loadAgents();
         contextsStore.setShowAlert(showAlertRef.current);
         // Honours the cache: only fetches if the store hasn't been loaded yet
         // in this session, so navigating into a context and back doesn't
         // trigger a refetch.
-        contextsStore.loadContexts();
+        void contextsStore.loadContexts();
         router.prefetch('/contexts');
     }, [router]);
 
@@ -88,7 +88,7 @@ const ContextsPage = observer(() => {
             clientId: clientDraft.trim(),
             contextId: contextIdDraft.trim(),
         });
-        contextsStore.loadContexts(true);
+        void contextsStore.loadContexts(true);
     };
 
     const handleClearFilters = () => {
@@ -101,12 +101,12 @@ const ContextsPage = observer(() => {
         setContextIdDraft('');
         contextsStore.setFilters({ agentId: '', clientId: '', contextId: '' });
         if (hadAppliedFilters) {
-            contextsStore.loadContexts(true);
+            void contextsStore.loadContexts(true);
         }
     };
 
     const handleRefresh = () => {
-        contextsStore.loadContexts(true);
+        void contextsStore.loadContexts(true);
     };
 
     const handleRowClick = (context_id: string) => {
@@ -114,7 +114,7 @@ const ContextsPage = observer(() => {
     };
 
     const handleLoadMore = () => {
-        contextsStore.loadMore();
+        void contextsStore.loadMore();
     };
 
     const agentNameById = useMemo(() => {

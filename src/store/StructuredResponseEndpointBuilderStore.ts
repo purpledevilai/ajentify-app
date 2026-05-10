@@ -158,7 +158,7 @@ class StructuredResponseEndpointBuilderStore {
 
     setSRE = (sre: StructuredResponseEndpoint) => {
         this.sre = sre;
-        this.loadParameterDefinition(sre.pd_id);
+        void this.loadParameterDefinition(sre.pd_id);
         this.syncTemplateArgsInput();
         this.syncVariableNamesInput();
     }

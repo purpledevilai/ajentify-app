@@ -38,7 +38,7 @@ const ChatPage = observer(() => {
 
     // Initiate load
     useEffect(() => {
-        chatPageStore.loadData();
+        void chatPageStore.loadData();
     }, [])
 
     // Show alerts

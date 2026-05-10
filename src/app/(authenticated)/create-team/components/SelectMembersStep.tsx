@@ -28,7 +28,7 @@ export const SelectMembersStep = observer(() => {
             return;
         }
 
-        createTeamStore.submitCreateTeam()
+        void createTeamStore.submitCreateTeam()
         createTeamStore.stepForward();
     };
 

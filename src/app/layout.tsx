@@ -21,7 +21,7 @@ Amplify.configure({
 const RootLayout = observer(({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
-    authStore.checkAuth();
+    void authStore.checkAuth();
   }, []);
 
   return (

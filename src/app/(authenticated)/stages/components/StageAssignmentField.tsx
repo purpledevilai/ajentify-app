@@ -92,8 +92,7 @@ export const StageAssignmentField = observer((props: StageAssignmentFieldProps) 
     const subtextColor = useColorModeValue('gray.500', 'gray.400');
 
     React.useEffect(() => {
-        // Lazy-load the cache. Cheap; bails immediately if already populated.
-        stagesStore.loadStages();
+        void stagesStore.loadStages();
     }, []);
 
     React.useEffect(() => {

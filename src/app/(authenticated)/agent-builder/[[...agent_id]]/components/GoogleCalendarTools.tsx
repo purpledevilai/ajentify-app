@@ -31,7 +31,7 @@ export const GoogleCalendarTools = observer(() => {
     const hasAnyCalendarTools = hasReadOnly || hasManage || hasDelete;
 
     useEffect(() => {
-        loadIntegrations();
+        void loadIntegrations();
     }, []);
 
     const loadIntegrations = async () => {

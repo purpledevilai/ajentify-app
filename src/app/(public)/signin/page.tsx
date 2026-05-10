@@ -35,7 +35,7 @@ const SignInPage = observer(() => {
 
 
     const handleSignIn = () => {
-        authStore.submitSignIn()
+        void authStore.submitSignIn();
     }
     
     return (

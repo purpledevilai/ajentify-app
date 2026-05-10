@@ -26,7 +26,7 @@ export const ModelSelector = observer(({ value, onChange }: ModelSelectorProps) 
     const subtextColor = useColorModeValue("gray.500", "gray.400");
 
     useEffect(() => {
-        modelsStore.loadModels();
+        void modelsStore.loadModels();
     }, []);
 
     if (modelsStore.isLoading) {

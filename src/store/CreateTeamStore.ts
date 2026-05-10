@@ -152,8 +152,7 @@ class CreateTeamStore {
             });
             this.jobId = job.job_id;
             setTimeout(() => {
-                console.log("Polling job status");
-                this.pollJobStatus();
+                void this.pollJobStatus();
             }, this.pollingTime);
         } catch (error) {
             console.error('Error creating team:', error);
@@ -172,7 +171,7 @@ class CreateTeamStore {
             const job = await getJob(this.jobId);
             console.log("Job:", job);
             if (job.status === 'completed') {
-                agentsStore.loadAgents(true);
+                void agentsStore.loadAgents(true);
                 this.stepForward();
             } else if (job.status === 'error') {
                 this.showAlert({
@@ -189,8 +188,7 @@ class CreateTeamStore {
                 });
             } else {
                 setTimeout(() => {
-                    console.log("Polling job status repeate");
-                    this.pollJobStatus();
+                    void this.pollJobStatus();
                 }, this.pollingTime);
             }
         } catch (error) {

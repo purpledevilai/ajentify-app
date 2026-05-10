@@ -41,7 +41,7 @@ export const OutlookTools = observer(() => {
     const hasAnyOutlookTools = hasReadOnly || hasBasicManage || hasSend || hasDrafts || hasFullManage;
 
     useEffect(() => {
-        loadIntegrations();
+        void loadIntegrations();
     }, []);
 
     const loadIntegrations = async () => {

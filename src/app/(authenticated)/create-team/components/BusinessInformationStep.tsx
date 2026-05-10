@@ -21,7 +21,7 @@ export const BusinessInformationStep = observer(() => {
 
         // Get links data if any
         if (createTeamStore.linkData.some((link) => link.link)) {
-            createTeamStore.getLinkData();
+            void createTeamStore.getLinkData();
         }
 
         createTeamStore.stepForward();

@@ -26,7 +26,7 @@ const ChatPagesPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     setAlertOnStore();
-    chatPagesStore.loadChatPages();
+    void chatPagesStore.loadChatPages();
   });
 
   const setAlertOnStore = () => {
