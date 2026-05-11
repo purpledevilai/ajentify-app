@@ -740,16 +740,16 @@ The fix is **not** to move form state into RHF. The fix is to keep MobX, keep th
 - [ ] On mount, the page calls `builder.setToolWithId(toolId)` / `builder.initiateNew()` (or whichever existing hydration entry point the store has) inside an effect keyed on the URL param. No explicit `builder.reset()` call is needed when the page unmounts — the instance is discarded with the component.
 - [ ] If the builder needs cleanup beyond instance discard (e.g. an in-flight WebSocket; a `reaction()` disposer it set up — though stores aren't supposed to set up reactions in their constructor anyway), add an optional `dispose()` method to the class and call it from a `useEffect` cleanup in the hook.
 
-##### H.3 Slimming and testing
+##### H.3 Testing
 
-- [ ] **List-cache duplication goes.** Many builder stores today re-fetch and re-cache things the list stores already hold (`ToolBuilderStore.setToolWithId` calls `toolsStore.loadTools()` and walks the result; `AgentBuilderStore` keeps its own `tools` field). After this work, builders read from their injected dependencies (`this.tools.tools`) directly. Delete duplicated list-cache fields and the methods that maintained them.
-- [ ] Audit the resulting store LOC. **Target: each builder under 300 lines after the duplication is gone.** (Domain logic stays in MobX — that's the point of this project. The original 200-line target was based on the assumption that form state was leaving entirely; with form state staying as MobX, 300 is the right line.) If a builder is still over 300, that slice probably belongs in a list store or a utility. **`JsonDocumentBuilderStore` is already 134 lines and is within bounds before any decomposition** — the only H-work there is the singleton → per-page conversion; LOC reduction is not a goal for that store.
-- [ ] Write one focused test per builder that exercises the cascading-mutation behaviour the domain logic depends on. Examples for `ToolBuilderStore`: "adding a parameter regenerates the function declaration"; "switching to client-side tool clears `code` and disables `pass_context`"; "validation rejects an enum with no options". These tests are the proof that the domain logic survived the refactor.
+- [ ] Write one focused test per builder that exercises the cascading-mutation behaviour the domain logic depends on. Examples for `ToolBuilderStore`: "adding a parameter regenerates the function declaration"; "switching to client-side tool clears `code` and disables `pass_context`"; "validation rejects an enum with no options". These tests are the proof that the domain logic survived the refactor without any behavioural change.
+
+**Do NOT change any domain logic.** Do not delete fields, do not rename methods, do not remove list-cache duplication, do not slim the store. The only changes are: (1) remove the singleton export, (2) add constructor injection for the deps the store actually uses from the persistent root stores, (3) create the `useXxxBuilder()` hook. Everything else in the store file stays exactly as written.
 
 ##### H.4 Order of work
 
 - [ ] Do this **before** converting the page to shadcn in project 08, not at the same time. One refactor at a time. The shape of the store is now stable; project 08 only swaps the view layer on top of it.
-- [ ] Convert one builder at a time, ship each as its own PR, run the focused test on the converted builder before merging. The conversion is mechanical-but-not-trivial; doing all five in one PR is asking for a hard-to-review diff.
+- [ ] Convert one builder at a time, committing to the branch after each, before moving to the next. The conversion is mechanical; test each before committing.
 
 #### I. Navigation, prefetch, and segment files
 
@@ -855,7 +855,7 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 - [ ] `refreshDashboardCaches.ts` is deleted; the equivalent lives on `RootStore` as a method.
 - [ ] **`ParameterDefinitionsStore` exists** on the root, is hydrated by `bootLoad()`, and the `Tool` and `SRE` builders read parameter definitions through it (no direct `getParameterDefinition(pdId)` call from a builder store).
 - [ ] **`AuthStore.submitSignIn` does not flip `signedIn = true` directly.** `signedIn` is set only inside `checkAuth` after `/user` returns 200. Verified by greppping `submitSignIn` and reading the body.
-- [ ] No builder store exceeds 300 lines (Tool, Agent, SRE). `JsonDocumentBuilderStore` is already 134 lines and is compliant before decomposition begins; it stays well under 300 after conversion. `ChatPageBuilderStore` is exempt — it's deprecated and untouched.
+- [ ] Each builder store (`Tool`, `Agent`, `SRE`, `JsonDocument`) is instantiated per-page via its `useXxxBuilder()` hook — no module-level singleton export remains. `ChatPageBuilderStore` is exempt — deprecated and untouched. Domain logic in each store is unchanged; only the singleton export and constructor injection are modified.
 - [ ] Every dashboard API call goes through `src/api/client.ts`. CI grep: `! grep -rE "fetch\\(\`\\$\\{process\\.env\\.NEXT_PUBLIC_API_BASE_URL" src/api/` (catches the old pattern) outside of `src/api/auth/` (Amplify, not backend) and `src/api/chatpage/` (deprecated carve-out).
 - [ ] At least one 401 from any API call cleanly logs the user out and redirects, in dev. Verified by manually invalidating a token mid-session.
 - [ ] **`(public)/` chunks** (verified via `next build` output or a bundle analyzer) do not include `mobx`, `aws-amplify`, `AuthStore`, `SignUpStore`, or any `@chakra-ui/*` chunk that wasn't directly imported by the route. (Landing imports Chakra directly today; that's fine until project 09.)
