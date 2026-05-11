@@ -9,8 +9,9 @@ import Sidebar from './components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { authStore } from '@/store/AuthStore';
 import { reaction } from 'mobx';
+import { AuthenticatedProviders } from './providers';
 
-const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode }) => {
+const AuthenticatedLayoutInner = observer(({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -88,4 +89,10 @@ const AuthenticatedLayout = observer(({ children }: { children: React.ReactNode 
     );
 });
 
-export default AuthenticatedLayout;
+export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <AuthenticatedProviders>
+            <AuthenticatedLayoutInner>{children}</AuthenticatedLayoutInner>
+        </AuthenticatedProviders>
+    );
+}
