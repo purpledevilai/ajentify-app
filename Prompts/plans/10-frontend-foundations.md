@@ -580,29 +580,29 @@ This deliverable owns four things: the boot orchestration component, real backen
 
 ##### F.1 `<DashboardBoot>` — the authenticated-side orchestrator
 
-- [ ] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`. **Completing the deliverable B migration:** deliverable B already removed `checkAuth()` and the `isDeterminingAuth` spinner from `app/layout.tsx` (the root layout). `<DashboardBoot>` is their new home — it is not being added alongside the root layout's logic, but replacing it for the authenticated route group.
-- [ ] Behaviour:
+- [x] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`. **Completing the deliverable B migration:** deliverable B already removed `checkAuth()` and the `isDeterminingAuth` spinner from `app/layout.tsx` (the root layout). `<DashboardBoot>` is their new home — it is not being added alongside the root layout's logic, but replacing it for the authenticated route group.
+- [x] Behaviour:
   - While `auth.isDeterminingAuth` is true: render `<BootSplash />` (a separate small component holding the branded loading animation; created in this deliverable).
   - When determination resolves to **not signed in**: call `redirect('/signin')` from `next/navigation` **during render** (not in an effect, not in a handler). The component returns `null` after the redirect call; the redirect throws a navigation signal Next catches.
   - When determination resolves to **signed in**: kick off `root.bootLoad()` (deliverable E.5) and the per-route prefetches (deliverable I) in a single effect; render `children`.
-- [ ] **`redirect()` discipline.** Render-phase only. Not in `useEffect`, not in event handlers, not in `reaction()`. For mid-session sign-outs (the 401 interceptor or a user-clicked Sign Out), do not call `redirect()`; instead let `<DashboardBoot>` re-render via its `observer` decorator on the `signedIn` flip, which re-enters the not-signed-in branch and calls `redirect('/signin')` from the next render. Belt-and-braces: the 401 interceptor also does `window.location.assign('/signin')` (F.4) because it's outside React; whichever fires first, Next dedupes.
-- [ ] Wrap `app/(authenticated)/layout.tsx`'s body in `<DashboardBoot>`. The layout stays a client component (Chakra `useBreakpointValue` for the sidebar).
-- [ ] Remove the per-page `useEffect` + `reaction()` + `router.push()` redirect machinery from: `app/page.tsx`, `(authenticated)/layout.tsx`, `(auth)/signin/page.tsx` (moved from `(public)/` in deliverable B). Sweep `src/` for any other `reaction(() => authStore.signedIn, ...)` (or `reaction(() => auth.signedIn, ...)`) patterns and remove them too. **Not in scope for F.1:** `(authenticated)/agents/page.tsx` guards data loading with `if (!authStore.signedIn) return;` but does **not** have `reaction()` + `router.push()` redirect machinery — leave it untouched here (the depless effect is addressed by deliverable G). `(authenticated)/create-team/page.tsx` has a `reaction()` at line 25 that drives a step scroll animation, not an auth redirect; it is also not in scope for F.1.
+- [x] **`redirect()` discipline.** Render-phase only. Not in `useEffect`, not in event handlers, not in `reaction()`. For mid-session sign-outs (the 401 interceptor or a user-clicked Sign Out), do not call `redirect()`; instead let `<DashboardBoot>` re-render via its `observer` decorator on the `signedIn` flip, which re-enters the not-signed-in branch and calls `redirect('/signin')` from the next render. Belt-and-braces: the 401 interceptor also does `window.location.assign('/signin')` (F.4) because it's outside React; whichever fires first, Next dedupes.
+- [x] Wrap `app/(authenticated)/layout.tsx`'s body in `<DashboardBoot>`. The layout stays a client component (Chakra `useBreakpointValue` for the sidebar).
+- [x] Remove the per-page `useEffect` + `reaction()` + `router.push()` redirect machinery from: `app/page.tsx`, `(authenticated)/layout.tsx`, `(auth)/signin/page.tsx` (moved from `(public)/` in deliverable B). Sweep `src/` for any other `reaction(() => authStore.signedIn, ...)` (or `reaction(() => auth.signedIn, ...)`) patterns and remove them too. **Not in scope for F.1:** `(authenticated)/agents/page.tsx` guards data loading with `if (!authStore.signedIn) return;` but does **not** have `reaction()` + `router.push()` redirect machinery — leave it untouched here (the depless effect is addressed by deliverable G). `(authenticated)/create-team/page.tsx` has a `reaction()` at line 25 that drives a step scroll animation, not an auth redirect; it is also not in scope for F.1.
 
 ##### F.2 Real backend-validated auth in `AuthStore.checkAuth`
 
-- [ ] In `AuthStore.checkAuth`, after fetching the token, call `getUser()` (`/user`) to validate. **"Signed in" means "the backend returned 200 to a token-bearing `/user` call,"** not "Amplify has a token in localStorage."
-- [ ] Failure policy:
+- [x] In `AuthStore.checkAuth`, after fetching the token, call `getUser()` (`/user`) to validate. **"Signed in" means "the backend returned 200 to a token-bearing `/user` call,"** not "Amplify has a token in localStorage."
+- [x] Failure policy:
   - 401 from `/user` → `signOut()` and set `signedIn = false`. Stale token; treat as not signed in.
   - 5xx or network failure → set `signedIn = false`. Cautious policy: a flaky backend should not gate the user *into* the dashboard, only out of it.
   - 200 → set `signedIn = true`, cache the user response on `authStore.user`.
-- [ ] `isDeterminingAuth` covers the **whole** boot — token fetch + `/user` call. Only flips to `false` after either branch above completes. (`isDeterminingAuth` is already initialized to `true` in `AuthStore`'s class body — preserve this; it ensures `<BootSplash>` renders immediately on first paint before `checkAuth()` has run.)
-- [ ] **Remove the lazy `loadUser()` call from `app/(authenticated)/layout.tsx`** (currently the layout calls `authStore.loadUser()` when `signedIn === true` and `authStore.user` is null). After F.2, `checkAuth()` already fetches and populates `authStore.user` on a 200 response; leaving the layout's call in place would hit `GET /user` twice per boot. Delete the `if (!authStore.user) { authStore.loadUser(); }` block from the authenticated layout.
-- [ ] **Delete `this.signedIn = true` from `AuthStore.submitSignIn`** (currently `AuthStore.ts:91`). With F.2 in place, `signedIn` flips only inside `checkAuth` after the backend has confirmed the token; flipping it optimistically inside `submitSignIn` would defeat F.2. The post-signin path becomes: `submitSignIn` resolves → page calls `router.replace('/agents')` → `<DashboardBoot>` mounts → `checkAuth()` runs → `signedIn = true` after `/user` returns 200. The boot splash covers the round-trip (F.3).
+- [x] `isDeterminingAuth` covers the **whole** boot — token fetch + `/user` call. Only flips to `false` after either branch above completes. (`isDeterminingAuth` is already initialized to `true` in `AuthStore`'s class body — preserve this; it ensures `<BootSplash>` renders immediately on first paint before `checkAuth()` has run.)
+- [x] **Remove the lazy `loadUser()` call from `app/(authenticated)/layout.tsx`** (currently the layout calls `authStore.loadUser()` when `signedIn === true` and `authStore.user` is null). After F.2, `checkAuth()` already fetches and populates `authStore.user` on a 200 response; leaving the layout's call in place would hit `GET /user` twice per boot. Delete the `if (!authStore.user) { authStore.loadUser(); }` block from the authenticated layout.
+- [x] **Delete `this.signedIn = true` from `AuthStore.submitSignIn`** (currently `AuthStore.ts:91`). With F.2 in place, `signedIn` flips only inside `checkAuth` after the backend has confirmed the token; flipping it optimistically inside `submitSignIn` would defeat F.2. The post-signin path becomes: `submitSignIn` resolves → page calls `router.replace('/agents')` → `<DashboardBoot>` mounts → `checkAuth()` runs → `signedIn = true` after `/user` returns 200. The boot splash covers the round-trip (F.3).
 
 ##### F.3 The post-signin handoff (replaces the old `reaction()` pattern)
 
-- [ ] In `(auth)/signin/page.tsx`, the submit handler does the navigation explicitly. `auth` comes from `useAuthFlowStores()` (E.2.1):
+- [x] In `(auth)/signin/page.tsx`, the submit handler does the navigation explicitly. `auth` comes from `useAuthFlowStores()` (E.2.1):
 
   ```ts
   const { auth } = useAuthFlowStores();
@@ -616,7 +616,7 @@ This deliverable owns four things: the boot orchestration component, real backen
 
   After replacing `/agents`, the auth-flow bundle unmounts; `<DashboardBoot>` mounts inside the dashboard bundle; the dashboard's *own* `auth` (a different `AuthStore` instance — see E.2.1) runs its `checkAuth()` (token + `/user`); the boot splash shows for the duration of that round-trip. **This is the intended UX** — "preparing your workspace" is the right thing to see between the click and the dashboard. Do not optimize past it by skipping the splash; the cost is one round-trip and the win is consistency with cold-load and refresh-load.
 
-- [ ] In `AuthStore.submitSignIn`, after `await signIn(...)` resolves successfully (and *before* it returns), set the advisory cookie (F.5) inline:
+- [x] In `AuthStore.submitSignIn`, after `await signIn(...)` resolves successfully (and *before* it returns), set the advisory cookie (F.5) inline:
 
   ```ts
   document.cookie = 'aj_signed_in=1; Path=/; SameSite=Lax';
@@ -628,7 +628,7 @@ This deliverable owns four things: the boot orchestration component, real backen
 
 The chokepoint and `bindApiClientAuth` already exist from deliverable D. This sub-deliverable is the *real* implementation of the auth-side methods that D shipped as stubs.
 
-- [ ] `AuthStore.forceRefreshAccessToken()`:
+- [x] `AuthStore.forceRefreshAccessToken()`:
   ```ts
   forceRefreshAccessToken = async (): Promise<string | undefined> => {
     try {
@@ -639,7 +639,7 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
     }
   };
   ```
-- [ ] `AuthStore.handleAuthFailure()`:
+- [x] `AuthStore.handleAuthFailure()`:
   1. Guarded by a `loggingOut` boolean field. If `loggingOut`, return immediately. (Prevents N concurrent failed requests from triggering N sign-outs.)
   2. Set `loggingOut = true`.
   3. Call `awsSignOut()` (Amplify only; **no backend `/logout` call** — see Risks for double-401-loop avoidance).
@@ -650,15 +650,15 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
      ```
   6. `window.location.assign('/signin')` as a hard navigation. (`<DashboardBoot>` will also re-render on the `signedIn` flip and call `redirect('/signin')` from render; either fires first; Next dedupes.)
   7. Reset `loggingOut = false` in a `finally`.
-- [ ] **Do not** add interceptor logic that chases 403s or other status codes. The interceptor handles 401 only. 403 (insufficient permissions, distinct from "not signed in") is the page's problem to render.
+- [x] **Do not** add interceptor logic that chases 403s or other status codes. The interceptor handles 401 only. 403 (insufficient permissions, distinct from "not signed in") is the page's problem to render.
 
 ##### F.5 Middleware — Flavour A: coarse signed-in cookie
 
-- [ ] Create `src/middleware.ts`. The matcher covers all `(authenticated)` paths and the `(auth)` paths (`/signin`, `/signup`, plus any future forgot-password / SSO callback paths added under `(auth)/`). Behaviour:
+- [x] Create `src/middleware.ts`. The matcher covers all `(authenticated)` paths and the `(auth)` paths (`/signin`, `/signup`, plus any future forgot-password / SSO callback paths added under `(auth)/`). Behaviour:
   - Request to an `(authenticated)` URL with no `aj_signed_in` cookie → `NextResponse.redirect(new URL('/signin', req.url))`.
   - Request to an `(auth)` URL with `aj_signed_in` set → `NextResponse.redirect(new URL('/agents', req.url))`. (A signed-in user landing on `/signin` directly should bounce to the dashboard, not see a signin form.)
   - Otherwise → `NextResponse.next()`.
-- [ ] **Matcher pattern.** Next route groups (the parentheses) are not part of the URL, so the matcher needs to enumerate the actual top-level URL prefixes for each side. Spell them out explicitly rather than negating `(public)`, because the `(public)` set is open-ended (docs, blog, etc. will be added later) and accidentally including a public path in the auth gate is the worst kind of silent regression:
+- [x] **Matcher pattern.** Next route groups (the parentheses) are not part of the URL, so the matcher needs to enumerate the actual top-level URL prefixes for each side. Spell them out explicitly rather than negating `(public)`, because the `(public)` set is open-ended (docs, blog, etc. will be added later) and accidentally including a public path in the auth gate is the worst kind of silent regression:
 
   ```ts
   export const config = {
@@ -677,8 +677,8 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
   ```
 
   `chat-pages` and `chat-page-builder` are deliberately omitted (deprecated, audit item 19). The shared `(public)/chat-page/[id]` embed remains public and is not gated.
-- [ ] The cookie is set on successful `signIn()` and confirmed `signUp()` (per F.3) and deleted on every `signOut()` / `handleAuthFailure()` path (per F.4 and E.4). Set/delete strings are spelled out above so the executing agent doesn't mismatch attributes.
-- [ ] Document at the top of `middleware.ts`:
+- [x] The cookie is set on successful `signIn()` and confirmed `signUp()` (per F.3) and deleted on every `signOut()` / `handleAuthFailure()` path (per F.4 and E.4). Set/delete strings are spelled out above so the executing agent doesn't mismatch attributes.
+- [x] Document at the top of `middleware.ts`:
 
   ```
   // Coarse, advisory gate. The cookie is forgeable; an attacker setting it
@@ -764,9 +764,9 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 
 ##### I.2 Boot splash & dashboard prefetch
 
-- [ ] **Boot splash.** Lives inside `<DashboardBoot>` (created in deliverable F.1). One branded splash for the whole dashboard, not per-page spinners. Renders while `auth.isDeterminingAuth` is `true`.
-- [ ] **Prefetch the dashboard at boot.** Inside `<DashboardBoot>`, in a single effect that runs after auth resolves to signed-in, fire `router.prefetch(...)` for every `DASHBOARD_ROUTES` entry. The same effect calls `root.bootLoad()` (deliverable E.5). One effect, both jobs.
-- [ ] **`DASHBOARD_ROUTES` is the source of truth.** Exported from `DashboardBoot.tsx`:
+- [x] **Boot splash.** Lives inside `<DashboardBoot>` (created in deliverable F.1). One branded splash for the whole dashboard, not per-page spinners. Renders while `auth.isDeterminingAuth` is `true`.
+- [x] **Prefetch the dashboard at boot.** Inside `<DashboardBoot>`, in a single effect that runs after auth resolves to signed-in, fire `router.prefetch(...)` for every `DASHBOARD_ROUTES` entry. The same effect calls `root.bootLoad()` (deliverable E.5). One effect, both jobs.
+- [x] **`DASHBOARD_ROUTES` is the source of truth.** Exported from `DashboardBoot.tsx`:
 
   ```ts
   // Top-level authenticated routes whose chunks are prefetched at boot so
