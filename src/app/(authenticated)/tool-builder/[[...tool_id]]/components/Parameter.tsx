@@ -1,4 +1,4 @@
-import { toolBuilderStore } from "../../toolBuilderStore"
+import { useToolBuilderStore } from "../../ToolBuilderContext";
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { CloseIcon } from "@chakra-ui/icons";
 
@@ -15,6 +15,7 @@ interface ParameterProps {
 const PRIMITIVE_TYPES: ReadonlySet<UIParameterNode['type']> = new Set(['string', 'number', 'integer', 'boolean']);
 
 export const ParameterView: React.FC<ParameterProps> = observer(({ indexArray, param, isEnumOption = false, showDelete = true }) => {
+    const toolBuilderStore = useToolBuilderStore();
     const isPrimitive = PRIMITIVE_TYPES.has(param.type);
     return (
         <Flex

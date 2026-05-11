@@ -1,4 +1,4 @@
-import { toolBuilderStore } from "../../toolBuilderStore"
+import { useToolBuilderStore } from "../../ToolBuilderContext";
 import { TestInput } from "@/types/tools";
 import { CloseIcon } from "@chakra-ui/icons";
 
@@ -12,6 +12,7 @@ interface TestInputProps {
 }
 
 export const TestInputView: React.FC<TestInputProps> = observer(({ indexArray, testInput, showDelete = false }) => {
+    const toolBuilderStore = useToolBuilderStore();
     return (
         <Flex
             border="1px solid"

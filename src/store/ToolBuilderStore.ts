@@ -4,9 +4,9 @@ import { AnyType, TestInput, Tool } from '@/types/tools';
 import { UIParameterNode } from '@/types/parameterdefinition';
 import { uiTreeToJsonSchema, jsonSchemaToUiTree } from '@/utils/jsonSchema';
 import { createParameterDefinition } from '@/api/parameterdefinition/createParameterDefinition';
-import { getParameterDefinition } from '@/api/parameterdefinition/getParameterDefinition';
 import { updateParameterDefinition } from '@/api/parameterdefinition/updateParameterDefinition';
 import { deleteParameterDefinition } from '@/api/parameterdefinition/deleteParameterDefinition';
+import { ParameterDefinitionsStore } from './ParameterDefinitionsStore';
 import { createTool } from '@/api/tool/createTool';
 import { updateTool } from '@/api/tool/updateTool';
 import { deleteTool } from '@/api/tool/deleteTool';
@@ -127,7 +127,10 @@ export class ToolBuilderStore {
     saveToolError: string | null = null;
     deleteToolError: string | null = null;
 
-    constructor() {
+    private parameterDefinitions: ParameterDefinitionsStore;
+
+    constructor({ parameterDefinitions }: { parameterDefinitions: ParameterDefinitionsStore }) {
+        this.parameterDefinitions = parameterDefinitions;
         makeAutoObservable(this);
     }
 
@@ -185,7 +188,11 @@ export class ToolBuilderStore {
         try {
             this.loadParameterDefinitionError = null;
             this.isLoadingParameterDefinition = true;
-            const parameterDefinition = await getParameterDefinition(pdId);
+            const parameterDefinition = await this.parameterDefinitions.ensurePdId(pdId);
+            if (!parameterDefinition) {
+                this.loadParameterDefinitionError = this.parameterDefinitions.parameterDefinitionsError ?? 'Failed to load parameter definition';
+                return;
+            }
             this.parameters = jsonSchemaToUiTree(parameterDefinition.schema);
             this.updateCode();
             this.updateTestInputs();

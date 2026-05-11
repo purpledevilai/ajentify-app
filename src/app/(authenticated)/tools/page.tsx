@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { toolBuilderStore } from '../tool-builder/toolBuilderStore';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
@@ -308,7 +307,6 @@ const ToolsPage = observer(() => {
   };
 
   const handleToolClick = (tool: Tool) => {
-    toolBuilderStore.setTool({ ...tool });
     router.push(`/tool-builder/${tool.tool_id}`);
   };
 

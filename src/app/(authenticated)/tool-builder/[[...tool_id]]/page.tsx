@@ -12,7 +12,8 @@ import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { observer } from "mobx-react-lite";
 import { InlineError } from "@/app/components/InlineError";
-import { toolBuilderStore } from '../toolBuilderStore';
+import { useToolBuilder } from "@/store/useToolBuilder";
+import { ToolBuilderStoreContext } from '../ToolBuilderContext';
 import { useStores } from "@/store/StoreContext";
 
 import { ParameterView } from "./components/Parameter";
@@ -30,6 +31,7 @@ interface ToolBuilderPageProps {
 }
 
 const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
+    const toolBuilderStore = useToolBuilder();
     const { tools: toolsStore } = useStores();
 
     const { colorMode } = useColorMode();
@@ -46,7 +48,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 toolBuilderStore.setToolWithId(tool_id);
             }
         }
-    }, [params]);
+    }, [params, toolBuilderStore]);
 
     useEffect(() => {
         void loadToolId(); // Load tool id from URL
@@ -54,7 +56,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
         return () => {
             toolBuilderStore.reset();
         };
-    }, [loadToolId]);
+    }, [loadToolId, toolBuilderStore]);
 
     const onSaveTool = async () => {
         const success = await toolBuilderStore.saveTool();
@@ -101,7 +103,8 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
 
 
     return (
-        <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
+        <ToolBuilderStoreContext.Provider value={toolBuilderStore}>
+            <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             {/* Header Section */}
             <Flex direction="row" w="100%" mb={8} gap={4} align="center">
                 <IconButton
@@ -343,7 +346,8 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Flex>
+            </Flex>
+        </ToolBuilderStoreContext.Provider>
     );
 });
 
