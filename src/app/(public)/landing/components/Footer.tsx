@@ -1,15 +1,5 @@
 'use client';
 
-import {
-    Box,
-    Container,
-    Flex,
-    HStack,
-    Link as ChakraLink,
-    Stack,
-    Text,
-    useColorModeValue,
-} from '@chakra-ui/react';
 import Link from 'next/link';
 
 const FOOTER_LINKS = {
@@ -27,117 +17,72 @@ const FOOTER_LINKS = {
 };
 
 export default function Footer() {
-    const borderColor = useColorModeValue('gray.200', 'gray.800');
-    const labelColor = useColorModeValue('gray.500', 'gray.500');
-    const linkColor = useColorModeValue('gray.700', 'gray.300');
-    const linkHoverColor = useColorModeValue('brand.600', 'brand.300');
-    const footerBg = useColorModeValue('white', 'gray.950');
-
     const renderLink = (link: { label: string; href: string; external: boolean }) => {
-        const common = {
-            color: linkColor,
-            fontSize: 'sm',
-            _hover: { color: linkHoverColor, textDecoration: 'none' },
-        };
+        const className =
+            'text-sm text-gray-700 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-300 no-underline transition-colors';
+
         if (link.external) {
             return (
-                <ChakraLink
+                <a
                     key={link.label}
                     href={link.href}
-                    isExternal
-                    {...common}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
                 >
                     {link.label}
-                </ChakraLink>
+                </a>
             );
         }
+
         return (
-            <Link key={link.label} href={link.href} passHref legacyBehavior>
-                <ChakraLink {...common}>{link.label}</ChakraLink>
+            <Link key={link.label} href={link.href} className={className}>
+                {link.label}
             </Link>
         );
     };
 
     return (
-        <Box
-            as="footer"
-            bg={footerBg}
-            borderTop="1px solid"
-            borderColor={borderColor}
-            py={{ base: 10, md: 12 }}
-            px="6"
-        >
-            <Container maxW="6xl">
-                <Flex
-                    direction={{ base: 'column', md: 'row' }}
-                    justify="space-between"
-                    gap={{ base: 10, md: 8 }}
-                >
-                    <Stack spacing="3" maxW="sm">
-                        <Text fontSize="lg" fontWeight="extrabold" letterSpacing="-0.01em">
+        <footer className="bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 py-10 md:py-12 px-6">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col md:flex-row justify-between gap-10 md:gap-8">
+                    <div className="flex flex-col gap-3 max-w-sm">
+                        <p className="text-lg font-extrabold tracking-[-0.01em]">
                             Ajentify
-                        </Text>
-                        <Text fontSize="sm" color={labelColor} lineHeight="1.6">
+                        </p>
+                        <p className="text-sm text-gray-500 leading-[1.6]">
                             Agents, memory, tools, and chat — as infrastructure, over plain HTTP.
-                        </Text>
-                    </Stack>
+                        </p>
+                    </div>
 
-                    <Flex
-                        direction={{ base: 'column', sm: 'row' }}
-                        gap={{ base: 8, md: 16 }}
-                    >
-                        <Stack spacing="3" minW="32">
-                            <Text
-                                fontSize="xs"
-                                fontWeight="semibold"
-                                color={labelColor}
-                                textTransform="uppercase"
-                                letterSpacing="wider"
-                            >
+                    <div className="flex flex-col sm:flex-row gap-8 md:gap-16">
+                        <div className="flex flex-col gap-3 min-w-32">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 Product
-                            </Text>
+                            </p>
                             {FOOTER_LINKS.product.map(renderLink)}
-                        </Stack>
-                        <Stack spacing="3" minW="32">
-                            <Text
-                                fontSize="xs"
-                                fontWeight="semibold"
-                                color={labelColor}
-                                textTransform="uppercase"
-                                letterSpacing="wider"
-                            >
+                        </div>
+                        <div className="flex flex-col gap-3 min-w-32">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 Follow
-                            </Text>
+                            </p>
                             {FOOTER_LINKS.follow.map(renderLink)}
-                        </Stack>
-                        <Stack spacing="3" minW="32">
-                            <Text
-                                fontSize="xs"
-                                fontWeight="semibold"
-                                color={labelColor}
-                                textTransform="uppercase"
-                                letterSpacing="wider"
-                            >
+                        </div>
+                        <div className="flex flex-col gap-3 min-w-32">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 Legal
-                            </Text>
+                            </p>
                             {FOOTER_LINKS.legal.map(renderLink)}
-                        </Stack>
-                    </Flex>
-                </Flex>
+                        </div>
+                    </div>
+                </div>
 
-                <HStack
-                    justify="space-between"
-                    mt={{ base: 10, md: 12 }}
-                    pt="6"
-                    borderTop="1px solid"
-                    borderColor={borderColor}
-                    flexWrap="wrap"
-                >
-                    <Text fontSize="xs" color={labelColor}>
+                <div className="flex items-center justify-between mt-10 md:mt-12 pt-6 border-t border-gray-200 dark:border-gray-800 flex-wrap">
+                    <p className="text-xs text-gray-500">
                         © {new Date().getFullYear()} Ajentify
-                    </Text>
-                </HStack>
-            </Container>
-        </Box>
+                    </p>
+                </div>
+            </div>
+        </footer>
     );
 }

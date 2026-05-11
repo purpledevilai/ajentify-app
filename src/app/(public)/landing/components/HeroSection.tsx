@@ -1,19 +1,9 @@
 'use client';
 
-import {
-    Box,
-    Button,
-    Container,
-    Flex,
-    Heading,
-    HStack,
-    Stack,
-    Text,
-    useClipboard,
-    useColorModeValue,
-} from '@chakra-ui/react';
-import { CheckIcon, CopyIcon } from '@chakra-ui/icons';
+import { useState } from 'react';
 import Link from 'next/link';
+import { Copy, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { CodeSnippet } from '@/app/components/CodeSnippet';
 
 const CODING_AGENT_PROMPT = `Add AI chat to my app using Ajentify. Read the docs at https://api.ajentify.com/docs and implement it end-to-end.`;
@@ -39,81 +29,68 @@ curl -X POST https://api.ajentify.com/chat \\
   -d '{"context_id":"ctx_...","message":"Where is order #4821?"}'`;
 
 export default function HeroSection() {
-    const { hasCopied, onCopy } = useClipboard(CODING_AGENT_PROMPT);
+    const [hasCopied, setHasCopied] = useState(false);
 
-    const subheadColor = useColorModeValue('gray.700', 'gray.300');
-    const eyebrowColor = useColorModeValue('brand.600', 'brand.300');
-    const secondaryBtnColor = useColorModeValue('gray.700', 'gray.200');
+    const onCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(CODING_AGENT_PROMPT);
+            setHasCopied(true);
+            setTimeout(() => setHasCopied(false), 2000);
+        } catch {
+            // clipboard write failed silently
+        }
+    };
 
     return (
-        <Box as="section" position="relative" overflow="hidden" py={{ base: 16, md: 24 }} px="6">
-            <Container maxW="6xl">
-                <Stack spacing={{ base: 8, md: 10 }} align="flex-start">
-                    <Text
-                        fontSize="sm"
-                        fontWeight="semibold"
-                        letterSpacing="wider"
-                        textTransform="uppercase"
-                        color={eyebrowColor}
-                    >
+        <section className="relative overflow-hidden py-16 md:py-24 px-6">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col items-start gap-8 md:gap-10">
+                    <p className="text-sm font-semibold tracking-wider uppercase text-brand-600 dark:text-brand-300">
                         AI agents, as infrastructure
-                    </Text>
+                    </p>
 
-                    <Heading
-                        as="h1"
-                        size={{ base: '2xl', md: '4xl' }}
-                        fontWeight="extrabold"
-                        letterSpacing="-0.02em"
-                        lineHeight="1.05"
-                    >
+                    <h1 className="text-2xl md:text-6xl lg:text-7xl font-extrabold tracking-[-0.02em] leading-[1.05]">
                         The Stripe of AI agents.
-                    </Heading>
+                    </h1>
 
-                    <Text
-                        fontSize={{ base: 'lg', md: 'xl' }}
-                        color={subheadColor}
-                        maxW="3xl"
-                        lineHeight="1.5"
-                    >
+                    <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl leading-[1.5]">
                         The HTTP API for adding agents, memory, tools, and chat to any app — with
                         docs built to be read and implemented directly by coding agents like Cursor
                         and Claude Code.
-                    </Text>
+                    </p>
 
-                    <Flex
-                        direction={{ base: 'column', sm: 'row' }}
-                        gap="3"
-                        w={{ base: 'full', sm: 'auto' }}
-                    >
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <Button
                             size="lg"
-                            variant="solid"
+                            variant="default"
                             onClick={onCopy}
-                            leftIcon={hasCopied ? <CheckIcon /> : <CopyIcon />}
-                            px="7"
+                            className="px-7"
                         >
+                            {hasCopied ? (
+                                <Check className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Copy className="mr-2 h-4 w-4" />
+                            )}
                             {hasCopied ? 'Prompt copied — paste into Cursor' : 'Give this to your coding agent'}
                         </Button>
-                        <Link href="/signup" passHref>
-                            <Button
-                                size="lg"
-                                variant="ghost"
-                                color={secondaryBtnColor}
-                                px="6"
-                            >
-                                Sign up
-                            </Button>
-                        </Link>
-                    </Flex>
+                        <Button
+                            asChild
+                            size="lg"
+                            variant="ghost"
+                            className="text-gray-700 dark:text-gray-200 px-6"
+                        >
+                            <Link href="/signup">Sign up</Link>
+                        </Button>
+                    </div>
 
-                    <Box w="full" pt={{ base: 2, md: 4 }}>
-                        <HStack mb="2" spacing="2" color={subheadColor}>
-                            <Text fontSize="sm">Or, from a terminal:</Text>
-                        </HStack>
+                    <div className="w-full pt-2 md:pt-4">
+                        <div className="flex items-center gap-2 mb-2 text-gray-700 dark:text-gray-300">
+                            <span className="text-sm">Or, from a terminal:</span>
+                        </div>
                         <CodeSnippet language="bash" code={CURL_EXAMPLE} />
-                    </Box>
-                </Stack>
-            </Container>
-        </Box>
+                    </div>
+                </div>
+            </div>
+        </section>
     );
 }

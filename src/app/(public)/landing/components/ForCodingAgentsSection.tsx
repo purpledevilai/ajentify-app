@@ -1,16 +1,7 @@
 'use client';
 
-import {
-    Box,
-    Button,
-    Container,
-    Flex,
-    Heading,
-    Stack,
-    Text,
-    useColorModeValue,
-} from '@chakra-ui/react';
-import { ExternalLinkIcon } from '@chakra-ui/icons';
+import { ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { CodeSnippet } from '@/app/components/CodeSnippet';
 
 const DOCS_URL = 'https://api.ajentify.com/docs';
@@ -24,101 +15,58 @@ Read the docs at ${DOCS_URL} — every endpoint, schema, and example is in there
 3. Show me the exact code changes and where to put them.`;
 
 export default function ForCodingAgentsSection() {
-    const descColor = useColorModeValue('gray.600', 'gray.400');
-    const cardBg = useColorModeValue('white', 'gray.800');
-    const cardBorder = useColorModeValue('gray.200', 'gray.700');
-    const accentColor = useColorModeValue('brand.600', 'brand.300');
-    const eyebrowColor = useColorModeValue('brand.600', 'brand.300');
-    const urlColor = useColorModeValue('gray.900', 'white');
-
     return (
-        <Box as="section" py={{ base: 16, md: 24 }} px="6">
-            <Container maxW="6xl">
-                <Stack spacing={{ base: 3, md: 4 }} mb={{ base: 10, md: 14 }} maxW="3xl">
-                    <Text
-                        fontSize="sm"
-                        fontWeight="semibold"
-                        letterSpacing="wider"
-                        textTransform="uppercase"
-                        color={eyebrowColor}
-                    >
+        <section className="py-16 md:py-24 px-6">
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col gap-3 md:gap-4 mb-10 md:mb-14 max-w-3xl">
+                    <p className="text-sm font-semibold tracking-wider uppercase text-brand-600 dark:text-brand-300">
                         Docs-first, agent-native
-                    </Text>
-                    <Heading
-                        as="h2"
-                        size={{ base: 'xl', md: '2xl' }}
-                        fontWeight="extrabold"
-                        letterSpacing="-0.02em"
-                    >
+                    </p>
+                    <h2 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-[-0.02em]">
                         Built to be read by AI.
-                    </Heading>
-                    <Text fontSize={{ base: 'md', md: 'lg' }} color={descColor}>
+                    </h2>
+                    <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
                         The API is plain HTTP — easy to call directly, easy to wrap in your own SDK.
                         The docs are structured so a coding agent can crawl them, understand the
                         full surface, and implement an integration end-to-end.
-                    </Text>
-                </Stack>
+                    </p>
+                </div>
 
-                <Box
-                    bg={cardBg}
-                    border="1px solid"
-                    borderColor={cardBorder}
-                    borderRadius="xl"
-                    p={{ base: 6, md: 8 }}
-                    mb={{ base: 8, md: 10 }}
-                >
-                    <Flex
-                        direction={{ base: 'column', md: 'row' }}
-                        align={{ base: 'flex-start', md: 'center' }}
-                        justify="space-between"
-                        gap={{ base: 5, md: 6 }}
-                    >
-                        <Stack spacing="1" flex="1">
-                            <Text
-                                fontSize="xs"
-                                fontWeight="semibold"
-                                color={accentColor}
-                                textTransform="uppercase"
-                                letterSpacing="wider"
-                            >
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 md:p-8 mb-8 md:mb-10">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 md:gap-6">
+                        <div className="flex flex-col gap-1 flex-1">
+                            <p className="text-xs font-semibold text-brand-600 dark:text-brand-300 uppercase tracking-wider">
                                 The one URL your coding agent needs
-                            </Text>
-                            <Text
-                                fontFamily="mono"
-                                fontSize={{ base: 'md', md: 'xl' }}
-                                fontWeight="bold"
-                                color={urlColor}
-                                wordBreak="break-all"
-                            >
+                            </p>
+                            <p className="font-mono text-base md:text-xl font-bold text-gray-900 dark:text-white break-all">
                                 {DOCS_URL}
-                            </Text>
-                            <Text color={descColor} fontSize="sm" lineHeight="1.6" pt="1">
+                            </p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm leading-[1.6] pt-1">
                                 Every endpoint, request and response schema, and runnable example —
                                 in one crawlable surface.
-                            </Text>
-                        </Stack>
+                            </p>
+                        </div>
                         <Button
-                            as="a"
-                            href={DOCS_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            asChild
                             size="lg"
-                            variant="solid"
-                            rightIcon={<ExternalLinkIcon />}
-                            flexShrink={0}
+                            variant="default"
+                            className="shrink-0"
                         >
-                            View docs
+                            <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
+                                View docs
+                                <ExternalLink className="ml-2 h-4 w-4" />
+                            </a>
                         </Button>
-                    </Flex>
-                </Box>
+                    </div>
+                </div>
 
-                <Stack spacing="3" maxW="3xl">
-                    <Text fontSize="sm" fontWeight="semibold" color={descColor}>
+                <div className="flex flex-col gap-3 max-w-3xl">
+                    <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                         The onboarding prompt (copy, paste, ship):
-                    </Text>
+                    </p>
                     <CodeSnippet language="markdown" code={ONBOARDING_PROMPT} />
-                </Stack>
-            </Container>
-        </Box>
+                </div>
+            </div>
+        </section>
     );
 }
