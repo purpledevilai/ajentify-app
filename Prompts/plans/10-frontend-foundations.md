@@ -115,23 +115,23 @@ Ship before any structural changes. Tiny PR; biggest correctness-per-line in the
 
 #### B. The layout split
 
-- [ ] Strip `'use client'` from `app/layout.tsx`. Make it a server component. **Current state of root layout (all of this is removed as part of this step):** it is wrapped with `observer(...)`, mounts three providers in order — `<NavigationGuardProvider>` → `<ChakraProviders>` → `<AlertProvider>` — calls `authStore.checkAuth()` in a `useEffect` with an empty dependency array, and gates rendering on `authStore.isDeterminingAuth`. Distribution when stripped: `NavigationGuardProvider` moves to `(authenticated)/providers.tsx` only (the `(auth)/` and `(public)/` routes do not need route-change guards); `ChakraProviders` moves to the route-group provider files described below; `AlertProvider` is removed from root and **not** added to any new provider (it is deleted in deliverable C); `authStore.checkAuth()` and the `isDeterminingAuth` rendering gate are removed from root here and re-housed in `<DashboardBoot>` (deliverable F).
-- [ ] Export a `metadata` (and later `generateMetadata`) from `app/layout.tsx`. Replace the hand-rolled `<head><title>` block.
-- [ ] **Move signin/signup into a new `(auth)/` route group** before touching providers:
+- [x] Strip `'use client'` from `app/layout.tsx`. Make it a server component. **Current state of root layout (all of this is removed as part of this step):** it is wrapped with `observer(...)`, mounts three providers in order — `<NavigationGuardProvider>` → `<ChakraProviders>` → `<AlertProvider>` — calls `authStore.checkAuth()` in a `useEffect` with an empty dependency array, and gates rendering on `authStore.isDeterminingAuth`. Distribution when stripped: `NavigationGuardProvider` moves to `(authenticated)/providers.tsx` only (the `(auth)/` and `(public)/` routes do not need route-change guards); `ChakraProviders` moves to the route-group provider files described below; `AlertProvider` is removed from root and **not** added to any new provider (it is deleted in deliverable C); `authStore.checkAuth()` and the `isDeterminingAuth` rendering gate are removed from root here and re-housed in `<DashboardBoot>` (deliverable F).
+- [x] Export a `metadata` (and later `generateMetadata`) from `app/layout.tsx`. Replace the hand-rolled `<head><title>` block.
+- [x] **Move signin/signup into a new `(auth)/` route group** before touching providers:
   - `git mv src/app/(public)/signin src/app/(auth)/signin`
   - `git mv src/app/(public)/signup src/app/(auth)/signup`
   - Update imports nothing — the `@/` paths the pages use don't change. The on-disk URL structure is unchanged (Next route groups don't appear in the URL).
   - `(public)/chat-page/[chat_page_id]/` stays where it is for now (it's RSC, doesn't import dashboard stores). It will be deleted by project 08 along with the rest of the chat-pages surface.
-- [ ] Create **three separate provider files** — they are not the same module, and an executing agent must not collapse them into one:
+- [x] Create **three separate provider files** — they are not the same module, and an executing agent must not collapse them into one:
   - `app/(authenticated)/providers.tsx` (`'use client'`) — the full dashboard stack: ChakraProvider (until shadcn migration removes it), the future ShadcnThemeProvider, NavigationGuardProvider, **`<StoreProvider>` constructed with `RootStore`** (added in deliverable E), and the `<DashboardBoot>` boundary (added in deliverable F). **This is the only file in the repo that imports `RootStore`.**
   - `app/(auth)/providers.tsx` (`'use client'`) — the auth-flow stack: ChakraProvider (until shadcn), `<AmplifyConfig />`, and **`<AuthFlowStoreProvider>`** (added in deliverable E) constructing `AuthStore` and `SignUpStore` independently of the dashboard's `RootStore`. **Does not import `RootStore` or any dashboard list-cache/builder store.** Imports `AuthStore` and `SignUpStore` *as classes only* — the same modules `RootStore` imports, just instantiated separately.
   - `app/(public)/providers.tsx` (`'use client'`) — only what public routes genuinely need (e.g. the future ShadcnThemeProvider, theming primitives). **Does not import `RootStore`, `AuthStore`, `SignUpStore`, or any dashboard store.** Marketing pages may opt out of mounting it entirely and stay pure RSC.
-- [ ] Create `lib/amplify.ts` exporting a single `configureAmplify()` call. Invoke from a tiny `<AmplifyConfig />` client component rendered once inside both `(authenticated)/providers.tsx` and `(auth)/providers.tsx`. `(public)/` does not call it; landing/docs/privacy never instantiate Amplify.
-- [ ] Each route group gets its own `layout.tsx`:
+- [x] Create `lib/amplify.ts` exporting a single `configureAmplify()` call. Invoke from a tiny `<AmplifyConfig />` client component rendered once inside both `(authenticated)/providers.tsx` and `(auth)/providers.tsx`. `(public)/` does not call it; landing/docs/privacy never instantiate Amplify.
+- [x] Each route group gets its own `layout.tsx`:
   - `app/(public)/layout.tsx` — server component. Mounts `(public)/providers.tsx` only if/where needed. SEO-friendly.
   - `app/(auth)/layout.tsx` — client component. Mounts `(auth)/providers.tsx`. Renders centered card-style chrome (matching today's signin/signup look) so individual pages don't each duplicate the layout shell.
   - `app/(authenticated)/layout.tsx` — client component (it uses Chakra's `useBreakpointValue` for the sidebar, and will host `<DashboardBoot>` after deliverable F). Mounts `(authenticated)/providers.tsx`.
-- [ ] Verify the bundles split as expected:
+- [x] Verify the bundles split as expected:
   - **Source checks (CI-greppable):**
     - `(public)/` contains no `RootStore` import and no `from '@/store/` import. (After signin/signup move, this becomes true; before, it isn't.)
     - `(auth)/` contains no `RootStore` import and no import from a dashboard list-cache or builder store (only `AuthStore` and `SignUpStore` are allowed).
