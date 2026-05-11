@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { JSONRPCPeer } from '../../lib/JSONRPCPeer';
 import { SimpleWebSocketClient } from '../../lib/SimpleWebSocketClient';
 

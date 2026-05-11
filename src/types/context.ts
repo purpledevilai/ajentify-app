@@ -1,4 +1,3 @@
-/* eslint-disable */
 export type Message =
   | {
       sender: "ai" | "human" | "system";
