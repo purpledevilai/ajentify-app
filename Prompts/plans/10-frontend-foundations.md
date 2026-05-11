@@ -345,7 +345,7 @@ The fix is to bind at **render time**, inside a tiny `<ApiClientBinder />` compo
 
 ##### D.4 Sweep of `src/api/**/*.ts`
 
-- [ ] For each backend-talking file (~60 of them), replace the manual `fetch` with a `request<T>` call:
+- [ ] For each backend-talking file (64 total fetch-using files: 61 standard auth+fetch + 3 public-access; the chatpage/* carve-out below reduces the sweep to 59), replace the manual `fetch` with a `request<T>` call:
 
   ```ts
   // Before
@@ -375,14 +375,15 @@ The fix is to bind at **render time**, inside a tiny `<ApiClientBinder />` compo
   }
   ```
 
-- [ ] Auth-flow API files (`src/api/auth/signIn.ts`, `signOut.ts`, `signUp.ts`, `forgotPassword.ts`, `resetPassword.ts`, `confirmSignUp.ts`) talk to Amplify directly, not the backend, so they don't go through `request<T>`. Leave them alone.
+- [ ] Auth-flow and Amplify-only API files don't go through `request<T>`. Leave them alone: `src/api/auth/signIn.ts`, `signOut.ts`, `signUp.ts`, `forgotPassword.ts`, `resetPassword.ts`, `confirmSignUp.ts` (all call AWS Amplify auth functions directly), and `src/api/user/updateUser.ts` (calls `updateUserAttributes` from `aws-amplify/auth` — does **not** use fetch, so it is not caught by the sweep grep either).
 - [ ] **Chat-page-related API files are out of scope.** `src/api/chatpage/*.ts` (`getChatPage`, `getChatPages`, `createChatPage`, `updateChatPage`, `deleteChatPage`) are part of the deprecated chat-pages surface (audit item 19) and will be deleted by project 08. Skip them in the sweep — leave them on the old `fetch` + `checkResponseAndGetJson` pattern. The one wrinkle: `(public)/chat-page/[chat_page_id]/page.tsx` is an RSC that calls `getChatPage`, `getContext`, `createContext` server-side. Today those latter two reach `authStore.getAccessToken()` (which silently returns `undefined` on the server). If we'd swept them through `request<T>`, the SSR call would break. By leaving the chat-page area on the old pattern, the deprecated page keeps working until project 08 deletes it. Do not invent a `requestServer<T>` for this; the carve-out is the right call.
+- [ ] **Public-access endpoints.** Three fetch files send no `Authorization` header today: `src/api/chatpage/getChatPage.ts` (already covered by the chatpage carve-out above), `src/api/tool/getTool.ts`, and `src/api/structuredresponseendpoint/getSRE.ts`. The latter two are intentionally public read endpoints but are **not** deprecated — include them in the sweep. After the sweep, `request<T>` will attach an `Authorization` header when a token is available. For anonymous visitors the token is `undefined`; `request<T>` must omit the header entirely in that case rather than sending an empty string (the existing `|| ''` fallback is one of the bugs this chokepoint fixes). Verify with the backend that receiving an auth header on these endpoints when signed in does not change their response before merging the sweep PR.
 - [ ] Delete `src/utils/api/checkResponseAndParseJson.ts` only **if** the chat-page files no longer reference it after the sweep. They do (per the carve-out above), so leave the helper in place; it'll be deleted alongside `src/api/chatpage/*.ts` in project 08.
 - [ ] Add a focused vitest for `src/api/client.ts` covering: URL construction (preserving sub-paths on `NEXT_PUBLIC_API_BASE_URL`), query serialization (drops `undefined`), 401-then-refresh-then-200 happy path, 401-then-refresh-then-401 unhappy path, non-2xx error shape, empty-body 2xx.
 
 ##### D.5 What's deliberately not in the chokepoint
 
-- **WebSocket / streaming clients** (`src/lib/JSONRPCPeer.ts`, `src/lib/SimpleWebSocketClient.ts`) stay as-is. They have their own auth handshake; routing them through `request<T>` doesn't fit.
+- **WebSocket / streaming clients** (`src/lib/JSONRPCPeer.ts`, `src/lib/SimpleWebSocketClient.ts`, and `src/api/tokenstreamingservice/TokenStreamingService.ts`) stay as-is. They have their own auth handshake (auth is passed as a constructor parameter and injected into the first JSON-RPC message, not as an HTTP header); routing them through `request<T>` doesn't fit.
 - **Server-side fetches.** `request<T>` is client-only (uses Amplify under the hood). The "Nice-to-ship" server-cookie session item below would add a parallel `requestServer<T>` helper; not now.
 - **Per-call retries beyond the 401-refresh path.** No 5xx auto-retry. If a load 5xxs, the store's error field shows the message and the user retries explicitly.
 
@@ -896,7 +897,7 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 - New: `ajentify-app/src/api/client.ts` (chokepoint, interceptor home, `bindApiClientAuth`)
 - New: `ajentify-app/src/api/client.test.ts`
 - New: `ajentify-app/src/app/(authenticated)/ApiClientBinder.tsx` (render-time bind; reads from `useStores()` after E)
-- Modified: every `ajentify-app/src/api/**/*.ts` (route through `request<T>`) **except** `src/api/auth/*` (Amplify) and `src/api/chatpage/*` (deprecated carve-out)
+- Modified: every `ajentify-app/src/api/**/*.ts` (route through `request<T>`) **except** `src/api/auth/*` (Amplify), `src/api/user/updateUser.ts` (Amplify — `updateUserAttributes`), `src/api/tokenstreamingservice/TokenStreamingService.ts` (WebSocket, no fetch), and `src/api/chatpage/*` (deprecated carve-out)
 - Untouched (carved out, deleted by project 08): `src/utils/api/checkResponseAndParseJson.ts` (still referenced by the carved-out `chatpage/*`)
 
 **Auth gating (deliverable F):**
