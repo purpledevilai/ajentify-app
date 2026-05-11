@@ -404,7 +404,7 @@ After deliverable C, no store needs `showAlert` — error reporting is observabl
 
 Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's equivalent re-fetch a single PD by id every time a builder opens, with no shared cache. The list-cache pattern that exists for agents/tools/models doesn't exist for parameter definitions. Add it now so it lands as part of the same `RootStore` work, not as a one-off later.
 
-- [ ] Create `src/store/ParameterDefinitionsStore.ts`. Shape:
+- [x] Create `src/store/ParameterDefinitionsStore.ts`. Shape:
 
   ```ts
   class ParameterDefinitionsStore {
@@ -457,12 +457,12 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
   ```
 
 - [ ] `ToolBuilderStore` and `StructuredResponseEndpointBuilderStore` consume `ParameterDefinitionsStore` (injected via constructor in deliverable H). On builder open, they call `parameterDefinitions.ensurePdId(pdId)` instead of `getParameterDefinition(pdId)` directly. The standalone `getParameterDefinition` API call is still used by `ensurePdId`'s fallback path; `getParameterDefinitions` (plural) drives the warm-cache list load.
-- [ ] `bootLoad()` (E.5) calls `parameterDefinitions.loadParameterDefinitions()` alongside `models.loadModels()` so the cache is hot before any builder opens.
+- [x] `bootLoad()` (E.5) calls `parameterDefinitions.loadParameterDefinitions()` alongside `models.loadModels()` so the cache is hot before any builder opens.
 
 ##### E.2 Shape of `RootStore`
 
-- [ ] Create `src/store/RootStore.ts`. Stores are exposed as **flat named fields**: `root.auth`, `root.agents`, `root.tools`, etc. Not nested under `root.stores`.
-- [ ] `RootStore` constructor takes no arguments. The example below shows the construction *graph*; the **exact** dependency list each store ends up with is whatever its methods actually reach for, audited at PR time. Stores with no other-store deps take no arguments. **Don't paste the example literally — most stores in the current codebase have zero deps and the audit might leave them that way.**
+- [x] Create `src/store/RootStore.ts`. Stores are exposed as **flat named fields**: `root.auth`, `root.agents`, `root.tools`, etc. Not nested under `root.stores`.
+- [x] `RootStore` constructor takes no arguments. The example below shows the construction *graph*; the **exact** dependency list each store ends up with is whatever its methods actually reach for, audited at PR time. Stores with no other-store deps take no arguments. **Don't paste the example literally — most stores in the current codebase have zero deps and the audit might leave them that way.**
 
   ```ts
   constructor() {
@@ -491,12 +491,12 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
   - **`ChatPagesStore` and `ChatPageBuilderStore` are not here.** That feature is being deprecated (audit item 19); leave the old singletons alone. They'll be deleted in project 08.
   - **Builder stores (Tool / Agent / SRE / JsonDocument) are not here.** They're per-page MobX instances (deliverable H).
 
-- [ ] **Stores hold their dependencies as private fields and call them directly.** `this.tools.loadTools()` because `tools` was injected, **not** `this.root.tools.loadTools()`. Stores **do not** hold a reference to the root.
-- [ ] **Stores must not perform side effects in their constructor.** No data fetches, no MobX `reaction()` / `autorun()` setup. Boot-time data loading lives in `RootStore.bootLoad()` (E.5), called once by `<DashboardBoot>` after auth resolution.
+- [x] **Stores hold their dependencies as private fields and call them directly.** `this.tools.loadTools()` because `tools` was injected, **not** `this.root.tools.loadTools()`. Stores **do not** hold a reference to the root.
+- [x] **Stores must not perform side effects in their constructor.** No data fetches, no MobX `reaction()` / `autorun()` setup. Boot-time data loading lives in `RootStore.bootLoad()` (E.5), called once by `<DashboardBoot>` after auth resolution.
 
 ##### E.2.1 The auth-flow provider
 
-- [ ] Create `src/store/AuthFlowStore.ts` (a thin "root" for the auth-flow side). It does **not** subclass `RootStore`; it owns just the two stores the signin/signup pages need:
+- [x] Create `src/store/AuthFlowStore.ts` (a thin "root" for the auth-flow side). It does **not** subclass `RootStore`; it owns just the two stores the signin/signup pages need:
 
   ```ts
   export class AuthFlowStore {
@@ -514,25 +514,25 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
   }
   ```
 
-- [ ] Add `<AuthFlowStoreProvider>` and a `useAuthFlowStores()` hook in `src/store/AuthFlowStoreContext.tsx` (separate file from `StoreContext.tsx`). The naming is intentionally distinct so a developer in a `(auth)` page can't accidentally call `useStores()` and expect the dashboard root.
-- [ ] Mount `<AuthFlowStoreProvider>` only inside `app/(auth)/providers.tsx`. **Do not** mount it from `(public)/` or `(authenticated)/`.
-- [ ] The signin and signup pages replace `import { authStore } from '@/store/AuthStore'` (and the same for `signUpStore`) with `const { auth, signUp } = useAuthFlowStores()`.
-- [ ] **Two `AuthStore` instances exist at runtime** — one in the auth-flow bundle, one in the dashboard's `RootStore`. They share state via Amplify's session store and the `aj_signed_in` cookie, not via JS. This is the intended shape; it's what keeps the auth-flow bundle from pulling in `RootStore`. Document this at the top of `AuthFlowStore.ts` so the next reader doesn't try to "fix" it.
+- [x] Add `<AuthFlowStoreProvider>` and a `useAuthFlowStores()` hook in `src/store/AuthFlowStoreContext.tsx` (separate file from `StoreContext.tsx`). The naming is intentionally distinct so a developer in a `(auth)` page can't accidentally call `useStores()` and expect the dashboard root.
+- [x] Mount `<AuthFlowStoreProvider>` only inside `app/(auth)/providers.tsx`. **Do not** mount it from `(public)/` or `(authenticated)/`.
+- [x] The signin and signup pages replace `import { authStore } from '@/store/AuthStore'` (and the same for `signUpStore`) with `const { auth, signUp } = useAuthFlowStores()`.
+- [x] **Two `AuthStore` instances exist at runtime** — one in the auth-flow bundle, one in the dashboard's `RootStore`. They share state via Amplify's session store and the `aj_signed_in` cookie, not via JS. This is the intended shape; it's what keeps the auth-flow bundle from pulling in `RootStore`. Document this at the top of `AuthFlowStore.ts` so the next reader doesn't try to "fix" it.
 
 ##### E.3 Provider, hook, sweep (dashboard side)
 
-- [ ] Add `<StoreProvider>` and a single `useStores()` hook (returning the root for destructuring: `const { agents, auth } = useStores()`) in `src/store/StoreContext.tsx`. **Do not** add a parametrized `useStore('agents')`.
-- [ ] Mount `<StoreProvider>` only inside `app/(authenticated)/providers.tsx`. The provider constructs `new RootStore()` once and provides it via context. **Do not** mount it from `(public)/` or `(auth)/`.
-- [ ] Replace every `import { xxxStore } from '@/store/XxxStore'` in components under `(authenticated)/` (and `src/app/components/` for components only used by the dashboard) with `useStores()`. Roughly a 30-file mechanical sweep.
-- [ ] Delete every module-level singleton (`export const xxxStore = new XxxStore()`) from every store file the dashboard touches **and** from `AuthStore` and `SignUpStore` (those are now constructed by `AuthFlowStore` for the auth-flow side and by `RootStore` for the dashboard side). Each store file exports the class only. The `lint:arch` script from deliverable A will fail CI if one is added back.
+- [x] Add `<StoreProvider>` and a single `useStores()` hook (returning the root for destructuring: `const { agents, auth } = useStores()`) in `src/store/StoreContext.tsx`. **Do not** add a parametrized `useStore('agents')`.
+- [x] Mount `<StoreProvider>` only inside `app/(authenticated)/providers.tsx`. The provider constructs `new RootStore()` once and provides it via context. **Do not** mount it from `(public)/` or `(auth)/`.
+- [x] Replace every `import { xxxStore } from '@/store/XxxStore'` in components under `(authenticated)/` (and `src/app/components/` for components only used by the dashboard) with `useStores()`. Roughly a 30-file mechanical sweep.
+- [x] Delete every module-level singleton (`export const xxxStore = new XxxStore()`) from every store file the dashboard touches **and** from `AuthStore` and `SignUpStore` (those are now constructed by `AuthFlowStore` for the auth-flow side and by `RootStore` for the dashboard side). Each store file exports the class only. The `lint:arch` script from deliverable A will fail CI if one is added back.
   - The two singletons that survive this PR are `chatPagesStore` and `chatPageBuilderStore` (deprecated; deleted in project 08). The `lint:arch` regex (`^export const \w+Store = new \w+Store`) will match them, so the script's exclusion list explicitly carves out `src/store/ChatPagesStore.ts` and `src/store/ChatPageBuilderStore.ts`. Add a comment in `lint:arch` naming the carve-out and the project that removes it (project 08).
-- [ ] **Update `<ApiClientBinder>` to source `auth` from `useStores()`.** This is the swap-over described in D.3's "End of deliverable E" section — same render-time binding pattern, now reading from the root. The chokepoint and every API call site are untouched.
+- [x] **Update `<ApiClientBinder>` to source `auth` from `useStores()`.** This is the swap-over described in D.3's "End of deliverable E" section — same render-time binding pattern, now reading from the root. The chokepoint and every API call site are untouched.
 
 ##### E.4 Reset and refresh
 
-- [ ] `RootStore.resetAll()`: iterates its own fields and calls `reset()` on each that has one. The implementation is the root's job; individual stores don't know about each other for reset.
-- [ ] `AuthStore.signOut()` is a thin wrapper: it calls Amplify's `awsSignOut()`, deletes the `aj_signed_in` cookie (`document.cookie = 'aj_signed_in=; Path=/; Max-Age=0'`), then calls the `resetAll` callback it received in its constructor, then sets `signedIn = false`. **Do not** restore the manual list of `xxxStore.reset()` calls; that's exactly the pattern this deliverable removes. (Render-phase `redirect('/signin')` from `<DashboardBoot>` re-rendering on the `signedIn` flip handles the navigation; deliverable F.1.) **Circular-import elimination:** because `AuthStore` no longer imports any builder store singleton, the three circular module-level chains identified in audit item 9 (`AuthStore` ↔ `ChatPageBuilderStore`, `AuthStore` ↔ `StructuredResponseEndpointBuilderStore`, `AuthStore` ↔ `ToolBuilderStore`) are broken as a concrete byproduct of this change. The builder stores still receive an `AuthStore` instance via constructor injection (deliverable H), so the dependency direction is preserved — it is simply no longer circular.
-- [ ] Move `src/store/refreshDashboardCaches.ts` onto `RootStore.refreshDashboardCaches()` and **delete the original file**:
+- [x] `RootStore.resetAll()`: iterates its own fields and calls `reset()` on each that has one. The implementation is the root's job; individual stores don't know about each other for reset.
+- [x] `AuthStore.signOut()` is a thin wrapper: it calls Amplify's `awsSignOut()`, deletes the `aj_signed_in` cookie (`document.cookie = 'aj_signed_in=; Path=/; Max-Age=0'`), then calls the `resetAll` callback it received in its constructor, then sets `signedIn = false`. **Do not** restore the manual list of `xxxStore.reset()` calls; that's exactly the pattern this deliverable removes. (Render-phase `redirect('/signin')` from `<DashboardBoot>` re-rendering on the `signedIn` flip handles the navigation; deliverable F.1.) **Circular-import elimination:** because `AuthStore` no longer imports any builder store singleton, the three circular module-level chains identified in audit item 9 (`AuthStore` ↔ `ChatPageBuilderStore`, `AuthStore` ↔ `StructuredResponseEndpointBuilderStore`, `AuthStore` ↔ `ToolBuilderStore`) are broken as a concrete byproduct of this change. The builder stores still receive an `AuthStore` instance via constructor injection (deliverable H), so the dependency direction is preserved — it is simply no longer circular.
+- [x] Move `src/store/refreshDashboardCaches.ts` onto `RootStore.refreshDashboardCaches()` and **delete the original file**:
 
   ```ts
   refreshDashboardCaches() {
@@ -551,12 +551,12 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
 
 After `<DashboardBoot>` (deliverable F) confirms the user is signed in, the root store kicks off `bootLoad()`:
 
-- [ ] `RootStore.bootLoad()` fires loads in this order:
+- [x] `RootStore.bootLoad()` fires loads in this order:
   1. `parameterDefinitions.loadParameterDefinitions()` and `models.loadModels()` — no dependencies, fired in parallel. PDs are loaded eagerly so builders open instantly with their parameter trees already cached (E.1).
   2. `tools.loadTools()` and `sres.loadSREs()` — fired after step 1 resolves, in parallel with each other (the dep on PDs is a render-time lookup, not a load-time gate, so technically these could go in step 1; sequencing them after step 1 keeps the network burst small and the boot trace easy to read).
   3. `agents.loadAgents()` — fired after step 2.
   4. Lower-priority stores (`integrations`, `stages`, `contexts`) fire alongside step 3, since their data isn't blocked by anything.
-- [ ] Each `loadXxx` call is awaited only as far as ordering requires. Failures are non-fatal — a load that 401s goes through the interceptor (deliverable F); a load that 5xx-es sets the store's error field (deliverable C) and leaves the store empty.
+- [x] Each `loadXxx` call is awaited only as far as ordering requires. Failures are non-fatal — a load that 401s goes through the interceptor (deliverable F); a load that 5xx-es sets the store's error field (deliverable C) and leaves the store empty.
 
 ##### E.6 Where the auth-flow / one-shot stores end up
 
@@ -568,11 +568,11 @@ After `<DashboardBoot>` (deliverable F) confirms the user is signed in, the root
 
 ##### E.7 Tests
 
-- [ ] Write `src/store/RootStore.test.ts` using the vitest stack from deliverable A. At minimum:
+- [x] Write `src/store/RootStore.test.ts` using the vitest stack from deliverable A. At minimum:
   - Boots a `new RootStore()` without throwing.
   - Calls `root.resetAll()` and asserts every field with a `reset()` method got called and that no error was thrown.
   - Asserts no field is `undefined` after construction (catches dependency-order regressions).
-- [ ] Write `src/store/AuthFlowStore.test.ts` covering the same three cases for `AuthFlowStore` — boots, resets `auth`, no undefined fields.
+- [x] Write `src/store/AuthFlowStore.test.ts` covering the same three cases for `AuthFlowStore` — boots, resets `auth`, no undefined fields.
 
 #### F. Auth gating boundary
 
