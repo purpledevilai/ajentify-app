@@ -757,10 +757,10 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 
 ##### I.1 `<Link>` sweep
 
-- [ ] Replace every `router.push(staticPath)` with `<Link href={staticPath}>`. Reserve `router.push` for navigations triggered by post-action redirects (e.g. "after `createAgent()`, route to its detail page"). **Sidebar note:** `Sidebar.tsx` already wraps each main-nav tab in a Chakra UI `<Link>` (imported from `@chakra-ui/react`, **not** `'next/link'`) that fires `router.push` in its `onClick` — there is no `href` prop. This is the wrong component: it generates no `<a>` tag, provides no prefetch, and breaks middle-click / Cmd+click. The `<Link>` sweep must replace those Chakra `<Link>` elements with Next.js `<Link>` components (import from `'next/link'`).
-- [ ] Replace the manual `router.prefetch` calls (`agents/page.tsx:337`, `tools/page.tsx:285`, `sres/page.tsx:347`, `documents/page.tsx:273`, `contexts/page.tsx:82`, plus any others surfaced by the sweep) with `<Link prefetch>` (the default). The boot-time prefetch in I.2 covers the top-level routes; per-link prefetch covers the rest. **Exception — `contexts/page.tsx:82`:** that effect prefetches `/contexts`, which is the page it already lives on — a no-op. Delete the call outright rather than replacing it with a `<Link>`.
-- [ ] **Do not** add `<Link>`s to `/chat-pages`, `/chat-page-builder`, or `(public)/chat-page/[id]` from any new code. The Sidebar entry for "Chat Pages" stays as the existing `router.push` until project 08 deletes the page; touching it here would imply we're keeping it.
-- [ ] **Do not** convert the `router.push` calls in `gmail/authcode/page.tsx`, `google-calendar/authcode/page.tsx`, or `outlook/callback/page.tsx`. These are OAuth callback landing pages that users reach via external redirect from a third-party OAuth provider, never via in-app navigation. Their auto-redirect logic lives inside `useEffect` callbacks; they also each have a `handleGoBack` event handler that pushes to `/integrations`. Neither call is a candidate for `<Link>`.
+- [x] Replace every `router.push(staticPath)` with `<Link href={staticPath}>`. Reserve `router.push` for navigations triggered by post-action redirects (e.g. "after `createAgent()`, route to its detail page"). **Sidebar note:** `Sidebar.tsx` already wraps each main-nav tab in a Chakra UI `<Link>` (imported from `@chakra-ui/react`, **not** `'next/link'`) that fires `router.push` in its `onClick` — there is no `href` prop. This is the wrong component: it generates no `<a>` tag, provides no prefetch, and breaks middle-click / Cmd+click. The `<Link>` sweep must replace those Chakra `<Link>` elements with Next.js `<Link>` components (import from `'next/link'`).
+- [x] Replace the manual `router.prefetch` calls (`agents/page.tsx:337`, `tools/page.tsx:285`, `sres/page.tsx:347`, `documents/page.tsx:273`, `contexts/page.tsx:82`, plus any others surfaced by the sweep) with `<Link prefetch>` (the default). The boot-time prefetch in I.2 covers the top-level routes; per-link prefetch covers the rest. **Exception — `contexts/page.tsx:82`:** that effect prefetches `/contexts`, which is the page it already lives on — a no-op. Delete the call outright rather than replacing it with a `<Link>`.
+- [x] **Do not** add `<Link>`s to `/chat-pages`, `/chat-page-builder`, or `(public)/chat-page/[id]` from any new code. The Sidebar entry for "Chat Pages" stays as the existing `router.push` until project 08 deletes the page; touching it here would imply we're keeping it.
+- [x] **Do not** convert the `router.push` calls in `gmail/authcode/page.tsx`, `google-calendar/authcode/page.tsx`, or `outlook/callback/page.tsx`. These are OAuth callback landing pages that users reach via external redirect from a third-party OAuth provider, never via in-app navigation. Their auto-redirect logic lives inside `useEffect` callbacks; they also each have a `handleGoBack` event handler that pushes to `/integrations`. Neither call is a candidate for `<Link>`.
 
 ##### I.2 Boot splash & dashboard prefetch
 
@@ -808,13 +808,13 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 
 ##### I.3 Segment files
 
-- [ ] Add `loading.tsx` to each top-level segment under `(authenticated)/` as a **cold-cache fallback** consistent with the in-page skeleton style. **Do not** treat it as the user's primary "something is happening" feedback for normal navigation — that's the boot splash (entering the app) and in-page skeletons (data load).
-- [ ] Add `error.tsx` to each segment with a "something went wrong" + retry button.
-- [ ] Add `not-found.tsx` for dynamic segments that 404 (e.g. `/agents/[id]`, `/contexts/[context_id]`).
+- [x] Add `loading.tsx` to each top-level segment under `(authenticated)/` as a **cold-cache fallback** consistent with the in-page skeleton style. **Do not** treat it as the user's primary "something is happening" feedback for normal navigation — that's the boot splash (entering the app) and in-page skeletons (data load).
+- [x] Add `error.tsx` to each segment with a "something went wrong" + retry button.
+- [x] Add `not-found.tsx` for dynamic segments that 404 (e.g. `/agents/[id]`, `/contexts/[context_id]`).
 
 ##### I.4 SEO surface
 
-- [ ] Add `app/sitemap.ts` and `app/robots.ts`. Static for now; the docs/landing rewrite (project 09) populates them with real entries.
+- [x] Add `app/sitemap.ts` and `app/robots.ts`. Static for now; the docs/landing rewrite (project 09) populates them with real entries.
 
 #### J. Webpack fallback cleanup
 
