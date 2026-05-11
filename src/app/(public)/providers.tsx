@@ -1,7 +1,8 @@
 'use client';
-// Minimal public providers — no RootStore, no AuthFlowStore, no Amplify
-// When project 08 adds a shadcn theme, it will be added here.
+import React from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
+import theme from '@/theme/theme';
 
 export function PublicProviders({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <ChakraProvider theme={theme}>{children}</ChakraProvider>;
 }

@@ -1,3 +1,5 @@
+import { PublicProviders } from './providers';
+
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <PublicProviders>{children}</PublicProviders>;
 }

@@ -11,6 +11,11 @@ export function middleware(req: NextRequest) {
   const signedIn = req.cookies.get('aj_signed_in')?.value;
   const { pathname } = req.nextUrl;
 
+  // Root path → redirect based on auth state
+  if (pathname === '/') {
+    return NextResponse.redirect(new URL(signedIn ? '/agents' : '/landing', req.url));
+  }
+
   // Signed-in user landing on auth pages → bounce to dashboard
   const isAuthPath = pathname === '/signin' || pathname.startsWith('/signup');
   if (isAuthPath && signedIn) {
@@ -33,12 +38,18 @@ function isPublicPath(pathname: string): boolean {
 
 export const config = {
   matcher: [
+    // Public
+    '/',
+
+    // Auth
+    '/signin', '/signup',
+
+    // Authenticated
     '/agents/:path*', '/tools/:path*', '/sres/:path*', '/contexts/:path*',
     '/documents/:path*', '/stages/:path*', '/integrations/:path*',
     '/agent-builder/:path*', '/tool-builder/:path*', '/sre-builder/:path*',
     '/json-document-builder/:path*', '/chat/:path*',
     '/api-keys/:path*', '/usage/:path*', '/profile/:path*', '/create-team/:path*',
     '/gmail/:path*', '/google-calendar/:path*', '/outlook/:path*',
-    '/signin', '/signup',
   ],
 };
