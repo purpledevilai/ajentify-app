@@ -695,15 +695,15 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
 
 `react-hooks/exhaustive-deps` is already on at **warn** today (it ships with `next/core-web-vitals`, which `.eslintrc.json` extends). Today's CI doesn't fail on warnings, so the warnings have piled up unchecked. Deliverable A leaves the rule at warn; this deliverable promotes it to **error** *after* C and E have deleted the largest sources of violations (15 `setShowAlert` effects from C; 3 auth-redirect `reaction(authStore.signedIn, ...)` patterns from E/F.1 — note that `create-team/page.tsx:25` wraps a scroll-animation `reaction(createTeamStore.step, ...)`, not an auth redirect, so it is **not** removed by E/F and G must address it). Starting count before this deliverable: **15 warnings, 0 errors**; after C and E/F land roughly 12 of those are gone, leaving approximately 3 for G to fix.
 
-- [ ] Promote `react-hooks/exhaustive-deps` from `warn` to `error` in the ESLint config.
-- [ ] Run `next lint`. For each error, choose one of:
+- [x] Promote `react-hooks/exhaustive-deps` from `warn` to `error` in the ESLint config.
+- [x] Run `next lint`. For each error, choose one of:
   - Add the missing dep. Most cases.
   - Promote the value to a `useRef` or `useCallback` if its identity flips every render but its value shouldn't drive re-runs.
   - Switch to `[]` and add a one-line comment explaining why no deps are needed (rare; e.g. a one-shot mount-time fetch).
   - Pull the work out of React entirely — a MobX `autorun` set up at app boot, a `reaction()` inside an `observer`-derived render. (Should be rare.)
-- [ ] CI fails on any new violation.
-- [ ] One intentional inline suppression already exists at `StageAssignmentField.tsx:105` (`// eslint-disable-next-line react-hooks/exhaustive-deps`). Verify it carries a brief reason comment explaining why `value` and `onChange` are deliberately omitted (to avoid reacting to every value change). Preserve the suppression; do not delete it.
-- [ ] The three whole-file `/* eslint-disable */` files (`TokenStreamingService.ts`, `JSONRPCPeer.ts`, `types/context.ts`) silence ESLint entirely — they will not emit errors when `exhaustive-deps` is promoted and are out of scope for this sweep.
+- [x] CI fails on any new violation.
+- [x] One intentional inline suppression already exists at `StageAssignmentField.tsx:105` (`// eslint-disable-next-line react-hooks/exhaustive-deps`). Verify it carries a brief reason comment explaining why `value` and `onChange` are deliberately omitted (to avoid reacting to every value change). Preserve the suppression; do not delete it.
+- [x] The three whole-file `/* eslint-disable */` files (`TokenStreamingService.ts`, `JSONRPCPeer.ts`, `types/context.ts`) silence ESLint entirely — they will not emit errors when `exhaustive-deps` is promoted and are out of scope for this sweep.
 
 #### H. Builder stores: singleton → per-page instance
 
