@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { sreBuilderStore } from '../sre-builder/sreBuilderStore';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
@@ -362,12 +361,10 @@ const SREsPage = observer(() => {
   };
 
   const handleAddSREClick = () => {
-    sreBuilderStore.initiateNew();
     router.push('/sre-builder');
   };
 
   const handleSREClick = (sre: StructuredResponseEndpoint) => {
-    sreBuilderStore.setSRE({ ...sre });
     router.push(`/sre-builder/${sre.sre_id}`);
   };
 

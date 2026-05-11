@@ -10,8 +10,8 @@ import { updateSRE } from "@/api/structuredresponseendpoint/updateSRE";
 import { deleteSRE } from "@/api/structuredresponseendpoint/deleteSRE";
 import { runSRE } from "@/api/structuredresponseendpoint/runSRE";
 import { AnyType } from "@/types/tools";
-import { getParameterDefinition } from "@/api/parameterdefinition/getParameterDefinition";
 import { deleteParameterDefinition } from "@/api/parameterdefinition/deleteParameterDefinition";
+import { ParameterDefinitionsStore } from "./ParameterDefinitionsStore";
 
 const defaultSRE: StructuredResponseEndpoint = {
     sre_id: '',
@@ -85,7 +85,10 @@ export class StructuredResponseEndpointBuilderStore {
         return this.useVariableNames;
     }
 
-    constructor() {
+    private parameterDefinitions: ParameterDefinitionsStore;
+
+    constructor({ parameterDefinitions }: { parameterDefinitions: ParameterDefinitionsStore }) {
+        this.parameterDefinitions = parameterDefinitions;
         makeAutoObservable(this, {
             templateArgs: computed,
             isLegacySRE: computed,
@@ -188,7 +191,11 @@ export class StructuredResponseEndpointBuilderStore {
         try {
             this.loadParameterDefinitionError = null;
             this.isLoadingParameterDefinition = true;
-            const parameterDefinition = await getParameterDefinition(pdId);
+            const parameterDefinition = await this.parameterDefinitions.ensurePdId(pdId);
+            if (!parameterDefinition) {
+                this.loadParameterDefinitionError = this.parameterDefinitions.parameterDefinitionsError ?? 'Failed to load parameter definition';
+                return;
+            }
             this.parameters = jsonSchemaToUiTree(parameterDefinition.schema);
         } catch (error) {
             this.loadParameterDefinitionError = (error as Error).message;

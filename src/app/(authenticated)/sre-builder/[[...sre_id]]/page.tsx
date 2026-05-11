@@ -13,7 +13,8 @@ import { ArrowBackIcon, AddIcon, SmallCloseIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { observer } from "mobx-react-lite";
 import { InlineError } from "@/app/components/InlineError";
-import { sreBuilderStore } from '../sreBuilderStore';
+import { useSREBuilder } from "@/store/useSREBuilder";
+import { SREBuilderStoreContext } from '../SREBuilderContext';
 import { useStores } from "@/store/StoreContext";
 
 import { ParameterView } from "./components/Parameter";
@@ -28,6 +29,7 @@ interface SREBuilderPageProps {
 }
 
 const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
+  const sreBuilderStore = useSREBuilder();
   const { sres: structuredResponseEndpointsStore } = useStores();
 
   // Nav Guard to detect page navigation - Really dump NextJS limitiation
@@ -51,7 +53,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
       // Direct URL access to /sre-builder with no id — mark as new
       sreBuilderStore.initiateNew();
     }
-  }, [params]);
+  }, [params, sreBuilderStore]);
 
   useEffect(() => {
     void loadSREId();
@@ -59,7 +61,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
     return () => {
       sreBuilderStore.reset();
     };
-  }, [loadSREId]);
+  }, [loadSREId, sreBuilderStore]);
 
   // Detect page navigation
   useEffect(() => {
@@ -90,6 +92,7 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
         leavePage();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navGuard]);
 
   const onSaveSRE = async () => {
@@ -117,7 +120,8 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
 
 
   return (
-    <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
+    <SREBuilderStoreContext.Provider value={sreBuilderStore}>
+      <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
       {/* Header Section */}
       <Flex direction="row" w="100%" mb={8} gap={4} align="center">
         <IconButton
@@ -412,7 +416,8 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Flex>
+      </Flex>
+    </SREBuilderStoreContext.Provider>
   );
 });
 
