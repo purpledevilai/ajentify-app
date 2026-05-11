@@ -575,14 +575,14 @@ This deliverable owns four things: the boot orchestration component, real backen
 
 ##### F.1 `<DashboardBoot>` — the authenticated-side orchestrator
 
-- [ ] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`.
+- [ ] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`. **Completing the deliverable B migration:** deliverable B already removed `checkAuth()` and the `isDeterminingAuth` spinner from `app/layout.tsx` (the root layout). `<DashboardBoot>` is their new home — it is not being added alongside the root layout's logic, but replacing it for the authenticated route group.
 - [ ] Behaviour:
   - While `auth.isDeterminingAuth` is true: render `<BootSplash />` (a separate small component holding the branded loading animation; created in this deliverable).
   - When determination resolves to **not signed in**: call `redirect('/signin')` from `next/navigation` **during render** (not in an effect, not in a handler). The component returns `null` after the redirect call; the redirect throws a navigation signal Next catches.
   - When determination resolves to **signed in**: kick off `root.bootLoad()` (deliverable E.5) and the per-route prefetches (deliverable I) in a single effect; render `children`.
 - [ ] **`redirect()` discipline.** Render-phase only. Not in `useEffect`, not in event handlers, not in `reaction()`. For mid-session sign-outs (the 401 interceptor or a user-clicked Sign Out), do not call `redirect()`; instead let `<DashboardBoot>` re-render via its `observer` decorator on the `signedIn` flip, which re-enters the not-signed-in branch and calls `redirect('/signin')` from the next render. Belt-and-braces: the 401 interceptor also does `window.location.assign('/signin')` (F.4) because it's outside React; whichever fires first, Next dedupes.
 - [ ] Wrap `app/(authenticated)/layout.tsx`'s body in `<DashboardBoot>`. The layout stays a client component (Chakra `useBreakpointValue` for the sidebar).
-- [ ] Remove the per-page `useEffect` + `reaction()` + `router.push()` redirect machinery from at least: `app/page.tsx`, `(authenticated)/layout.tsx`, `(authenticated)/agents/page.tsx`, `(authenticated)/create-team/page.tsx`, `(auth)/signin/page.tsx` (moved from `(public)/` in deliverable B). The audit's list is a starting point — sweep `src/` for any other `reaction(() => authStore.signedIn, ...)` (or `reaction(() => auth.signedIn, ...)`) patterns and remove them too.
+- [ ] Remove the per-page `useEffect` + `reaction()` + `router.push()` redirect machinery from: `app/page.tsx`, `(authenticated)/layout.tsx`, `(auth)/signin/page.tsx` (moved from `(public)/` in deliverable B). Sweep `src/` for any other `reaction(() => authStore.signedIn, ...)` (or `reaction(() => auth.signedIn, ...)`) patterns and remove them too. **Not in scope for F.1:** `(authenticated)/agents/page.tsx` guards data loading with `if (!authStore.signedIn) return;` but does **not** have `reaction()` + `router.push()` redirect machinery — leave it untouched here (the depless effect is addressed by deliverable G). `(authenticated)/create-team/page.tsx` has a `reaction()` at line 25 that drives a step scroll animation, not an auth redirect; it is also not in scope for F.1.
 
 ##### F.2 Real backend-validated auth in `AuthStore.checkAuth`
 
@@ -590,8 +590,9 @@ This deliverable owns four things: the boot orchestration component, real backen
 - [ ] Failure policy:
   - 401 from `/user` → `signOut()` and set `signedIn = false`. Stale token; treat as not signed in.
   - 5xx or network failure → set `signedIn = false`. Cautious policy: a flaky backend should not gate the user *into* the dashboard, only out of it.
-  - 200 → set `signedIn = true`, cache the user response on `authStore.user` to skip a redundant `loadUser()` call on the next page.
-- [ ] `isDeterminingAuth` covers the **whole** boot — token fetch + `/user` call. Only flips to `false` after either branch above completes.
+  - 200 → set `signedIn = true`, cache the user response on `authStore.user`.
+- [ ] `isDeterminingAuth` covers the **whole** boot — token fetch + `/user` call. Only flips to `false` after either branch above completes. (`isDeterminingAuth` is already initialized to `true` in `AuthStore`'s class body — preserve this; it ensures `<BootSplash>` renders immediately on first paint before `checkAuth()` has run.)
+- [ ] **Remove the lazy `loadUser()` call from `app/(authenticated)/layout.tsx`** (currently the layout calls `authStore.loadUser()` when `signedIn === true` and `authStore.user` is null). After F.2, `checkAuth()` already fetches and populates `authStore.user` on a 200 response; leaving the layout's call in place would hit `GET /user` twice per boot. Delete the `if (!authStore.user) { authStore.loadUser(); }` block from the authenticated layout.
 - [ ] **Delete `this.signedIn = true` from `AuthStore.submitSignIn`** (currently `AuthStore.ts:91`). With F.2 in place, `signedIn` flips only inside `checkAuth` after the backend has confirmed the token; flipping it optimistically inside `submitSignIn` would defeat F.2. The post-signin path becomes: `submitSignIn` resolves → page calls `router.replace('/agents')` → `<DashboardBoot>` mounts → `checkAuth()` runs → `signedIn = true` after `/user` returns 200. The boot splash covers the round-trip (F.3).
 
 ##### F.3 The post-signin handoff (replaces the old `reaction()` pattern)
@@ -605,6 +606,8 @@ This deliverable owns four things: the boot orchestration component, real backen
     if (!auth.signInError) router.replace('/agents');
   };
   ```
+
+  **Deliberate change from current code:** the existing `(public)/signin/page.tsx` uses `router.push('/agents')`. This deliverable changes it to `router.replace` so `/signin` is not pushed onto the browser's history stack — after signing in, pressing the back button takes the user to wherever they were before `/signin`, not back to the sign-in form.
 
   After replacing `/agents`, the auth-flow bundle unmounts; `<DashboardBoot>` mounts inside the dashboard bundle; the dashboard's *own* `auth` (a different `AuthStore` instance — see E.2.1) runs its `checkAuth()` (token + `/user`); the boot splash shows for the duration of that round-trip. **This is the intended UX** — "preparing your workspace" is the right thing to see between the click and the dashboard. Do not optimize past it by skipping the splash; the cost is one round-trip and the win is consistency with cold-load and refresh-load.
 
