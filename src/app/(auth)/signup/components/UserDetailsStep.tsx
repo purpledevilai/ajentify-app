@@ -4,16 +4,16 @@ import React from 'react';
 import { Stack, FormControl, FormLabel, Input, Button, Heading } from '@chakra-ui/react';
 import { observer } from 'mobx-react-lite';
 import { signUpStore } from '@/store/SignUpStore';
+import { InlineError } from '@/app/components/InlineError';
 
 const UserDetailsStep = observer(() => {
     return (
         <Stack
             spacing={4}
-            //height="100%" // Fill parent's height
-            width="100%" // Fill parent's width
-            justifyContent="center" // Center content vertically
-            alignItems="center" // Center content horizontally
-            px={4} // Optional padding for responsive design
+            width="100%"
+            justifyContent="center"
+            alignItems="center"
+            px={4}
         >
             <Heading as="h1" size="lg" textAlign="center">
                 Sign Up
@@ -43,6 +43,9 @@ const UserDetailsStep = observer(() => {
                     onChange={(e) => signUpStore.setField('confirmPassword', e.target.value)}
                 />
             </FormControl>
+            {signUpStore.signUpError && (
+                <InlineError message={signUpStore.signUpError} />
+            )}
             <Button width="100%" isLoading={signUpStore.signUpLoading} onClick={() => signUpStore.submitSignUp()}>
                 Sign Up
             </Button>

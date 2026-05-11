@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigationGuard } from "next-navigation-guard";
 import {
     Flex, Text, FormControl, Heading, IconButton, Input, Switch, Textarea, Button, Tooltip,
     useDisclosure, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
     Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerOverlay, DrawerCloseButton,
     Tag, TagLabel, TagCloseButton, useColorMode, useClipboard, FormLabel, Spinner, Select,
-    useBreakpointValue, useToast
+    useBreakpointValue, useToast,
+    AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon, HamburgerIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
@@ -15,7 +17,7 @@ import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { agentBuilderStore } from "@/store/AgentBuilderStore";
 import { agentsStore } from "@/store/AgentsStore";
 import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
-import { useAlert } from "@/app/components/AlertProvider";
+import { InlineError } from "@/app/components/InlineError";
 import { ChatEvent } from "@/types/chatresponse";
 import { observer } from "mobx-react-lite";
 import { PassEventTool } from "./components/PassEventTool";
@@ -50,13 +52,15 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const { isOpen: isPromptEngineerModalOpen, onOpen: onOpenPromptEngineerModal, onClose: onClosePromptEngineerModal } = useDisclosure();
     const { isOpen: isToolPickerModalOpen, onOpen: onOpenToolPickerModal, onClose: onCloseToolPickerModal } = useDisclosure();
     const { isOpen: isToolNavDrawerOpen, onOpen: onOpenToolNavDrawer, onClose: onCloseToolNavDrawer } = useDisclosure();
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const deleteRef = useRef<any>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const { hasCopied, onCopy } = useClipboard(agentBuilderStore.showAgentId ? agentBuilderStore.currentAgent.agent_id : '');
-    const { showAlert } = useAlert();
     const toast = useToast();
     const isMobile = useBreakpointValue({ base: true, md: false });
 
     useEffect(() => {
-        setShowAlertOnStore();
         loadAgentId();
         toolsStore.loadTools();
 
@@ -64,10 +68,6 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
             agentBuilderStore.reset();
         }
     }, []);
-
-    const setShowAlertOnStore = () => {
-        agentBuilderStore.setShowAlert(showAlert);
-    }
 
     const loadAgentId = async () => {
         const paramArray = (await params).agent_id ?? undefined;
@@ -104,20 +104,16 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 navGuard.accept();
             }
             if (agentBuilderStore.hasUpdates) {
-                // Unsaved changes alert
-                showAlert({
-                    title: "Unsaved Changes",
-                    message: "You have unsaved changes. Are you sure you want to leave?",
-                    actions: [
-                        { label: "Cancel", onClick: stayOnPage },
-                        { label: "Leave", onClick: leavePage }
-                    ]
-                })
+                if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+                    leavePage();
+                } else {
+                    stayOnPage();
+                }
             } else {
                 leavePage();
             }
         }
-    }, [navGuard, showAlert]);
+    }, [navGuard]);
 
     const onOpenPromptEngineerClick = () => {
         agentBuilderStore.createPromptEngineerContext();
@@ -155,22 +151,13 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
         });
     }
 
-    const onDeleteAgentClick = async () => {
-        showAlert({
-            title: "Delete Agent",
-            message: "Are you sure you want to delete this agent?",
-            actions: [
-                { label: "Cancel", onClick: () => { } },
-                {
-                    label: "Delete", onClick: async () => {
-                        await agentBuilderStore.deleteAgent();
-                        agentsStore.loadAgents(true);
-                        // Navigate back
-                        window.history.back();
-                    }
-                }
-            ]
-        })
+    const handleConfirmDeleteAgent = async () => {
+        setIsDeleting(true);
+        await agentBuilderStore.deleteAgent();
+        agentsStore.loadAgents(true);
+        setIsDeleting(false);
+        onDeleteClose();
+        window.history.back();
     }
 
     const beforeCloseTestAgentModal = () => {
@@ -511,10 +498,19 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                         isLoading={agentBuilderStore.agentLoading || agentsStore.agentsLoading}
                     >Save</Button>
                 </Tooltip>
+                {agentBuilderStore.deleteAgentError && (
+                    <InlineError message={agentBuilderStore.deleteAgentError} />
+                )}
+                {agentBuilderStore.createAgentError && (
+                    <InlineError message={agentBuilderStore.createAgentError} />
+                )}
+                {agentBuilderStore.updateAgentError && (
+                    <InlineError message={agentBuilderStore.updateAgentError} />
+                )}
                 {/* Delete Button */}
                 {agentBuilderStore.showDeleteButton && (
                     <Button
-                        onClick={onDeleteAgentClick}
+                        onClick={onDeleteOpen}
                         variant="outline"
                         size="lg"
                         isLoading={agentBuilderStore.agentDeleteLoading}
@@ -664,6 +660,18 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     </ModalBody>
                 </ModalContent>
             </Modal>
+
+            <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={deleteRef} onClose={onDeleteClose} isCentered>
+                <AlertDialogOverlay />
+                <AlertDialogContent>
+                    <AlertDialogHeader fontSize="lg" fontWeight="bold">Delete Agent</AlertDialogHeader>
+                    <AlertDialogBody>Are you sure you want to delete this agent?</AlertDialogBody>
+                    <AlertDialogFooter gap={3}>
+                        <Button ref={deleteRef} onClick={onDeleteClose} isDisabled={isDeleting}>Cancel</Button>
+                        <Button colorScheme="red" onClick={handleConfirmDeleteAgent} isLoading={isDeleting} loadingText="Deleting…">Delete</Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Flex>
     );
 });

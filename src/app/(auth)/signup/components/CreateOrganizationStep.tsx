@@ -4,6 +4,7 @@ import React from 'react';
 import { Stack, FormControl, FormLabel, Input, Button, Heading } from '@chakra-ui/react';
 import { observer } from 'mobx-react-lite';
 import { signUpStore } from '@/store/SignUpStore';
+import { InlineError } from '@/app/components/InlineError';
 
 const CreateOrganizationStep = observer(() => {
     return (
@@ -15,7 +16,10 @@ const CreateOrganizationStep = observer(() => {
                 <FormLabel>Organization Name</FormLabel>
                 <Input value={signUpStore.organizationName} onChange={(e) => signUpStore.setField('organizationName', e.target.value)} />
             </FormControl>
-            <Button  isLoading={signUpStore.createOrgLoading} onClick={() => signUpStore.createOrganization()}>
+            {signUpStore.createOrgError && (
+                <InlineError message={signUpStore.createOrgError} />
+            )}
+            <Button isLoading={signUpStore.createOrgLoading} onClick={() => signUpStore.createOrganization()}>
                 Create Organization
             </Button>
         </Stack>

@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import ChatBox from '@/app/components/chatbox/ChatBox';
-import { useAlert } from '@/app/components/AlertProvider';
 import { defaultChatBoxStyle, defaultDarkChatBoxStyle } from '@/app/components/chatbox/ChatBox';
 import { chatPageStore } from '@/store/ChatPageStore';
 import { ChatSideBar } from './components/chatsidebar/ChatSideBar';
@@ -34,21 +33,10 @@ const ChatPage = observer(() => {
         onOpen: onMobileChatDrawerOpen,
         onClose: onMobileChatDrawereClose
     } = useDisclosure();
-    const { showAlert } = useAlert();
-
     // Initiate load
     useEffect(() => {
         chatPageStore.loadData();
     }, [])
-
-    // Show alerts
-    useEffect(() => {
-        setAlertOnStore();
-    })
-
-    const setAlertOnStore = () => {
-        chatPageStore.setShowAlert(showAlert);
-    }
 
     return (
         <Flex direction="column" height="100%" p={2}>

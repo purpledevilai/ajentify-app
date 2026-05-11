@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
     Box,
@@ -30,24 +30,36 @@ import {
     InputRightElement,
     IconButton,
     useClipboard,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
 } from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
 import { authStore } from '@/store/AuthStore';
 import { getAPIKeys, APIKeySummary } from '@/api/apikey/getAPIKeys';
 import { generateAPIKey } from '@/api/apikey/generateAPIKey';
 import { revokeAPIKey } from '@/api/apikey/revokeAPIKey';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 
 const APIKeysPage = observer(() => {
     const [apiKeys, setApiKeys] = useState<APIKeySummary[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
     const [newToken, setNewToken] = useState<string | null>(null);
+    const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
+    const [revoking, setRevoking] = useState(false);
+    const [revokeError, setRevokeError] = useState<string | null>(null);
 
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen: isRevokeOpen, onOpen: onRevokeOpen, onClose: onRevokeClose } = useDisclosure();
     const { onCopy, hasCopied } = useClipboard(newToken || '');
-    const { showAlert } = useAlert();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cancelRef = useRef<any>(null);
 
     const cardBg = useColorModeValue('white', 'gray.800');
 
@@ -71,6 +83,7 @@ const APIKeysPage = observer(() => {
 
     const handleCreate = async () => {
         if (!authStore.user || authStore.user.organizations.length === 0) return;
+        setCreateError(null);
         setCreating(true);
         try {
             const orgId = authStore.user.organizations[0].id;
@@ -79,37 +92,32 @@ const APIKeysPage = observer(() => {
             onOpen();
             await fetchKeys();
         } catch (err) {
-            showAlert({
-                title: 'Error',
-                message: (err as Error).message || 'Failed to create API key.',
-            });
+            setCreateError((err as Error).message || 'Failed to create API key.');
         } finally {
             setCreating(false);
         }
     };
 
-    const handleRevoke = (apiKeyId: string) => {
-        showAlert({
-            title: 'Revoke API Key',
-            message: 'Are you sure you want to revoke this API key? This action cannot be undone and any integrations using this key will stop working.',
-            actions: [
-                { label: 'Cancel', onClick: () => {} },
-                {
-                    label: 'Revoke',
-                    onClick: async () => {
-                        try {
-                            await revokeAPIKey(apiKeyId);
-                            await fetchKeys();
-                        } catch (err) {
-                            showAlert({
-                                title: 'Error',
-                                message: (err as Error).message || 'Failed to revoke API key.',
-                            });
-                        }
-                    },
-                },
-            ],
-        });
+    const handleRevokeClick = (apiKeyId: string) => {
+        setRevokeTarget(apiKeyId);
+        setRevokeError(null);
+        onRevokeOpen();
+    };
+
+    const handleConfirmRevoke = async () => {
+        if (!revokeTarget) return;
+        setRevoking(true);
+        setRevokeError(null);
+        try {
+            await revokeAPIKey(revokeTarget);
+            await fetchKeys();
+            onRevokeClose();
+            setRevokeTarget(null);
+        } catch (err) {
+            setRevokeError((err as Error).message || 'Failed to revoke API key.');
+        } finally {
+            setRevoking(false);
+        }
     };
 
     const handleModalClose = () => {
@@ -140,6 +148,8 @@ const APIKeysPage = observer(() => {
                     Create API Key
                 </Button>
             </Flex>
+
+            {createError && <InlineError message={createError} />}
 
             {loading && (
                 <Flex justify="center" py={12}>
@@ -190,7 +200,7 @@ const APIKeysPage = observer(() => {
                                                 size="xs"
                                                 colorScheme="red"
                                                 variant="outline"
-                                                onClick={() => handleRevoke(key.api_key_id)}
+                                                onClick={() => handleRevokeClick(key.api_key_id)}
                                             >
                                                 Revoke
                                             </Button>
@@ -237,6 +247,24 @@ const APIKeysPage = observer(() => {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
+
+            {/* Revoke confirmation */}
+            <AlertDialog isOpen={isRevokeOpen} leastDestructiveRef={cancelRef} onClose={onRevokeClose} isCentered>
+                <AlertDialogOverlay />
+                <AlertDialogContent>
+                    <AlertDialogHeader fontSize="lg" fontWeight="bold">Revoke API Key</AlertDialogHeader>
+                    <AlertDialogBody>
+                        <Text>Are you sure you want to revoke this API key? This action cannot be undone and any integrations using this key will stop working.</Text>
+                        {revokeError && <InlineError message={revokeError} />}
+                    </AlertDialogBody>
+                    <AlertDialogFooter gap={3}>
+                        <Button ref={cancelRef} onClick={onRevokeClose} isDisabled={revoking}>Cancel</Button>
+                        <Button colorScheme="red" onClick={handleConfirmRevoke} isLoading={revoking} loadingText="Revoking…">
+                            Revoke
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Box>
     );
 });

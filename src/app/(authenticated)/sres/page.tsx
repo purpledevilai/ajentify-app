@@ -42,9 +42,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  useToast,
 } from '@chakra-ui/react';
 import { CopyIcon, ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 import { authStore } from '@/store/AuthStore';
 
 type SortField = 'name' | 'model' | 'is_public' | 'created_at' | 'updated_at';
@@ -146,7 +147,7 @@ const SRERow = observer(
   }) => {
     const [idHovered, setIdHovered] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
-    const { showAlert } = useAlert();
+    const toast = useToast();
 
     const hoverBg = useColorModeValue('gray.50', 'gray.700');
     const selectedBg = useColorModeValue('blue.50', 'blue.900');
@@ -166,7 +167,7 @@ const SRERow = observer(
     const handleCopyId = (e: React.MouseEvent) => {
       e.stopPropagation();
       navigator.clipboard.writeText(sre.sre_id);
-      showAlert({ title: 'Copied', message: 'SRE ID copied to clipboard' });
+      toast({ title: 'Copied', description: 'SRE ID copied to clipboard', status: 'success', duration: 2000 });
     };
 
     return (
@@ -337,7 +338,7 @@ const SREsPage = observer(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cancelRef = useRef<any>(null);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const tableBorder = useColorModeValue('gray.200', 'gray.700');
@@ -345,8 +346,6 @@ const SREsPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/sre-builder');
-    structuredResponseEndpointsStore.setShowAlert(showAlert);
-    stagesStore.setShowAlert(showAlert);
     structuredResponseEndpointsStore.loadSREs();
     modelsStore.loadModels();
     stagesStore.loadStages();
@@ -402,12 +401,9 @@ const SREsPage = observer(() => {
       setSelectedIds(new Set());
       setSelectMode(false);
       setIsConfirmOpen(false);
-      showAlert({
-        title: 'Deleted',
-        message: `${selectedIds.size} SRE${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
-      });
+      toast({ title: 'Deleted', description: `${selectedIds.size} SRE${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`, status: 'success', duration: 3000, isClosable: true });
     } catch {
-      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+      toast({ title: 'Error', description: 'One or more deletions failed. Please try again.', status: 'error', duration: 4000, isClosable: true });
     } finally {
       setIsDeleting(false);
     }
@@ -500,11 +496,15 @@ const SREsPage = observer(() => {
         />
       </InputGroup>
 
-      {structuredResponseEndpointsStore.sresLoading ? (
+      {structuredResponseEndpointsStore.sresLoading && (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
-      ) : (
+      )}
+      {structuredResponseEndpointsStore.sresError && (
+        <InlineError message={structuredResponseEndpointsStore.sresError} onRetry={() => structuredResponseEndpointsStore.loadSREs(true)} />
+      )}
+      {!structuredResponseEndpointsStore.sresLoading && !structuredResponseEndpointsStore.sresError && (
         <Flex direction="column" gap={4}>
           {sortedSREs.length > 0 && (
             <TableContainer

@@ -1,5 +1,4 @@
 import { makeAutoObservable } from 'mobx';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { scrapePage } from '@/api/scrapepage/scrapePage';
 import { createTeam } from '@/api/createteam/createTeam';
 import { getJob } from '@/api/job/getJob';
@@ -50,7 +49,10 @@ class CreateTeamStore {
     jobId: string = '';
     pollingTime: number = 2000;
 
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+    // Error fields
+    getLinkDataError: string | null = null;
+    submitCreateTeamError: string | null = null;
+    pollJobStatusError: string | null = null;
     
     constructor() {
         makeAutoObservable(this);
@@ -69,10 +71,9 @@ class CreateTeamStore {
         this.createingTeamLoading = false;
         this.gettingLinkData = false;
         this.jobId = '';
-    }
-
-    setShowAlert(showAlert: (params: ShowAlertParams) => void) {
-        this.showAlert = showAlert;
+        this.getLinkDataError = null;
+        this.submitCreateTeamError = null;
+        this.pollJobStatusError = null;
     }
 
     stepForward() {
@@ -118,6 +119,7 @@ class CreateTeamStore {
     }
 
     async getLinkData() {
+        this.getLinkDataError = null;
         this.gettingLinkData = true;
         try {
             this.linkData = await Promise.all(this.linkData.map(async (link) => {
@@ -132,16 +134,14 @@ class CreateTeamStore {
             }));
         } catch (error) {
             console.error('Error getting link data:', error);
-            this.showAlert({
-                title: 'Error Getting Link Data',
-                message: 'An error occurred while getting link data. Please try again later.',
-            });
+            this.getLinkDataError = (error as Error).message;
         } finally {
             this.gettingLinkData = false;
         }
     }
 
     async submitCreateTeam() {
+        this.submitCreateTeamError = null;
         this.createingTeamLoading = true;
         try {
             const job = await createTeam({
@@ -157,16 +157,14 @@ class CreateTeamStore {
             }, this.pollingTime);
         } catch (error) {
             console.error('Error creating team:', error);
-            this.showAlert({
-                title: 'Error Creating Team',
-                message: 'An error occurred while creating the team. Please try again later.',
-            });
+            this.submitCreateTeamError = (error as Error).message;
         } finally {
             this.createingTeamLoading = false;
         }
     }
 
     async pollJobStatus() {
+        this.pollJobStatusError = null;
         this.createingTeamLoading = true;
         try {
             const job = await getJob(this.jobId);
@@ -175,18 +173,7 @@ class CreateTeamStore {
                 agentsStore.loadAgents(true);
                 this.stepForward();
             } else if (job.status === 'error') {
-                this.showAlert({
-                    title: 'Error Creating Team',
-                    message: job.message,
-                    actions: [
-                        {
-                            label: 'Go back and try again',
-                            onClick: () => {
-                                this.stepBack();
-                            }
-                        }
-                    ]
-                });
+                this.pollJobStatusError = job.message;
             } else {
                 setTimeout(() => {
                     console.log("Polling job status repeate");
@@ -195,10 +182,7 @@ class CreateTeamStore {
             }
         } catch (error) {
             console.error('Error polling job status:', error);
-            this.showAlert({
-                title: 'Error Polling Job Status',
-                message: 'An error occurred while polling the job status. Please try again later.',
-            });
+            this.pollJobStatusError = (error as Error).message;
         } finally {
             this.createingTeamLoading = false;
         }

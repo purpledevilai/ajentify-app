@@ -1,5 +1,4 @@
 import { makeAutoObservable } from 'mobx';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { authStore } from './AuthStore';
 import { AnyType, TestInput, Tool } from '@/types/tools';
 import { UIParameterNode } from '@/types/parameterdefinition';
@@ -112,7 +111,6 @@ const getTestObject = (testInputs: TestInput[], isArrayItem: boolean = false): R
 
 class ToolBuilderStore {
 
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
     tool: Tool = defaultTool;
     isLoadingParameterDefinition = false;
     parameters: UIParameterNode[] = [];
@@ -122,6 +120,13 @@ class ToolBuilderStore {
     functionDeclaration = 'def custom_function():';
     toolExecuting = false;
 
+    // Error fields
+    setToolWithIdError: string | null = null;
+    loadParameterDefinitionError: string | null = null;
+    executeTestInputError: string | null = null;
+    executeTestInputResult: string | null = null;
+    saveToolError: string | null = null;
+    deleteToolError: string | null = null;
 
     constructor() {
         makeAutoObservable(this);
@@ -136,10 +141,12 @@ class ToolBuilderStore {
         this.toolDeleting = false;
         this.functionDeclaration = 'def custom_function():';
         this.toolExecuting = false;
-    }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
+        this.setToolWithIdError = null;
+        this.loadParameterDefinitionError = null;
+        this.executeTestInputError = null;
+        this.executeTestInputResult = null;
+        this.saveToolError = null;
+        this.deleteToolError = null;
     }
 
     initiateNew = () => {
@@ -161,20 +168,15 @@ class ToolBuilderStore {
     }
 
     setToolWithId = async (toolId: string) => {
+        this.setToolWithIdError = null;
         await toolsStore.loadTools();
         if (!toolsStore.tools) {
-            this.showAlert({
-                title: 'Whoops',
-                message: 'There was a problem loading the tools',
-            });
+            this.setToolWithIdError = 'There was a problem loading the tools';
             return;
         }
         const tool = toolsStore.tools.find((t) => t.tool_id === toolId);
         if (!tool) {
-            this.showAlert({
-                title: 'Whoops',
-                message: 'Could not find chat page',
-            });
+            this.setToolWithIdError = 'Could not find tool';
             return;
         }
         this.setTool(tool);
@@ -182,16 +184,14 @@ class ToolBuilderStore {
 
     loadParameterDefinition = async (pdId: string) => {
         try {
+            this.loadParameterDefinitionError = null;
             this.isLoadingParameterDefinition = true;
             const parameterDefinition = await getParameterDefinition(pdId);
             this.parameters = jsonSchemaToUiTree(parameterDefinition.schema);
             this.updateCode();
             this.updateTestInputs();
         } catch (error) {
-            this.showAlert({
-                title: 'Whoops',
-                message: (error as Error).message,
-            })
+            this.loadParameterDefinitionError = (error as Error).message;
         } finally {
             this.isLoadingParameterDefinition = false;
         }
@@ -380,20 +380,16 @@ class ToolBuilderStore {
 
     executeTestInput = async () => {
         if (this.tool.is_client_side_tool) {
-            this.showAlert({
-                title: 'Whoops',
-                message: 'Testing is not available for client-side tools.',
-            });
+            this.executeTestInputError = 'Testing is not available for client-side tools.';
             return;
         }
         if (this.tool.pass_context) {
-            this.showAlert({
-                title: 'Whoops',
-                message: 'Testing is disabled when pass context is enabled.',
-            });
+            this.executeTestInputError = 'Testing is disabled when pass context is enabled.';
             return;
         }
         try {
+            this.executeTestInputError = null;
+            this.executeTestInputResult = null;
             this.toolExecuting = true;
             if (!this.tool.code) {
                 throw new Error('Code is required to test the tool');
@@ -408,15 +404,9 @@ class ToolBuilderStore {
                 code: this.tool.code,
             }
             const result = await testTool(payload);
-            this.showAlert({
-                title: 'Test Results',
-                message: result,
-            })
+            this.executeTestInputResult = result;
         } catch (error) {
-            this.showAlert({
-                title: 'Whoops',
-                message: (error as Error).message,
-            })
+            this.executeTestInputError = (error as Error).message;
         } finally {
             this.toolExecuting = false;
         }
@@ -485,6 +475,7 @@ class ToolBuilderStore {
 
     saveTool = async (): Promise<boolean> => {
         try {
+            this.saveToolError = null;
             this.toolSaving = true;
             this.codifyNames();
             this.validateNamesAndDescriptions();
@@ -539,10 +530,7 @@ class ToolBuilderStore {
             }
             return true;
         } catch (error) {
-            this.showAlert({
-                title: 'Whoops',
-                message: (error as Error).message,
-            })
+            this.saveToolError = (error as Error).message;
             return false;
         } finally {
             this.toolSaving = false;
@@ -551,14 +539,12 @@ class ToolBuilderStore {
 
     deleteTool = async (): Promise<boolean> => {
         try {
+            this.deleteToolError = null;
             this.toolDeleting = true;
             await deleteTool(this.tool.tool_id);
             return true;
         } catch (error) {
-            this.showAlert({
-                title: 'Whoops',
-                message: (error as Error).message,
-            })
+            this.deleteToolError = (error as Error).message;
             return false;
         } finally {
             this.toolDeleting = false;

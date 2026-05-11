@@ -39,9 +39,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  useToast,
 } from '@chakra-ui/react';
 import { CopyIcon, ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 import { authStore } from '@/store/AuthStore';
 
 type SortField = 'name' | 'fields' | 'created_at' | 'updated_at';
@@ -136,7 +137,7 @@ const DocumentRow = ({
 }) => {
   const [idHovered, setIdHovered] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const selectedBg = useColorModeValue('blue.50', 'blue.900');
@@ -147,7 +148,7 @@ const DocumentRow = ({
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(doc.document_id);
-    showAlert({ title: 'Copied', message: 'Document ID copied to clipboard' });
+    toast({ title: 'Copied', description: 'Document ID copied to clipboard', status: 'success', duration: 2000 });
   };
 
   return (
@@ -263,7 +264,7 @@ const DocumentsPage = observer(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cancelRef = useRef<any>(null);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const tableBorder = useColorModeValue('gray.200', 'gray.700');
@@ -271,8 +272,6 @@ const DocumentsPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/json-document-builder');
-    jsonDocumentsStore.setShowAlert(showAlert);
-    stagesStore.setShowAlert(showAlert);
     jsonDocumentsStore.loadDocuments();
     stagesStore.loadStages();
   }, []);
@@ -328,12 +327,9 @@ const DocumentsPage = observer(() => {
       setSelectedIds(new Set());
       setSelectMode(false);
       setIsConfirmOpen(false);
-      showAlert({
-        title: 'Deleted',
-        message: `${selectedIds.size} document${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
-      });
+      toast({ title: 'Deleted', description: `${selectedIds.size} document${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`, status: 'success', duration: 3000, isClosable: true });
     } catch {
-      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+      toast({ title: 'Error', description: 'One or more deletions failed. Please try again.', status: 'error', duration: 4000, isClosable: true });
     } finally {
       setIsDeleting(false);
     }
@@ -420,11 +416,15 @@ const DocumentsPage = observer(() => {
         />
       </InputGroup>
 
-      {jsonDocumentsStore.documentsLoading ? (
+      {jsonDocumentsStore.documentsLoading && (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
-      ) : (
+      )}
+      {jsonDocumentsStore.documentsError && (
+        <InlineError message={jsonDocumentsStore.documentsError} onRetry={() => jsonDocumentsStore.loadDocuments(true)} />
+      )}
+      {!jsonDocumentsStore.documentsLoading && !jsonDocumentsStore.documentsError && (
         <Flex direction="column" gap={4}>
           {sortedDocuments.length > 0 && (
             <TableContainer

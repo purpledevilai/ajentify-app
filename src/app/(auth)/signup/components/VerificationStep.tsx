@@ -4,6 +4,7 @@ import React from 'react';
 import { Stack, FormControl, FormLabel, Input, Button, Heading } from '@chakra-ui/react';
 import { observer } from 'mobx-react-lite';
 import { signUpStore } from '@/store/SignUpStore';
+import { InlineError } from '@/app/components/InlineError';
 
 const VerificationStep = observer(() => {
     return (
@@ -15,7 +16,10 @@ const VerificationStep = observer(() => {
                 <FormLabel>Verification Code</FormLabel>
                 <Input value={signUpStore.confirmCode} onChange={(e) => signUpStore.setField('confirmCode', e.target.value)} />
             </FormControl>
-            <Button  isLoading={signUpStore.confirmSignInLoading} onClick={() => signUpStore.confirmSignInCode()}>
+            {signUpStore.confirmSignUpError && (
+                <InlineError message={signUpStore.confirmSignUpError} />
+            )}
+            <Button isLoading={signUpStore.confirmSignInLoading} onClick={() => signUpStore.confirmSignInCode()}>
                 Submit
             </Button>
         </Stack>

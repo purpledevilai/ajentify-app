@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigationGuard } from "next-navigation-guard";
 import {
   Flex, FormControl, Heading, IconButton, Input, Button, Tooltip, Textarea, Box, Switch,
   Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay,
-  useColorMode, Text, FormLabel
+  useColorMode, Text, FormLabel,
+  AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogOverlay, useDisclosure,
 } from "@chakra-ui/react";
 import { ArrowBackIcon, AddIcon, SmallCloseIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
-import { useAlert } from "@/app/components/AlertProvider";
 import { observer } from "mobx-react-lite";
+import { InlineError } from "@/app/components/InlineError";
 import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore";
 import { structuredResponseEndpointsStore } from "@/store/StructuredResponseEndpointStore";
 import { ParameterView } from "./components/Parameter";
@@ -30,11 +32,13 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
   const navGuard = useNavigationGuard({});
   const isShowingNavAlert = useRef(false);
 
-  const { showAlert } = useAlert();
   const resultBackgroundColor = useColorMode().colorMode === 'dark' ? "#2b2b2b" : "#f7f7f7";
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const deleteRef = useRef<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    setShowAlertOnStore();
     loadSREId();
 
     return () => {
@@ -57,28 +61,21 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
         navGuard.accept();
       }
 
-      // Show alert if there are unsaved changes
+      // Show confirm if there are unsaved changes
       // OR if the SRE is new and the user has not clicked save
       const hasUnsavedChanges = sreBuilderStore.hasUpdatedParameterDefinition || sreBuilderStore.hasUpdatedSRE;
       const isNewButDidNotClickSave = sreBuilderStore.isNewSme && !sreBuilderStore.useClickedSave;
       if (hasUnsavedChanges || isNewButDidNotClickSave) {
-        showAlert({
-          title: "Unsaved Changes",
-          message: "You have unsaved changes. Are you sure you want to leave?",
-          actions: [
-            { label: "Cancel", onClick: stayOnPage },
-            { label: "Leave", onClick: leavePage }
-          ]
-        })
+        if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+          leavePage();
+        } else {
+          stayOnPage();
+        }
       } else {
         leavePage();
       }
     }
-  }, [navGuard, showAlert]);
-
-  const setShowAlertOnStore = () => {
-    sreBuilderStore.setShowAlert(showAlert);
-  };
+  }, [navGuard]);
 
   const loadSREId = async () => {
     const paramArray = (await params).sre_id ?? undefined;
@@ -101,21 +98,13 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
     window.history.back();
   };
 
-  const onDeleteSREClick = async () => {
-    showAlert({
-      title: "Delete SRE",
-      message: "Are you sure you want to delete this SRE?",
-      actions: [
-        { label: "Cancel", onClick: () => { } },
-        {
-          label: "Delete", onClick: async () => {
-            await sreBuilderStore.deleteSRE();
-            structuredResponseEndpointsStore.loadSREs(true);
-            window.history.back();
-          }
-        }
-      ]
-    });
+  const handleConfirmDeleteSRE = async () => {
+    setIsDeleting(true);
+    await sreBuilderStore.deleteSRE();
+    structuredResponseEndpointsStore.loadSREs(true);
+    setIsDeleting(false);
+    onDeleteClose();
+    window.history.back();
   };
 
   const onRunSRE = async () => {
@@ -387,10 +376,20 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           </Button>
         </Tooltip>
 
+        {sreBuilderStore.saveSREError && (
+          <InlineError message={sreBuilderStore.saveSREError} />
+        )}
+        {sreBuilderStore.setSREWithIdError && (
+          <InlineError message={sreBuilderStore.setSREWithIdError} />
+        )}
+        {sreBuilderStore.runSREError && (
+          <InlineError message={sreBuilderStore.runSREError} />
+        )}
+
         {/* Delete Button */}
         {!sreBuilderStore.isNewSme && (
           <Button
-            onClick={onDeleteSREClick}
+            onClick={onDeleteOpen}
             variant="outline"
             size="lg"
             isLoading={sreBuilderStore.sreDeleting}
@@ -399,6 +398,18 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
           </Button>
         )}
       </Flex>
+
+      <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={deleteRef} onClose={onDeleteClose} isCentered>
+        <AlertDialogOverlay />
+        <AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">Delete SRE</AlertDialogHeader>
+          <AlertDialogBody>Are you sure you want to delete this SRE?</AlertDialogBody>
+          <AlertDialogFooter gap={3}>
+            <Button ref={deleteRef} onClick={onDeleteClose} isDisabled={isDeleting}>Cancel</Button>
+            <Button colorScheme="red" onClick={handleConfirmDeleteSRE} isLoading={isDeleting} loadingText="Deleting…">Delete</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Flex>
   );
 });

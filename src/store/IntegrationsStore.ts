@@ -2,10 +2,10 @@ import { makeAutoObservable } from 'mobx';
 import { getIntegrations } from '@/api/integration/getIntegrations';
 import { deleteIntegration } from '@/api/integration/deleteIntegration';
 import { Integration } from '@/types/integration';
-import { ShowAlertParams } from "@/app/components/AlertProvider";
 
 class IntegrationsStore {
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+    integrationsError: string | null = null;
+    deleteIntegrationError: string | null = null;
     integrations: Integration[] | undefined = undefined;
     integrationsLoading = true;
     deleteLoading = false;
@@ -14,23 +14,17 @@ class IntegrationsStore {
         makeAutoObservable(this);
     }
 
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
-    }
-
     async loadIntegrations(force: boolean = false) {
         if (!force && this.integrations) {
             return;
         }
 
         try {
+            this.integrationsError = null;
             this.integrationsLoading = true;
             this.integrations = await getIntegrations();
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            });
+            this.integrationsError = (error as Error).message;
         } finally {
             this.integrationsLoading = false;
         }
@@ -38,14 +32,12 @@ class IntegrationsStore {
 
     async deleteIntegration(integrationId: string) {
         try {
+            this.deleteIntegrationError = null;
             this.deleteLoading = true;
             await deleteIntegration(integrationId);
             this.integrations = this.integrations?.filter(i => i.integration_id !== integrationId);
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            });
+            this.deleteIntegrationError = (error as Error).message;
         } finally {
             this.deleteLoading = false;
         }
@@ -69,4 +61,3 @@ class IntegrationsStore {
 }
 
 export const integrationsStore = new IntegrationsStore();
-

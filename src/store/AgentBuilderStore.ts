@@ -6,7 +6,6 @@ import { deleteContext } from "@/api/context/deleteContext";
 import { createAgent } from "@/api/agent/createAgent";
 import { deleteAgent } from "@/api/agent/deleteAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
-import { ShowAlertParams } from "@/app/components/AlertProvider";
 import { getTools } from "@/api/tool/getTools";
 import { agentsStore } from "./AgentsStore";
 import { Tool } from "@/types/tools";
@@ -56,8 +55,6 @@ interface AgentBooleanFields {
 
 class AgentBuilderStore {
 
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
-
     isNewAgent = false;
     currentAgent: Agent = {
         agent_id: '',
@@ -105,6 +102,17 @@ class AgentBuilderStore {
     tools: Tool[] = []
     isLoadingTools = false;
 
+    // Error fields
+    loadAgentToolsError: string | null = null;
+    setCurrentAgentError: string | null = null;
+    createAgentError: string | null = null;
+    updateAgentError: string | null = null;
+    deleteAgentError: string | null = null;
+    deletePromptEngineerContextError: string | null = null;
+    deleteAgentContextError: string | null = null;
+    createPromptEngineerContextError: string | null = null;
+    createAgentContextError: string | null = null;
+
     get promptArgs(): string[] {
         if (!this.currentAgent.uses_prompt_args) {
             return [];
@@ -148,10 +156,15 @@ class AgentBuilderStore {
         this.promptArgsInput = {};
         this.tools = [];
         this.isLoadingTools = false;
-    }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
+        this.loadAgentToolsError = null;
+        this.setCurrentAgentError = null;
+        this.createAgentError = null;
+        this.updateAgentError = null;
+        this.deleteAgentError = null;
+        this.deletePromptEngineerContextError = null;
+        this.deleteAgentContextError = null;
+        this.createPromptEngineerContextError = null;
+        this.createAgentContextError = null;
     }
 
     setIsNewAgent(isNewAgent: boolean) {
@@ -159,8 +172,8 @@ class AgentBuilderStore {
     }
 
     loadAgentTools = async () => {
-        
         try {
+            this.loadAgentToolsError = null;
             this.isLoadingTools = true;
             // Fetch custom tools from API
             const customTools = await getTools(this.currentAgent.agent_id);
@@ -180,10 +193,7 @@ class AgentBuilderStore {
             // Combine custom tools with default tools
             this.tools = [...customTools, ...defaultToolsOnAgent];
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.loadAgentToolsError = (error as Error).message;
         } finally {
             this.isLoadingTools = false;
         }
@@ -202,20 +212,15 @@ class AgentBuilderStore {
     }
 
     async setCurrentAgentWithId(agentId: string) {
+        this.setCurrentAgentError = null;
         await agentsStore.loadAgents(); // not forced, will only load if data not available
         if (!agentsStore.agents) {
-            this.showAlert({
-                title: "Whoops",
-                message: "There was a problem loading the agents"
-            })
+            this.setCurrentAgentError = 'There was a problem loading the agents';
             return;
         }
         const agent = agentsStore.agents.find((a) => a.agent_id === agentId);
         if (!agent) {
-            this.showAlert({
-                title: "Whoops",
-                message: "Could not find agent"
-            })
+            this.setCurrentAgentError = 'Could not find agent';
             return;
         }
         this.setCurrentAgent(agent);
@@ -274,13 +279,11 @@ class AgentBuilderStore {
 
     async createAgent() {
         if (this.currentAgent.agent_id) {
-            this.showAlert({
-                title: 'Error',
-                message: 'Agent already exists. Please update the agent instead.',
-            })
+            this.createAgentError = 'Agent already exists. Please update the agent instead.';
             return;
         }
         try {
+            this.createAgentError = null;
             this.agentLoading = true;
             const agent = await createAgent({
                 agent_name: this.currentAgent.agent_name,
@@ -298,10 +301,7 @@ class AgentBuilderStore {
             this.currentAgent = agent;
             this.hasUpdates = false;
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.createAgentError = (error as Error).message;
         } finally {
             this.agentLoading = false;
         }
@@ -309,13 +309,11 @@ class AgentBuilderStore {
 
     async updateAgent() {
         if (!this.currentAgent.agent_id) {
-            this.showAlert({
-                title: 'Error',
-                message: 'Agent does not exist. Please create the agent first.',
-            })
+            this.updateAgentError = 'Agent does not exist. Please create the agent first.';
             return;
         }
         try {
+            this.updateAgentError = null;
             this.agentLoading = true;
             const agent = await updateAgent({
                 agent_id: this.currentAgent.agent_id,
@@ -336,10 +334,7 @@ class AgentBuilderStore {
             this.currentAgent = agent;
             this.hasUpdates = false;
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.updateAgentError = (error as Error).message;
         } finally {
             this.agentLoading = false;
         }
@@ -347,20 +342,15 @@ class AgentBuilderStore {
 
     async deleteAgent() {
         if (!this.currentAgent.agent_id) {
-            this.showAlert({
-                title: 'Error',
-                message: 'Agent does not exist. Please create the agent first.',
-            })
+            this.deleteAgentError = 'Agent does not exist. Please create the agent first.';
             return;
         }
         try {
+            this.deleteAgentError = null;
             this.agentDeleteLoading = true;
             await deleteAgent(this.currentAgent.agent_id);
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.deleteAgentError = (error as Error).message;
         } finally {
             this.agentDeleteLoading = false;
         }
@@ -369,13 +359,11 @@ class AgentBuilderStore {
     async deletePromptEngineerContext() {
         if (this.promptEngineerContext) {
             try {
+                this.deletePromptEngineerContextError = null;
                 await deleteContext({context_id: this.promptEngineerContext.context_id});
                 this.promptEngineerContext = undefined;
             } catch (error) {
-                this.showAlert({
-                    title: 'Error',
-                    message: (error as Error).message,
-                })
+                this.deletePromptEngineerContextError = (error as Error).message;
             }
         }
     }
@@ -383,13 +371,11 @@ class AgentBuilderStore {
     async deleteAgentContext() {
         if (this.agentContext) {
             try {
+                this.deleteAgentContextError = null;
                 await deleteContext({context_id: this.agentContext.context_id});
                 this.agentContext = undefined;
             } catch (error) {
-                this.showAlert({
-                    title: 'Error',
-                    message: (error as Error).message,
-                })
+                this.deleteAgentContextError = (error as Error).message;
             }
         }
     }
@@ -438,6 +424,7 @@ class AgentBuilderStore {
 
     async createPromptEngineerContext() {
         try {
+            this.createPromptEngineerContextError = null;
             this.promptEngineerContextLoading = true;
             const context = await createContext({
                 agent_id: 'aj-prompt-engineer-latest',
@@ -450,10 +437,7 @@ class AgentBuilderStore {
             });
             this.promptEngineerContext = context;
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.createPromptEngineerContextError = (error as Error).message;
         } finally {
             this.promptEngineerContextLoading = false;
         }
@@ -461,6 +445,7 @@ class AgentBuilderStore {
 
     async createAgentContext(promptArgs?: Record<string, string>) {
         try {
+            this.createAgentContextError = null;
             this.agentContextLoading = true;
             const context = await createContext({
                 agent_id: this.currentAgent.agent_id,
@@ -468,10 +453,7 @@ class AgentBuilderStore {
             });
             this.agentContext = context;
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.createAgentContextError = (error as Error).message;
         } finally {
             this.agentContextLoading = false;
         }

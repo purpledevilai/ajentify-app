@@ -2,12 +2,11 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { TokenStreamingService } from "@/api/tokenstreamingservice/TokenStreamingService";
-import { Box } from "@chakra-ui/react";
+import { Box, useToast } from "@chakra-ui/react";
 import { MessagesArea } from "./MessagesArea";
 import { UserInput } from "./UserInput";
 import { Context, Message } from "@/types/context";
 import { ChatEvent } from "@/types/chatresponse";
-import { useAlert } from "../AlertProvider";
 import { ChatBoxStyle } from "@/types/chatboxstyle";
 import { authStore } from "@/store/AuthStore";
 
@@ -62,7 +61,7 @@ interface ChatBoxProps {
 export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_display = false }: ChatBoxProps) => {
     const [responseLoading, setResponseLoading] = useState<boolean>(false);
     const [messages, setMessages] = useState<Message[]>(context.messages)
-    const { showAlert } = useAlert();
+    const toast = useToast();
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [isConnecting, setIsConnecting] = useState<boolean>(false);
     const startNewAIMessageRef = useRef<boolean>(true);
@@ -119,13 +118,13 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                     console.log("WebSocket closed");
                     setIsConnected(false);
                     setIsConnecting(false);
-                    showAlert({ title: "Connection Lost", message: "The connection to the context has been lost." });
+                    toast({ title: "Connection Lost", description: "The connection to the context has been lost.", status: "warning", duration: 4000, isClosable: true });
                 });
 
                 await service.connect();
                 setIsConnected(true);
             } catch (err) {
-                showAlert({ title: "Whoops", message: "Failed to connect to context." });
+                toast({ title: "Connection Failed", description: "Failed to connect to context.", status: "error", duration: 4000, isClosable: true });
                 console.error("Failed to connect to context:", err);
                 setIsConnected(false);
             } finally {
@@ -143,14 +142,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
 
     const sendMessage = async (message: string) => {
         if (!isConnected) {
-            showAlert({
-                title: "Whoops",
-                message: "Not connected to context",
-                actions: [
-                    { label: "close", onClick: undefined },
-                    { label: "Reconnect", onClick: () => tokenStreamingServiceRef.current?.connect() }
-                ]
-            });
+            toast({ title: "Not Connected", description: "Not connected to context", status: "warning", duration: 4000, isClosable: true });
             return;
         }
 
@@ -160,7 +152,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
             setResponseLoading(true);
             await tokenStreamingServiceRef.current?.addMessage(message);
         } catch (error) {
-            showAlert({ title: "Whoops", message: (error as Error).message });
+            toast({ title: "Error", description: (error as Error).message, status: "error", duration: 4000, isClosable: true });
         }
     };
 

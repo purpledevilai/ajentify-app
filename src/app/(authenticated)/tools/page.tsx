@@ -40,9 +40,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  useToast,
 } from '@chakra-ui/react';
 import { ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 import { authStore } from '@/store/AuthStore';
 
 type SortField = 'function' | 'language' | 'created_at' | 'updated_at';
@@ -275,7 +276,7 @@ const ToolsPage = observer(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cancelRef = useRef<any>(null);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const tableBorder = useColorModeValue('gray.200', 'gray.700');
@@ -283,8 +284,6 @@ const ToolsPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/tool-builder');
-    toolsStore.setShowAlert(showAlert);
-    stagesStore.setShowAlert(showAlert);
     toolsStore.loadTools();
     stagesStore.loadStages();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
@@ -343,12 +342,9 @@ const ToolsPage = observer(() => {
       setSelectedIds(new Set());
       setSelectMode(false);
       setIsConfirmOpen(false);
-      showAlert({
-        title: 'Deleted',
-        message: `${selectedIds.size} tool${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
-      });
+      toast({ title: 'Deleted', description: `${selectedIds.size} tool${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`, status: 'success', duration: 3000, isClosable: true });
     } catch {
-      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+      toast({ title: 'Error', description: 'One or more deletions failed. Please try again.', status: 'error', duration: 4000, isClosable: true });
     } finally {
       setIsDeleting(false);
     }
@@ -438,11 +434,15 @@ const ToolsPage = observer(() => {
         />
       </InputGroup>
 
-      {toolsStore.toolsLoading ? (
+      {toolsStore.toolsLoading && (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
-      ) : (
+      )}
+      {toolsStore.toolsError && (
+        <InlineError message={toolsStore.toolsError} onRetry={() => toolsStore.loadTools(true)} />
+      )}
+      {!toolsStore.toolsLoading && !toolsStore.toolsError && (
         <Flex direction="column" gap={4}>
           {sortedTools.length > 0 && (
             <TableContainer

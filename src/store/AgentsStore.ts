@@ -1,19 +1,14 @@
 import { makeAutoObservable } from 'mobx';
 import { getAgents } from '@/api/agent/getAgents';
 import { Agent } from '@/types/agent';
-import { ShowAlertParams } from "@/app/components/AlertProvider";
 
 class AgentsStore {
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+    agentsError: string | null = null;
     agents: Agent[] | undefined = undefined;
     agentsLoading = true;
 
     constructor() {
         makeAutoObservable(this);
-    }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
     }
 
     async loadAgents(force: boolean = false) {
@@ -22,13 +17,11 @@ class AgentsStore {
         }
 
         try {
+            this.agentsError = null;
             this.agentsLoading = true;
             this.agents = await getAgents();
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            })
+            this.agentsError = (error as Error).message;
         } finally {
             this.agentsLoading = false;
         }

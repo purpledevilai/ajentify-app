@@ -30,7 +30,6 @@ import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 import ChatPage from '@/app/components/chatpage/ChatPage';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { chatPagesStore } from '@/store/ChatPagesStore';
-import { useAlert } from "@/app/components/AlertProvider";
 
 type Params = Promise<{ chat_page_id: string[] }>;
 
@@ -43,17 +42,9 @@ const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
   const sectionBackground = useColorModeValue('gray.50', 'gray.800');
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { showAlert } = useAlert();
-
-
   useEffect(() => {
-    setAlertOnStore();
     loadChatPageId();
   });
-
-  const setAlertOnStore = () => {
-    chatPageBuilderStore.setShowAlert(showAlert);
-  }
 
   const loadChatPageId = async () => {
     const paramArray = (await params).chat_page_id ?? undefined;

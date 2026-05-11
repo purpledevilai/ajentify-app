@@ -36,9 +36,10 @@ import {
     FormControl,
     FormLabel,
     Tooltip,
+    useToast,
 } from '@chakra-ui/react';
 import { CopyIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 import { authStore } from '@/store/AuthStore';
 import { DeleteStageMode } from '@/api/stage/deleteStage';
 import { refreshDashboardCaches } from '@/store/refreshDashboardCaches';
@@ -69,14 +70,14 @@ const StageRow = observer(({
 }) => {
     const [idHovered, setIdHovered] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
-    const { showAlert } = useAlert();
+    const toast = useToast();
     const hoverBg = useColorModeValue('gray.50', 'gray.700');
     const subtextColor = useColorModeValue('gray.500', 'gray.400');
 
     const handleCopyId = (e: React.MouseEvent) => {
         e.stopPropagation();
         navigator.clipboard.writeText(stage.stage_id);
-        showAlert({ title: 'Copied', message: 'Stage ID copied to clipboard' });
+        toast({ title: 'Copied', description: 'Stage ID copied to clipboard', status: 'success', duration: 2000 });
     };
 
     return (
@@ -143,7 +144,7 @@ const StageRow = observer(({
 
 const StagesPage = observer(() => {
     const router = useRouter();
-    const { showAlert } = useAlert();
+    const toast = useToast();
     const [search, setSearch] = useState('');
     const createModal = useDisclosure();
     const deployModal = useDisclosure();
@@ -155,7 +156,6 @@ const StagesPage = observer(() => {
 
     useEffect(() => {
         if (!authStore.signedIn) return;
-        stagesStore.setShowAlert(showAlert);
         stagesStore.loadStages();
     });
 
@@ -177,12 +177,14 @@ const StagesPage = observer(() => {
             // Either mode mutates Agents/Tools/SREs/Documents — refresh every
             // list cache so the dashboard tabs reflect reality immediately.
             refreshDashboardCaches();
-            showAlert({
+            toast({
                 title: mode === 'destroy' ? 'Destroyed' : 'Detached',
-                message:
-                    mode === 'destroy'
-                        ? `Stage "${target.name}" and all its resources were deleted.`
-                        : `Stage "${target.name}" deleted; its resources were detached and remain in your org.`,
+                description: mode === 'destroy'
+                    ? `Stage "${target.name}" and all its resources were deleted.`
+                    : `Stage "${target.name}" deleted; its resources were detached and remain in your org.`,
+                status: 'success',
+                duration: 4000,
+                isClosable: true,
             });
         }
         setPendingDelete(null);
@@ -221,11 +223,15 @@ const StagesPage = observer(() => {
                 />
             </InputGroup>
 
-            {stagesStore.stagesLoading && !stagesStore.stages ? (
+            {stagesStore.stagesLoading && !stagesStore.stages && (
                 <Flex justify="center" align="center" height="200px">
                     <Spinner size="xl" />
                 </Flex>
-            ) : (
+            )}
+            {stagesStore.stagesError && (
+                <InlineError message={stagesStore.stagesError} onRetry={() => stagesStore.loadStages(true)} />
+            )}
+            {!stagesStore.stagesLoading && !stagesStore.stagesError && (
                 <Flex direction="column" gap={4}>
                     {filtered.length > 0 && (
                         <TableContainer
@@ -283,9 +289,12 @@ const StagesPage = observer(() => {
                     // caches — refresh them all so the dashboard tabs
                     // reflect the new state without a hard reload.
                     refreshDashboardCaches();
-                    showAlert({
+                    toast({
                         title: 'Deployed',
-                        message: `Stage "${response.stage_name}": ${response.summary.create} created, ${response.summary.update} updated, ${response.summary.delete} deleted.`,
+                        description: `Stage "${response.stage_name}": ${response.summary.create} created, ${response.summary.update} updated, ${response.summary.delete} deleted.`,
+                        status: 'success',
+                        duration: 5000,
+                        isClosable: true,
                     });
                 }}
             />

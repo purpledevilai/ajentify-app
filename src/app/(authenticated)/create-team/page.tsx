@@ -4,7 +4,6 @@ import React, { useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { createTeamStore } from '@/store/CreateTeamStore';
 import { Flex, Box } from '@chakra-ui/react';
-import { useAlert } from '@/app/components/AlertProvider';
 import { BusinessInformationStep } from './components/BusinessInformationStep';
 import { SelectMembersStep } from './components/SelectMembersStep';
 import { CreatingTeamLoadingStep } from './components/CreateingTeamLoadingStep';
@@ -12,8 +11,6 @@ import { SuccessStep } from './components/SuccessStep';
 import { reaction } from 'mobx';
 
 const CreateTeamPage = observer(() => {
-    const { showAlert } = useAlert();
-    createTeamStore.setShowAlert(showAlert);
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {

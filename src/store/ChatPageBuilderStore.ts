@@ -1,6 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { ChatPageData } from '@/types/chatpagedata';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
+interface ShowAlertParams { title: string; message: string; actions?: { label: string; onClick?: () => void }[]; onClose?: () => void; }
 import { authStore } from './AuthStore';
 import { agentsStore } from './AgentsStore';
 import { chatPagesStore } from './ChatPagesStore';

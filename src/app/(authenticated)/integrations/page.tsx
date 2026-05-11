@@ -34,7 +34,7 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
 import Card from '@/app/components/Card';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 import { FaGoogle, FaMicrosoft, FaCalendarAlt } from 'react-icons/fa';
 
 // Component for displaying and copying integration ID
@@ -62,7 +62,9 @@ const CopyableIntegrationId = ({ integrationId }: { integrationId: string }) => 
 };
 
 const IntegrationsPage = observer(() => {
-  const { showAlert } = useAlert();
+  const [connectGmailError, setConnectGmailError] = useState<string | null>(null);
+  const [connectOutlookError, setConnectOutlookError] = useState<string | null>(null);
+  const [connectCalendarError, setConnectCalendarError] = useState<string | null>(null);
   const [connectingGmail, setConnectingGmail] = useState(false);
   const [connectingOutlook, setConnectingOutlook] = useState(false);
   const [connectingGoogleCalendar, setConnectingGoogleCalendar] = useState(false);
@@ -72,55 +74,44 @@ const IntegrationsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    setShowAlertOnStore();
     integrationsStore.loadIntegrations();
   });
 
-  const setShowAlertOnStore = () => {
-    integrationsStore.setShowAlert(showAlert);
-  };
-
   const handleConnectGmail = async () => {
+    setConnectGmailError(null);
     setConnectingGmail(true);
     try {
       const orgId = authStore.user?.organizations[0]?.id;
       const authUrl = await getGmailAuthUrl(orgId);
       window.location.href = authUrl;
     } catch (error) {
-      showAlert({
-        title: 'Error',
-        message: (error as Error).message || 'Failed to connect Gmail',
-      });
+      setConnectGmailError((error as Error).message || 'Failed to connect Gmail');
       setConnectingGmail(false);
     }
   };
 
   const handleConnectOutlook = async () => {
+    setConnectOutlookError(null);
     setConnectingOutlook(true);
     try {
       const orgId = authStore.user?.organizations[0]?.id;
       const authUrl = await getOutlookAuthUrl(orgId);
       window.location.href = authUrl;
     } catch (error) {
-      showAlert({
-        title: 'Error',
-        message: (error as Error).message || 'Failed to connect Outlook',
-      });
+      setConnectOutlookError((error as Error).message || 'Failed to connect Outlook');
       setConnectingOutlook(false);
     }
   };
 
   const handleConnectGoogleCalendar = async () => {
+    setConnectCalendarError(null);
     setConnectingGoogleCalendar(true);
     try {
       const orgId = authStore.user?.organizations[0]?.id;
       const authUrl = await getGoogleCalendarAuthUrl(orgId);
       window.location.href = authUrl;
     } catch (error) {
-      showAlert({
-        title: 'Error',
-        message: (error as Error).message || 'Failed to connect Google Calendar',
-      });
+      setConnectCalendarError((error as Error).message || 'Failed to connect Google Calendar');
       setConnectingGoogleCalendar(false);
     }
   };
@@ -180,11 +171,15 @@ const IntegrationsPage = observer(() => {
       </Alert>
 
       {/* Content Section */}
-      {integrationsStore.integrationsLoading ? (
+      {integrationsStore.integrationsLoading && (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
-      ) : (
+      )}
+      {integrationsStore.integrationsError && (
+        <InlineError message={integrationsStore.integrationsError} onRetry={() => integrationsStore.loadIntegrations(true)} />
+      )}
+      {!integrationsStore.integrationsLoading && !integrationsStore.integrationsError && (
         <Box>
           {/* Gmail Section */}
           <Heading as="h2" size="lg" mb={4}>
@@ -221,6 +216,7 @@ const IntegrationsPage = observer(() => {
                 </Flex>
               )}
             </Flex>
+            {connectGmailError && <InlineError message={connectGmailError} />}
 
             {/* Gmail Integration Cards */}
             {gmailIntegrations.length > 0 ? (
@@ -292,6 +288,7 @@ const IntegrationsPage = observer(() => {
                 </Flex>
               )}
             </Flex>
+            {connectOutlookError && <InlineError message={connectOutlookError} />}
 
             {/* Outlook Integration Cards */}
             {outlookIntegrations.length > 0 ? (
@@ -363,6 +360,7 @@ const IntegrationsPage = observer(() => {
                 </Flex>
               )}
             </Flex>
+            {connectCalendarError && <InlineError message={connectCalendarError} />}
 
             {/* Google Calendar Integration Cards */}
             {googleCalendarIntegrations.length > 0 ? (
