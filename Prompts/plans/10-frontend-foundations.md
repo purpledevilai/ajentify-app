@@ -720,11 +720,11 @@ The fix is **not** to move form state into RHF. The fix is to keep MobX, keep th
 
 ##### H.1 Conversion to per-page instance
 
-- [ ] For each builder store, **delete the module-level singleton export** (`export const xxxBuilderStore = new XxxBuilderStore()`). The file exports the class only.
-- [ ] Add the constructor-injection pattern from deliverable E: the constructor takes `{ ...listStores }` (e.g. `ToolBuilderStore` takes `{ tools, parameterDefinitions }`; `AgentBuilderStore` takes `{ agents }` — `toolsStore` and `modelsStore` are only used by the agent-builder *page*, not by the store itself). The store stores them as private fields. After deliverable C, no `showAlert` dep is needed; errors surface via observable fields per the C.1 pattern.
-- [ ] **Builder stores are not registered on `RootStore`.** They are not constructed at boot, not iterated by `resetAll()`, not part of `bootLoad()`. The root only knows about list/cache stores and the auth-flow / persistent stores from E.
-- [ ] Each builder page owns the lifecycle of its store instance. **Use `useState(() => new XxxBuilderStore({...}))[0]`** (preferred for class-based stores that already call `makeAutoObservable(this)` in their constructor). `useMemo(() => new XxxBuilderStore({...}), [])` is equivalent and acceptable. **Do not** use `useLocalObservable` from `mobx-react-lite` — it's intended for plain-object factories and re-wraps an already-observed class instance, which can shadow class methods through MobX's proxy. Class-based stores already manage their own observability via `makeAutoObservable`.
-- [ ] Each builder gets a small companion hook colocated with the store: `useToolBuilder()`, `useAgentBuilder()`, etc. The hook reads `useStores()` for dependencies, constructs the per-page instance, and returns it. Pages call the hook; they don't construct the store directly.
+- [x] For each builder store, **delete the module-level singleton export** (`export const xxxBuilderStore = new XxxBuilderStore()`). The file exports the class only.
+- [x] Add the constructor-injection pattern from deliverable E: the constructor takes `{ ...listStores }` (e.g. `ToolBuilderStore` takes `{ tools, parameterDefinitions }`; `AgentBuilderStore` takes `{ agents }` — `toolsStore` and `modelsStore` are only used by the agent-builder *page*, not by the store itself). The store stores them as private fields. After deliverable C, no `showAlert` dep is needed; errors surface via observable fields per the C.1 pattern.
+- [x] **Builder stores are not registered on `RootStore`.** They are not constructed at boot, not iterated by `resetAll()`, not part of `bootLoad()`. The root only knows about list/cache stores and the auth-flow / persistent stores from E.
+- [x] Each builder page owns the lifecycle of its store instance. **Use `useState(() => new XxxBuilderStore({...}))[0]`** (preferred for class-based stores that already call `makeAutoObservable(this)` in their constructor). `useMemo(() => new XxxBuilderStore({...}), [])` is equivalent and acceptable. **Do not** use `useLocalObservable` from `mobx-react-lite` — it's intended for plain-object factories and re-wraps an already-observed class instance, which can shadow class methods through MobX's proxy. Class-based stores already manage their own observability via `makeAutoObservable`.
+- [x] Each builder gets a small companion hook colocated with the store: `useToolBuilder()`, `useAgentBuilder()`, etc. The hook reads `useStores()` for dependencies, constructs the per-page instance, and returns it. Pages call the hook; they don't construct the store directly.
 
   ```ts
   // src/store/builders/ToolBuilder/useToolBuilder.ts (or alongside the class file)
@@ -736,20 +736,20 @@ The fix is **not** to move form state into RHF. The fix is to keep MobX, keep th
 
 ##### H.2 What pages do
 
-- [ ] In each builder page, replace `import { xxxBuilderStore } from '@/store/...'` with `const builder = useXxxBuilder();`.
-- [ ] On mount, the page calls `builder.setToolWithId(toolId)` / `builder.initiateNew()` (or whichever existing hydration entry point the store has) inside an effect keyed on the URL param. No explicit `builder.reset()` call is needed when the page unmounts — the instance is discarded with the component.
-- [ ] If the builder needs cleanup beyond instance discard (e.g. an in-flight WebSocket; a `reaction()` disposer it set up — though stores aren't supposed to set up reactions in their constructor anyway), add an optional `dispose()` method to the class and call it from a `useEffect` cleanup in the hook.
+- [x] In each builder page, replace `import { xxxBuilderStore } from '@/store/...'` with `const builder = useXxxBuilder();`.
+- [x] On mount, the page calls `builder.setToolWithId(toolId)` / `builder.initiateNew()` (or whichever existing hydration entry point the store has) inside an effect keyed on the URL param. No explicit `builder.reset()` call is needed when the page unmounts — the instance is discarded with the component.
+- [x] If the builder needs cleanup beyond instance discard (e.g. an in-flight WebSocket; a `reaction()` disposer it set up — though stores aren't supposed to set up reactions in their constructor anyway), add an optional `dispose()` method to the class and call it from a `useEffect` cleanup in the hook.
 
 ##### H.3 Testing
 
-- [ ] Write one focused test per builder that exercises the cascading-mutation behaviour the domain logic depends on. Examples for `ToolBuilderStore`: "adding a parameter regenerates the function declaration"; "switching to client-side tool clears `code` and disables `pass_context`"; "validation rejects an enum with no options". These tests are the proof that the domain logic survived the refactor without any behavioural change.
+- [x] Write one focused test per builder that exercises the cascading-mutation behaviour the domain logic depends on. Examples for `ToolBuilderStore`: "adding a parameter regenerates the function declaration"; "switching to client-side tool clears `code` and disables `pass_context`"; "validation rejects an enum with no options". These tests are the proof that the domain logic survived the refactor without any behavioural change.
 
 **Do NOT change any domain logic.** Do not delete fields, do not rename methods, do not remove list-cache duplication, do not slim the store. The only changes are: (1) remove the singleton export, (2) add constructor injection for the deps the store actually uses from the persistent root stores, (3) create the `useXxxBuilder()` hook. Everything else in the store file stays exactly as written.
 
 ##### H.4 Order of work
 
-- [ ] Do this **before** converting the page to shadcn in project 08, not at the same time. One refactor at a time. The shape of the store is now stable; project 08 only swaps the view layer on top of it.
-- [ ] Convert one builder at a time, committing to the branch after each, before moving to the next. The conversion is mechanical; test each before committing.
+- [x] Do this **before** converting the page to shadcn in project 08, not at the same time. One refactor at a time. The shape of the store is now stable; project 08 only swaps the view layer on top of it.
+- [x] Convert one builder at a time, committing to the branch after each, before moving to the next. The conversion is mechanical; test each before committing.
 
 #### I. Navigation, prefetch, and segment files
 
@@ -853,9 +853,9 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 - [ ] `AlertProvider` and `Alert.tsx` are deleted; no `setShowAlert` calls remain in the codebase.
 - [ ] `AuthStore.signOut()` no longer names individual stores. The reset is generic.
 - [ ] `refreshDashboardCaches.ts` is deleted; the equivalent lives on `RootStore` as a method.
-- [ ] **`ParameterDefinitionsStore` exists** on the root, is hydrated by `bootLoad()`, and the `Tool` and `SRE` builders read parameter definitions through it (no direct `getParameterDefinition(pdId)` call from a builder store).
+- [x] **`ParameterDefinitionsStore` exists** on the root, is hydrated by `bootLoad()`, and the `Tool` and `SRE` builders read parameter definitions through it (no direct `getParameterDefinition(pdId)` call from a builder store).
 - [ ] **`AuthStore.submitSignIn` does not flip `signedIn = true` directly.** `signedIn` is set only inside `checkAuth` after `/user` returns 200. Verified by greppping `submitSignIn` and reading the body.
-- [ ] Each builder store (`Tool`, `Agent`, `SRE`, `JsonDocument`) is instantiated per-page via its `useXxxBuilder()` hook — no module-level singleton export remains. `ChatPageBuilderStore` is exempt — deprecated and untouched. Domain logic in each store is unchanged; only the singleton export and constructor injection are modified.
+- [x] Each builder store (`Tool`, `Agent`, `SRE`, `JsonDocument`) is instantiated per-page via its `useXxxBuilder()` hook — no module-level singleton export remains. `ChatPageBuilderStore` is exempt — deprecated and untouched. Domain logic in each store is unchanged; only the singleton export and constructor injection are modified.
 - [ ] Every dashboard API call goes through `src/api/client.ts`. CI grep: `! grep -rE "fetch\\(\`\\$\\{process\\.env\\.NEXT_PUBLIC_API_BASE_URL" src/api/` (catches the old pattern) outside of `src/api/auth/` (Amplify, not backend) and `src/api/chatpage/` (deprecated carve-out).
 - [ ] At least one 401 from any API call cleanly logs the user out and redirects, in dev. Verified by manually invalidating a token mid-session.
 - [ ] **`(public)/` chunks** (verified via `next build` output or a bundle analyzer) do not include `mobx`, `aws-amplify`, `AuthStore`, `SignUpStore`, or any `@chakra-ui/*` chunk that wasn't directly imported by the route. (Landing imports Chakra directly today; that's fine until project 09.)
