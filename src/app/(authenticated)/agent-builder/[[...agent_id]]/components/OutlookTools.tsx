@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { agentBuilderStore } from "../../agentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { useStores } from "@/store/StoreContext";
 import { Heading, Text, Button, Flex, Select, FormControl, FormLabel, Alert, AlertIcon, Box } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
@@ -7,6 +7,7 @@ import { observer } from "mobx-react-lite";
 import { Integration } from "@/types/integration";
 
 export const OutlookTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
     const { integrations: integrationsStore } = useStores();
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);

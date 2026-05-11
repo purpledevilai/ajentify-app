@@ -1,10 +1,11 @@
 import React from "react";
-import { agentBuilderStore } from "../../agentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { Heading, Text, Button, Flex, Box } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";
 
 export const GoogleMapsTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
     // Tool groupings
     const searchTools = ["search_places", "get_place_details"];
     const routeTools = ["compute_routes"];

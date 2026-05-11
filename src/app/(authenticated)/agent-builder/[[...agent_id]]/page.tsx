@@ -14,7 +14,8 @@ import {
 import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon, HamburgerIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
-import { agentBuilderStore } from '../agentBuilderStore';
+import { useAgentBuilder } from "@/store/useAgentBuilder";
+import { AgentBuilderStoreContext } from '../AgentBuilderContext';
 import { useStores } from "@/store/StoreContext";
 
 import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
@@ -43,6 +44,7 @@ interface AgentBuilderPageProps {
 }
 
 const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
+    const agentBuilderStore = useAgentBuilder();
     const { agents: agentsStore, tools: toolsStore, models: modelsStore } = useStores();
 
     // Nav Guard to detect page navigation - Really dump NextJS limitiation
@@ -68,6 +70,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
             const agent_id = paramArray ? paramArray[0] : undefined;
             if (agent_id && agentBuilderStore.currentAgent.agent_id !== agent_id) {
                 agentBuilderStore.setCurrentAgentWithId(agent_id);
+            } else if (!agent_id) {
+                agentBuilderStore.setIsNewAgent(true);
             }
         })();
         void toolsStore.loadTools();
@@ -75,7 +79,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
         return () => {
             agentBuilderStore.reset();
         };
-    }, [params, toolsStore]);
+    }, [params, toolsStore, agentBuilderStore]);
 
     // Detect page navigation
     useEffect(() => {
@@ -111,6 +115,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 leavePage();
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navGuard, agentsStore]);
 
     const onOpenPromptEngineerClick = () => {
@@ -199,7 +204,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
 
 
     return (
-        <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
+        <AgentBuilderStoreContext.Provider value={agentBuilderStore}>
+            <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             {/* Header Section */}
             <Flex direction="row" w="100%" mb={8} gap={4} align="center">
                 <IconButton
@@ -670,7 +676,8 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Flex>
+            </Flex>
+        </AgentBuilderStoreContext.Provider>
     );
 });
 

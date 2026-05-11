@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { agentBuilderStore } from '../agent-builder/agentBuilderStore';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
@@ -352,12 +351,10 @@ const AgentsPage = observer(() => {
   };
 
   const handleAddAgentClick = () => {
-    agentBuilderStore.setIsNewAgent(true);
     router.push('/agent-builder');
   };
 
   const handleAgentClick = (agent: Agent) => {
-    agentBuilderStore.setCurrentAgent({ ...agent });
     router.push(`/agent-builder/${agent.agent_id}`);
   };
 

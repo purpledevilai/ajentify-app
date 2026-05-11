@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { agentBuilderStore } from "../../agentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { Heading, Text, Button, Flex, Input, Select, FormControl, FormLabel, useToast } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";
@@ -8,6 +8,7 @@ import { createJsonDocument } from "@/api/jsondocument/createJsonDocument";
 import { JsonDocument } from "@/types/jsondocument";
 
 export const MemoryTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
     const [documents, setDocuments] = useState<JsonDocument[]>([]);
     const [selectedDocumentId, setSelectedDocumentId] = useState<string>("");
     const [newDocumentName, setNewDocumentName] = useState<string>("");
