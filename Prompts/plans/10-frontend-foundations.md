@@ -65,7 +65,11 @@ From the 2026-05-04 frontend audit, re-checked against the codebase 2026-05-07. 
 
 ## Order of operations
 
-This section is read first by the executing agent. **Each deliverable below is its own PR. Ship them in order. Each must pass `lint`, `typecheck`, `test`, and `next build` on its own — do not stack one on top of another in flight.**
+This section is read first by the executing agent. **This plan is executed as a sequential agent lineage on a single feature branch.** Each deliverable is implemented by one agent, which commits its work to the branch before the next agent picks up. There is one PR for the whole project; it accumulates commits as deliverables land.
+
+**Quality gate per deliverable:** After completing each deliverable, the implementing agent runs `lint`, `typecheck`, `test`, and `next build` and fixes any failures before committing. The branch must compile and pass checks at every commit — not just at the end.
+
+**Handoff protocol:** Each implementing agent reads this plan, identifies the first unchecked deliverable, implements it fully, runs the quality gate, commits with a message like `feat(10): deliverable A — foundation prep`, and stops. The orchestrator then dispatches the next agent for the following deliverable.
 
 The order is not arbitrary. It reflects three constraints:
 
@@ -82,8 +86,8 @@ Order:
 - **E. Root store + per-store DI** — introduce `ParameterDefinitionsStore`. Construct stores in dep-order, kill module singletons, expose `useStores()` for the dashboard. Construct a separate `<AuthFlowStoreProvider>` in `(auth)/providers.tsx` for the signin/signup pages (its own `AuthStore` + `SignUpStore` instances). Re-bind the API client's auth callbacks to the root-store-owned `authStore`. After this step there is no `export const xxxStore = new XxxStore()` anywhere.
 - **F. Auth gating boundary** — `<DashboardBoot>`, real `/user` validation in `AuthStore.checkAuth`, hardened 401 interceptor (lives in D's chokepoint, wired through E's bindings), coarse middleware gate. Removes the optimistic `signedIn = true` flip from `submitSignIn`.
 - **G. Enable `react-hooks/exhaustive-deps` at error + sweep** — promote the rule (already on at warn via `next/core-web-vitals`) to error level, fix every surviving warning. Of the **15 warnings** present today, roughly 12 are removed as a side effect of C and E/F; G fixes the ~3 that survive.
-- **H. Builder stores: singleton → per-page instance** — one builder per PR (`Tool`, `Agent`, `SRE`, `JsonDocument`). The `ChatPageBuilder` is **not** included — that surface is being deprecated and will be deleted in project 08. Each shipped builder gets a focused domain-logic test.
-- **I. Navigation, prefetch, and segment files** — `<Link>` sweep (excluding deprecated chat-page routes), `DASHBOARD_ROUTES` + `router.prefetch(...)` effect inside `<DashboardBoot>`, `loading.tsx` / `error.tsx` / `not-found.tsx` per segment, `app/sitemap.ts` and `app/robots.ts`. May ship in parallel with H.
+- **H. Builder stores: singleton → per-page instance** — four sequential commits, one per builder (`Tool`, `Agent`, `SRE`, `JsonDocument`), each committed separately to the branch. The `ChatPageBuilder` is **not** included — that surface is being deprecated and will be deleted in project 08. Each converted builder gets a focused domain-logic test before the next builder begins.
+- **I. Navigation, prefetch, and segment files** — `<Link>` sweep (excluding deprecated chat-page routes), `DASHBOARD_ROUTES` + `router.prefetch(...)` effect inside `<DashboardBoot>`, `loading.tsx` / `error.tsx` / `not-found.tsx` per segment, `app/sitemap.ts` and `app/robots.ts`.
 - **J. Webpack fallback cleanup** — investigate `child_process: false` in `next.config.ts`; remove if possible, otherwise leave a comment naming the offending import.
 
 ## Deliverables
