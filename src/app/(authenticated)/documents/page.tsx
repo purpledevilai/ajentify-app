@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { jsonDocumentBuilderStore } from '../json-document-builder/jsonDocumentBuilderStore';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
@@ -287,13 +286,10 @@ const DocumentsPage = observer(() => {
   };
 
   const handleAddDocumentClick = () => {
-    jsonDocumentBuilderStore.reset();
-    jsonDocumentBuilderStore.setIsNewDocument(true);
     router.push('/json-document-builder');
   };
 
   const handleDocumentClick = (doc: JsonDocument) => {
-    jsonDocumentBuilderStore.setDocument({ ...doc });
     router.push(`/json-document-builder/${doc.document_id}`);
   };
 

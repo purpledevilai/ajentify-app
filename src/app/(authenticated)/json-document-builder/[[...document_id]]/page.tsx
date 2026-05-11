@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
-import { jsonDocumentBuilderStore } from '../jsonDocumentBuilderStore';
+import { useJsonDocumentBuilder } from '@/store/useJsonDocumentBuilder';
+import { JsonDocumentBuilderStoreContext } from '../JsonDocumentBuilderContext';
 import { useStores } from '@/store/StoreContext';
 import {
     Flex,
@@ -36,6 +37,7 @@ interface PageProps {
 }
 
 const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
+    const jsonDocumentBuilderStore = useJsonDocumentBuilder();
     const router = useRouter();
     const { jsonDocuments: jsonDocumentsStore } = useStores();
     const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
@@ -57,14 +59,14 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
         } else {
             router.push('/documents');
         }
-    }, [params, jsonDocumentsStore, router]);
+    }, [params, jsonDocumentsStore, router, jsonDocumentBuilderStore]);
 
     useEffect(() => {
         void loadDocumentId();
         return () => {
             jsonDocumentBuilderStore.reset();
         };
-    }, [loadDocumentId]);
+    }, [loadDocumentId, jsonDocumentBuilderStore]);
 
     const onSaveDocument = async () => {
         await jsonDocumentBuilderStore.onSaveDocumentClick();
@@ -82,7 +84,8 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
     }
 
     return (
-        <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
+        <JsonDocumentBuilderStoreContext.Provider value={jsonDocumentBuilderStore}>
+            <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             <Flex direction="row" w="100%" mb={4} gap={4} align="center">
                 <IconButton
                     aria-label="Back"
@@ -190,7 +193,8 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </Flex>
+            </Flex>
+        </JsonDocumentBuilderStoreContext.Provider>
     );
 });
 
