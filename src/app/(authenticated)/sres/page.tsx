@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
@@ -343,7 +344,6 @@ const SREsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    router.prefetch('/sre-builder');
     structuredResponseEndpointsStore.loadSREs();
     modelsStore.loadModels();
     stagesStore.loadStages();
@@ -358,10 +358,6 @@ const SREsPage = observer(() => {
       setSortField(field);
       setSortDir(DEFAULT_DIR[field]);
     }
-  };
-
-  const handleAddSREClick = () => {
-    router.push('/sre-builder');
   };
 
   const handleSREClick = (sre: StructuredResponseEndpoint) => {
@@ -473,9 +469,11 @@ const SREsPage = observer(() => {
           >
             {selectMode ? 'Cancel' : 'Select'}
           </Button>
-          <Button size="sm" colorScheme="brand" onClick={handleAddSREClick}>
-            + Add SRE
-          </Button>
+          <NextLink href="/sre-builder">
+            <Button size="sm" colorScheme="brand">
+              + Add SRE
+            </Button>
+          </NextLink>
         </Flex>
       </Flex>
 

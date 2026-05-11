@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import NextLink from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
     Box,
@@ -236,14 +237,15 @@ export default function ContextDetailPage() {
     return (
         <Box p={{ base: 4, md: 6 }} h="100%" overflowY="auto">
             <Flex align="center" mb={4} gap={2}>
-                <Button
-                    leftIcon={<ArrowBackIcon />}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => router.push('/contexts')}
-                >
-                    Back
-                </Button>
+                <NextLink href="/contexts">
+                    <Button
+                        leftIcon={<ArrowBackIcon />}
+                        size="sm"
+                        variant="ghost"
+                    >
+                        Back
+                    </Button>
+                </NextLink>
                 <Heading as="h1" size="lg" flex="1" noOfLines={1}>
                     Context
                 </Heading>

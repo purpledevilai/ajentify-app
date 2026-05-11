@@ -5,7 +5,6 @@ import {
     Box,
     Flex,
     VStack,
-    Link,
     Text,
     Divider,
     Avatar,
@@ -24,7 +23,7 @@ import { BiDotsVerticalRounded } from 'react-icons/bi';
 import { FiTool, FiFileText, FiLink } from "react-icons/fi";
 import { VscJson } from "react-icons/vsc";
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useStores } from '@/store/StoreContext';
 import { observer } from 'mobx-react-lite';
@@ -36,7 +35,6 @@ interface SidebarProps {
 }
 
 const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
-    const router = useRouter();
     const pathname = usePathname();
     const { auth } = useStores();
     const [orgMenuOpen, setOrgMenuOpen] = useState(false);
@@ -109,27 +107,28 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                     overflowY="auto"
                 >
                     {tabs.map((tab, index) => (
-                        <Link
+                        <NextLink
                             key={index}
-                            onClick={() => {
-                                router.push(tab.route);
-                                if (onClose) onClose();
-                            }}
-                            p={2}
-                            borderRadius="md"
-                            display="flex"
-                            alignItems="center"
-                            gap={2}
-                            bg={pathname === tab.route ? 'brand.100' : 'transparent'}
-                            _hover={{ bg: 'gray.200' }}
-                            _dark={{
-                                bg: pathname === tab.route ? 'brand.700' : 'transparent',
-                                _hover: { bg: 'gray.700' },
-                            }}
+                            href={tab.route}
+                            onClick={() => { if (onClose) onClose(); }}
                         >
-                            <tab.icon />
-                            <Text fontWeight="bold">{tab.title}</Text>
-                        </Link>
+                            <Box
+                                p={2}
+                                borderRadius="md"
+                                display="flex"
+                                alignItems="center"
+                                gap={2}
+                                bg={pathname === tab.route ? 'brand.100' : 'transparent'}
+                                _hover={{ bg: 'gray.200' }}
+                                _dark={{
+                                    bg: pathname === tab.route ? 'brand.700' : 'transparent',
+                                    _hover: { bg: 'gray.700' },
+                                }}
+                            >
+                                <tab.icon />
+                                <Text fontWeight="bold">{tab.title}</Text>
+                            </Box>
+                        </NextLink>
                     ))}
                 </VStack>
 
@@ -171,9 +170,9 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
 
                             {/* Menu List */}
                             <MenuList>
-                                <MenuItem onClick={() => router.push('/profile')}>Profile</MenuItem>
-                                <MenuItem onClick={() => router.push('/usage')}>Usage</MenuItem>
-                                <MenuItem onClick={() => router.push('/api-keys')}>API Keys</MenuItem>
+                                <NextLink href="/profile"><MenuItem>Profile</MenuItem></NextLink>
+                                <NextLink href="/usage"><MenuItem>Usage</MenuItem></NextLink>
+                                <NextLink href="/api-keys"><MenuItem>API Keys</MenuItem></NextLink>
                                 <MenuDivider />
                                 <MenuItem onClick={() => void auth.signOut()}>Logout</MenuItem>
                             </MenuList>

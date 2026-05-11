@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import NextLink from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import {
@@ -304,9 +305,11 @@ const StageDetailPage = observer(() => {
     if (stageError) {
         return (
             <Box p={{ base: 4, md: 6 }}>
-                <Button leftIcon={<ArrowBackIcon />} variant="ghost" onClick={() => router.push('/stages')}>
-                    Stages
-                </Button>
+                <NextLink href="/stages">
+                    <Button leftIcon={<ArrowBackIcon />} variant="ghost">
+                        Stages
+                    </Button>
+                </NextLink>
                 <Box mt={6}>
                     <Heading size="md" mb={2}>Stage not found</Heading>
                     <Text color={subtextColor}>{stageError}</Text>
@@ -317,15 +320,16 @@ const StageDetailPage = observer(() => {
 
     return (
         <Box p={{ base: 4, md: 6 }}>
-            <Button
-                leftIcon={<ArrowBackIcon />}
-                variant="ghost"
-                size="sm"
-                mb={4}
-                onClick={() => router.push('/stages')}
-            >
-                All stages
-            </Button>
+            <NextLink href="/stages">
+                <Button
+                    leftIcon={<ArrowBackIcon />}
+                    variant="ghost"
+                    size="sm"
+                    mb={4}
+                >
+                    All stages
+                </Button>
+            </NextLink>
 
             <Flex align="flex-start" gap={4} mb={2} wrap="wrap">
                 <Box flex="1" minW="240px">

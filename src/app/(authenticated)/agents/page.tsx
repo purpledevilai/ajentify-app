@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
@@ -332,7 +333,6 @@ const AgentsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    router.prefetch('/agent-builder');
     agentsStore.loadAgents();
     toolsStore.loadTools();
     modelsStore.loadModels();
@@ -348,10 +348,6 @@ const AgentsPage = observer(() => {
       setSortField(field);
       setSortDir(DEFAULT_DIR[field]);
     }
-  };
-
-  const handleAddAgentClick = () => {
-    router.push('/agent-builder');
   };
 
   const handleAgentClick = (agent: Agent) => {
@@ -460,9 +456,11 @@ const AgentsPage = observer(() => {
           >
             {selectMode ? 'Cancel' : 'Select'}
           </Button>
-          <Button size="sm" colorScheme="brand" onClick={handleAddAgentClick}>
-            + Add Agent
-          </Button>
+          <NextLink href="/agent-builder">
+            <Button size="sm" colorScheme="brand">
+              + Add Agent
+            </Button>
+          </NextLink>
         </Flex>
       </Flex>
 

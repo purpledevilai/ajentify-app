@@ -66,8 +66,7 @@ const ContextsPage = observer(() => {
         // in this session, so navigating into a context and back doesn't
         // trigger a refetch.
         contextsStore.loadContexts();
-        router.prefetch('/contexts');
-    }, [router, agentsStore, authStore.signedIn, contextsStore]);
+    }, [agentsStore, authStore.signedIn, contextsStore]);
 
     const handleApplyFilters = () => {
         contextsStore.setFilters({

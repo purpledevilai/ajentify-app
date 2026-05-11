@@ -3,7 +3,8 @@
 import React from 'react';
 import { Flex, Text, Spacer, IconButton, Button, useColorMode } from '@chakra-ui/react';
 import { HamburgerIcon, SunIcon, MoonIcon, ChatIcon } from '@chakra-ui/icons';
-import { useRouter, usePathname } from 'next/navigation';
+import NextLink from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
   onMenuClick: () => void; // Function to toggle the sidebar
@@ -11,7 +12,6 @@ interface HeaderProps {
 
 const Header = ({ onMenuClick }: HeaderProps) => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const router = useRouter();
   const pathname = usePathname();
   const onChat = pathname === '/chat';
 
@@ -45,16 +45,17 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
       <Spacer />
 
-      <Button
-        leftIcon={<ChatIcon />}
-        onClick={() => router.push('/chat')}
-        variant={onChat ? 'solid' : 'ghost'}
-        colorScheme={onChat ? 'brand' : undefined}
-        _hover={{ bg: onChat ? undefined : 'gray.200', _dark: { bg: onChat ? undefined : 'gray.700' } }}
-        mr={2}
-      >
-        Chat
-      </Button>
+      <NextLink href="/chat">
+        <Button
+          leftIcon={<ChatIcon />}
+          variant={onChat ? 'solid' : 'ghost'}
+          colorScheme={onChat ? 'brand' : undefined}
+          _hover={{ bg: onChat ? undefined : 'gray.200', _dark: { bg: onChat ? undefined : 'gray.700' } }}
+          mr={2}
+        >
+          Chat
+        </Button>
+      </NextLink>
 
       <Button
         as="a"

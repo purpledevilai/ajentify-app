@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
@@ -281,7 +282,6 @@ const ToolsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    router.prefetch('/tool-builder');
     void toolsStore.loadTools();
     void stagesStore.loadStages();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
@@ -300,10 +300,6 @@ const ToolsPage = observer(() => {
       setSortField(field);
       setSortDir(DEFAULT_DIR[field]);
     }
-  };
-
-  const handleAddToolClick = () => {
-    router.push('/tool-builder');
   };
 
   const handleToolClick = (tool: Tool) => {
@@ -412,9 +408,11 @@ const ToolsPage = observer(() => {
           >
             {selectMode ? 'Cancel' : 'Select'}
           </Button>
-          <Button size="sm" colorScheme="brand" onClick={handleAddToolClick}>
-            + Add Tool
-          </Button>
+          <NextLink href="/tool-builder">
+            <Button size="sm" colorScheme="brand">
+              + Add Tool
+            </Button>
+          </NextLink>
         </Flex>
       </Flex>
 

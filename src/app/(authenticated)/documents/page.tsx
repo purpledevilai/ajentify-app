@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { observer } from 'mobx-react-lite';
 import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
@@ -269,10 +270,9 @@ const DocumentsPage = observer(() => {
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    router.prefetch('/json-document-builder');
     void jsonDocumentsStore.loadDocuments();
     void stagesStore.loadStages();
-  }, [authStore.signedIn, router, jsonDocumentsStore, stagesStore]);
+  }, [authStore.signedIn, jsonDocumentsStore, stagesStore]);
 
   const showStageColumns = stagesStore.hasAnyStage;
 
@@ -283,10 +283,6 @@ const DocumentsPage = observer(() => {
       setSortField(field);
       setSortDir(DEFAULT_DIR[field]);
     }
-  };
-
-  const handleAddDocumentClick = () => {
-    router.push('/json-document-builder');
   };
 
   const handleDocumentClick = (doc: JsonDocument) => {
@@ -392,9 +388,11 @@ const DocumentsPage = observer(() => {
           >
             {selectMode ? 'Cancel' : 'Select'}
           </Button>
-          <Button size="sm" colorScheme="brand" onClick={handleAddDocumentClick}>
-            + Add Document
-          </Button>
+          <NextLink href="/json-document-builder">
+            <Button size="sm" colorScheme="brand">
+              + Add Document
+            </Button>
+          </NextLink>
         </Flex>
       </Flex>
 
