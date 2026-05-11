@@ -81,7 +81,7 @@ Order:
 - **D. API client chokepoint** — build `src/api/client.ts` with auth and 401-interceptor bindings; sweep `src/api/**/*.ts` to use it (skipping the deprecated `chatpage/*` files and the auth-flow Amplify wrappers). Bindings wired up at the singleton-`authStore` level for now; deliverable E moves them to the root-store-owned `authStore`.
 - **E. Root store + per-store DI** — introduce `ParameterDefinitionsStore`. Construct stores in dep-order, kill module singletons, expose `useStores()` for the dashboard. Construct a separate `<AuthFlowStoreProvider>` in `(auth)/providers.tsx` for the signin/signup pages (its own `AuthStore` + `SignUpStore` instances). Re-bind the API client's auth callbacks to the root-store-owned `authStore`. After this step there is no `export const xxxStore = new XxxStore()` anywhere.
 - **F. Auth gating boundary** — `<DashboardBoot>`, real `/user` validation in `AuthStore.checkAuth`, hardened 401 interceptor (lives in D's chokepoint, wired through E's bindings), coarse middleware gate. Removes the optimistic `signedIn = true` flip from `submitSignIn`.
-- **G. Enable `react-hooks/exhaustive-deps` at error + sweep** — promote the rule (already on at warn via `next/core-web-vitals`) to error level, fix every surviving warning. Most violations were already deleted by C and E; what remains is a much smaller, less risky set.
+- **G. Enable `react-hooks/exhaustive-deps` at error + sweep** — promote the rule (already on at warn via `next/core-web-vitals`) to error level, fix every surviving warning. Of the **15 warnings** present today, roughly 12 are removed as a side effect of C and E/F; G fixes the ~3 that survive.
 - **H. Builder stores: singleton → per-page instance** — one builder per PR (`Tool`, `Agent`, `SRE`, `JsonDocument`). The `ChatPageBuilder` is **not** included — that surface is being deprecated and will be deleted in project 08. Each shipped builder gets a focused domain-logic test.
 - **I. Navigation, prefetch, and segment files** — `<Link>` sweep (excluding deprecated chat-page routes), `DASHBOARD_ROUTES` + `router.prefetch(...)` effect inside `<DashboardBoot>`, `loading.tsx` / `error.tsx` / `not-found.tsx` per segment, `app/sitemap.ts` and `app/robots.ts`. May ship in parallel with H.
 - **J. Webpack fallback cleanup** — investigate `child_process: false` in `next.config.ts`; remove if possible, otherwise leave a comment naming the offending import.
@@ -688,7 +688,7 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
 
 #### G. Promote `react-hooks/exhaustive-deps` to error + sweep
 
-`react-hooks/exhaustive-deps` is already on at **warn** today (it ships with `next/core-web-vitals`, which `.eslintrc.json` extends). Today's CI doesn't fail on warnings, so the warnings have piled up unchecked. Deliverable A leaves the rule at warn; this deliverable promotes it to **error** *after* C and E have deleted the largest sources of violations (~17 `setShowAlert` effect call sites from C; every `reaction(() => authStore.signedIn, ...)` pattern from E/F.1). Whatever remains is the legitimate audit work.
+`react-hooks/exhaustive-deps` is already on at **warn** today (it ships with `next/core-web-vitals`, which `.eslintrc.json` extends). Today's CI doesn't fail on warnings, so the warnings have piled up unchecked. Deliverable A leaves the rule at warn; this deliverable promotes it to **error** *after* C and E have deleted the largest sources of violations (15 `setShowAlert` effects from C; 3 auth-redirect `reaction(authStore.signedIn, ...)` patterns from E/F.1 — note that `create-team/page.tsx:25` wraps a scroll-animation `reaction(createTeamStore.step, ...)`, not an auth redirect, so it is **not** removed by E/F and G must address it). Starting count before this deliverable: **15 warnings, 0 errors**; after C and E/F land roughly 12 of those are gone, leaving approximately 3 for G to fix.
 
 - [ ] Promote `react-hooks/exhaustive-deps` from `warn` to `error` in the ESLint config.
 - [ ] Run `next lint`. For each error, choose one of:
@@ -697,6 +697,8 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
   - Switch to `[]` and add a one-line comment explaining why no deps are needed (rare; e.g. a one-shot mount-time fetch).
   - Pull the work out of React entirely — a MobX `autorun` set up at app boot, a `reaction()` inside an `observer`-derived render. (Should be rare.)
 - [ ] CI fails on any new violation.
+- [ ] One intentional inline suppression already exists at `StageAssignmentField.tsx:105` (`// eslint-disable-next-line react-hooks/exhaustive-deps`). Verify it carries a brief reason comment explaining why `value` and `onChange` are deliberately omitted (to avoid reacting to every value change). Preserve the suppression; do not delete it.
+- [ ] The three whole-file `/* eslint-disable */` files (`TokenStreamingService.ts`, `JSONRPCPeer.ts`, `types/context.ts`) silence ESLint entirely — they will not emit errors when `exhaustive-deps` is promoted and are out of scope for this sweep.
 
 #### H. Builder stores: singleton → per-page instance
 
