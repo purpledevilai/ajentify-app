@@ -111,7 +111,7 @@ Ship before any structural changes. Tiny PR; biggest correctness-per-line in the
 
 #### B. The layout split
 
-- [ ] Strip `'use client'` from `app/layout.tsx`. Make it a server component.
+- [ ] Strip `'use client'` from `app/layout.tsx`. Make it a server component. **Current state of root layout (all of this is removed as part of this step):** it is wrapped with `observer(...)`, mounts three providers in order — `<NavigationGuardProvider>` → `<ChakraProviders>` → `<AlertProvider>` — calls `authStore.checkAuth()` in a `useEffect` with an empty dependency array, and gates rendering on `authStore.isDeterminingAuth`. Distribution when stripped: `NavigationGuardProvider` moves to `(authenticated)/providers.tsx` only (the `(auth)/` and `(public)/` routes do not need route-change guards); `ChakraProviders` moves to the route-group provider files described below; `AlertProvider` is removed from root and **not** added to any new provider (it is deleted in deliverable C); `authStore.checkAuth()` and the `isDeterminingAuth` rendering gate are removed from root here and re-housed in `<DashboardBoot>` (deliverable F).
 - [ ] Export a `metadata` (and later `generateMetadata`) from `app/layout.tsx`. Replace the hand-rolled `<head><title>` block.
 - [ ] **Move signin/signup into a new `(auth)/` route group** before touching providers:
   - `git mv src/app/(public)/signin src/app/(auth)/signin`
@@ -177,7 +177,7 @@ Three categories of feedback, three homes:
 
 ##### C.2 Mechanical sweep
 
-- [ ] Delete `src/app/components/AlertProvider.tsx` and `src/app/components/Alert.tsx`. Remove the `<AlertProvider>` mount from `app/layout.tsx` (already a child of `(authenticated)/providers.tsx` per deliverable B; just don't add it back).
+- [ ] Delete `src/app/components/AlertProvider.tsx` and `src/app/components/Alert.tsx`. `<AlertProvider>` is currently mounted in the root `app/layout.tsx`; deliverable B removes it from there when root layout is stripped to a server component. Do not add it to `(authenticated)/providers.tsx` or any other route-group provider — it is being deleted here in C.
 - [ ] Delete every `setShowAlert` method and `showAlert` field from every store that has them. Sweep instruction: `rg -l "setShowAlert|showAlert" src/store/` finds the set; treat that grep as the source of truth, not the audit's hand-written list.
   - Stores that carry the standard `setShowAlert(showAlert) → showAlert(...)` plumbing today and need the full sweep (drop the field, drop the setter, replace each call site with an `xxxError` field per the C.1 pattern): `AgentsStore`, `ToolsStore`, `StagesStore`, `ContextsStore`, `IntegrationsStore`, `JsonDocumentsStore`, `StructuredResponseEndpointStore`, `ChatPageStore`, `CreateTeamStore`, `AgentBuilderStore`, `ToolBuilderStore`, `StructuredResponseEndpointBuilderStore`, `JsonDocumentBuilderStore`.
   - **Out of scope (deprecated):** `ChatPagesStore` and `ChatPageBuilderStore`. Skip them. They're being removed in project 08.
@@ -196,7 +196,7 @@ Three categories of feedback, three homes:
   {agents.agents && <AgentsList agents={agents.agents} />}
   ```
 
-- [ ] Add a tiny `<InlineError />` primitive at `src/components/feedback/InlineError.tsx`. Renders a Chakra `<Box>` with the error message + an optional retry button. ~20 lines.
+- [ ] Add a tiny `<InlineError />` primitive at `src/app/components/feedback/InlineError.tsx`. Renders a Chakra `<Box>` with the error message + an optional retry button. ~20 lines.
 - [ ] For pages that legitimately need a toast (today: "copied to clipboard" in `(authenticated)/components/CopyButton.tsx` and a few list pages after delete actions), wire `useToast()` from `@chakra-ui/react` directly. **Do not** introduce a wrapper.
 - [ ] Delete `useAlert` imports across the codebase. The hook ceases to exist with the provider.
 
@@ -516,7 +516,7 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
 
 - [ ] Add `<StoreProvider>` and a single `useStores()` hook (returning the root for destructuring: `const { agents, auth } = useStores()`) in `src/store/StoreContext.tsx`. **Do not** add a parametrized `useStore('agents')`.
 - [ ] Mount `<StoreProvider>` only inside `app/(authenticated)/providers.tsx`. The provider constructs `new RootStore()` once and provides it via context. **Do not** mount it from `(public)/` or `(auth)/`.
-- [ ] Replace every `import { xxxStore } from '@/store/XxxStore'` in components under `(authenticated)/` (and the shared `src/components/` and `src/app/components/` for components only used by the dashboard) with `useStores()`. Roughly a 30-file mechanical sweep.
+- [ ] Replace every `import { xxxStore } from '@/store/XxxStore'` in components under `(authenticated)/` (and `src/app/components/` for components only used by the dashboard) with `useStores()`. Roughly a 30-file mechanical sweep.
 - [ ] Delete every module-level singleton (`export const xxxStore = new XxxStore()`) from every store file the dashboard touches **and** from `AuthStore` and `SignUpStore` (those are now constructed by `AuthFlowStore` for the auth-flow side and by `RootStore` for the dashboard side). Each store file exports the class only. The `lint:arch` script from deliverable A will fail CI if one is added back.
   - The two singletons that survive this PR are `chatPagesStore` and `chatPageBuilderStore` (deprecated; deleted in project 08). The `lint:arch` regex (`^export const \w+Store = new \w+Store`) will match them, so the script's exclusion list explicitly carves out `src/store/ChatPagesStore.ts` and `src/store/ChatPageBuilderStore.ts`. Add a comment in `lint:arch` naming the carve-out and the project that removes it (project 08).
 - [ ] **Update `<ApiClientBinder>` to source `auth` from `useStores()`.** This is the swap-over described in D.3's "End of deliverable E" section — same render-time binding pattern, now reading from the root. The chokepoint and every API call site are untouched.
@@ -573,7 +573,7 @@ This deliverable owns four things: the boot orchestration component, real backen
 
 ##### F.1 `<DashboardBoot>` — the authenticated-side orchestrator
 
-- [ ] Create `src/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`.
+- [ ] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`.
 - [ ] Behaviour:
   - While `auth.isDeterminingAuth` is true: render `<BootSplash />` (a separate small component holding the branded loading animation; created in this deliverable).
   - When determination resolves to **not signed in**: call `redirect('/signin')` from `next/navigation` **during render** (not in an effect, not in a handler). The component returns `null` after the redirect call; the redirect throws a navigation signal Next catches.
@@ -883,12 +883,12 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 - New: `ajentify-app/src/app/(public)/layout.tsx`
 - Moved: `ajentify-app/src/app/(public)/signin/` → `ajentify-app/src/app/(auth)/signin/`
 - Moved: `ajentify-app/src/app/(public)/signup/` → `ajentify-app/src/app/(auth)/signup/`
-- New: `ajentify-app/src/lib/amplify.ts` and a tiny `ajentify-app/src/components/AmplifyConfig.tsx` rendered once inside both `(authenticated)/providers.tsx` and `(auth)/providers.tsx`
+- New: `ajentify-app/src/lib/amplify.ts` and a tiny `ajentify-app/src/app/components/AmplifyConfig.tsx` rendered once inside both `(authenticated)/providers.tsx` and `(auth)/providers.tsx`
 
 **Alerts → errors + toasts (deliverable C):**
 
 - Deleted: `ajentify-app/src/app/components/AlertProvider.tsx`, `ajentify-app/src/app/components/Alert.tsx`
-- New: `ajentify-app/src/components/feedback/InlineError.tsx`
+- New: `ajentify-app/src/app/components/feedback/InlineError.tsx`
 
 **API client (deliverable D):**
 
@@ -900,8 +900,8 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 
 **Auth gating (deliverable F):**
 
-- New: `ajentify-app/src/components/auth/DashboardBoot.tsx` (boot splash + auth determination + post-auth prefetch + redirect)
-- New: `ajentify-app/src/components/auth/BootSplash.tsx` (the branded loading animation)
+- New: `ajentify-app/src/app/components/auth/DashboardBoot.tsx` (boot splash + auth determination + post-auth prefetch + redirect)
+- New: `ajentify-app/src/app/components/auth/BootSplash.tsx` (the branded loading animation)
 - New: `ajentify-app/src/middleware.ts` (Flavour A coarse signed-in cookie gate; documented as advisory only; matcher enumerates `(authenticated)` and `(auth)` URL prefixes explicitly — no `(public)` paths gated)
 
 **Stores (deliverable E + H):**
