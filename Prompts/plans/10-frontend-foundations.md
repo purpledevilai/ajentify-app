@@ -182,8 +182,8 @@ Three categories of feedback, three homes:
 
 ##### C.2 Mechanical sweep
 
-- [ ] Delete `src/app/components/AlertProvider.tsx` and `src/app/components/Alert.tsx`. `<AlertProvider>` is currently mounted in the root `app/layout.tsx`; deliverable B removes it from there when root layout is stripped to a server component. Do not add it to `(authenticated)/providers.tsx` or any other route-group provider — it is being deleted here in C.
-- [ ] Delete every `setShowAlert` method and `showAlert` field from every store that has them. Sweep instruction: `rg -l "setShowAlert|showAlert" src/store/` finds the set; treat that grep as the source of truth, not the audit's hand-written list.
+- [x] Delete `src/app/components/AlertProvider.tsx` and `src/app/components/Alert.tsx`. `<AlertProvider>` is currently mounted in the root `app/layout.tsx`; deliverable B removes it from there when root layout is stripped to a server component. Do not add it to `(authenticated)/providers.tsx` or any other route-group provider — it is being deleted here in C.
+- [x] Delete every `setShowAlert` method and `showAlert` field from every store that has them. Sweep instruction: `rg -l "setShowAlert|showAlert" src/store/` finds the set; treat that grep as the source of truth, not the audit's hand-written list.
   - Stores that carry the standard `setShowAlert(showAlert) → showAlert(...)` plumbing today and need the full sweep (drop the field, drop the setter, replace each call site with an `xxxError` field per the C.1 pattern): `AgentsStore`, `ToolsStore`, `StagesStore`, `ContextsStore`, `IntegrationsStore`, `JsonDocumentsStore`, `StructuredResponseEndpointStore`, `ChatPageStore`, `CreateTeamStore`, `AgentBuilderStore`, `ToolBuilderStore`, `StructuredResponseEndpointBuilderStore`, `JsonDocumentBuilderStore`.
   - **Out of scope (deprecated):** `ChatPagesStore` and `ChatPageBuilderStore`. Skip them. They're being removed in project 08.
   - **Differently shaped — adapt the pattern, don't apply it literally:**
@@ -191,8 +191,8 @@ Three categories of feedback, three homes:
     - `SignUpStore` has its own internal alert emulation (`showAlertFlag`, `alertTitle`, `alertMessage`, `alertActions`), not the global `setShowAlert` callback. Replace those four fields with per-action `xxxError` fields (`signUpError`, `confirmSignUpError`, `createOrgError`) and let the signup step components render inline error blocks. The alert-replacement work is mechanical but the field names differ from the rest.
     - `AuthStore` already uses per-action error fields (`signInError`, `forgotPasswordError`); leave those alone. It carries no `showAlert` callback, so nothing to delete on the AuthStore side.
     - `JsonDocumentBuilderStore` is in the full-sweep list above but already has a `dataError: string | null` field (line 18) for JSON parse/validation errors — rendered in-UI, not via `showAlert`. The sweep must **preserve** `dataError`; add API-action error fields (`createDocumentError`, `updateDocumentError`, `deleteDocumentError`) alongside it rather than replacing it.
-- [ ] Replace every `this.showAlert({ title: 'Whoops', message: ... })` inside a store action with `this.<actionName>Error = (error as Error).message`. The action sets the error before the try block (so retries clear it) and lets `finally` handle the loading flag. Naming: `xxxError` for load errors, `<verbResource>Error` for one-off action errors (`deleteAgentError`, `saveToolError`, etc.). Keep names boring.
-- [ ] **Sweep every page call site** that calls `setShowAlert` on a store, regardless of whether it's inside a `useEffect`. The audit said "inside a `useEffect`", but at least one page (`(authenticated)/create-team/page.tsx:16`) calls `createTeamStore.setShowAlert(showAlert)` directly in render. Use `rg "setShowAlert" src/app/` to find every site; for each: delete the call, delete the surrounding `useEffect` if that was its only job, add inline error rendering near the loading skeleton:
+- [x] Replace every `this.showAlert({ title: 'Whoops', message: ... })` inside a store action with `this.<actionName>Error = (error as Error).message`. The action sets the error before the try block (so retries clear it) and lets `finally` handle the loading flag. Naming: `xxxError` for load errors, `<verbResource>Error` for one-off action errors (`deleteAgentError`, `saveToolError`, etc.). Keep names boring.
+- [x] **Sweep every page call site** that calls `setShowAlert` on a store, regardless of whether it's inside a `useEffect`. The audit said "inside a `useEffect`", but at least one page (`(authenticated)/create-team/page.tsx:16`) calls `createTeamStore.setShowAlert(showAlert)` directly in render. Use `rg "setShowAlert" src/app/` to find every site; for each: delete the call, delete the surrounding `useEffect` if that was its only job, add inline error rendering near the loading skeleton:
 
   ```tsx
   {agents.agentsLoading && <Skeleton />}
@@ -202,9 +202,9 @@ Three categories of feedback, three homes:
   {agents.agents && <AgentsList agents={agents.agents} />}
   ```
 
-- [ ] Add a tiny `<InlineError />` primitive at `src/app/components/feedback/InlineError.tsx`. Renders a Chakra `<Box>` with the error message + an optional retry button. ~20 lines.
-- [ ] For pages that legitimately need a toast (today: "copied to clipboard" in `(authenticated)/contexts/CopyButton.tsx` and a few list pages after delete actions), wire `useToast()` from `@chakra-ui/react` directly. **Do not** introduce a wrapper.
-- [ ] Delete `useAlert` imports across the codebase. The hook ceases to exist with the provider.
+- [x] Add a tiny `<InlineError />` primitive at `src/app/components/InlineError.tsx`. Renders a Chakra `<Box>` with the error message + an optional retry button. ~20 lines.
+- [x] For pages that legitimately need a toast (today: "copied to clipboard" in `(authenticated)/contexts/CopyButton.tsx` and a few list pages after delete actions), wire `useToast()` from `@chakra-ui/react` directly. **Do not** introduce a wrapper.
+- [x] Delete `useAlert` imports across the codebase. The hook ceases to exist with the provider.
 
 ##### C.3 What survives the sweep
 
