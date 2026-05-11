@@ -103,6 +103,7 @@ export class SignUpStore {
                 password: this.password
             };
             await signIn(signInPayload);
+            document.cookie = 'aj_signed_in=1; Path=/; SameSite=Lax';
 
             // Create User
             await createUser();

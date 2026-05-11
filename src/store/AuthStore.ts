@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { fetchAuthSession } from "aws-amplify/auth";
+import { fetchAuthSession, signOut as awsSignOut } from "aws-amplify/auth";
 import { signIn } from '@/api/auth/signIn'; 
 import { signOut } from '@/api/auth/signOut';
 import { updateUser } from '@/api/user/updateUser';
@@ -20,6 +20,7 @@ export class AuthStore {
     signInError = '';
     isDeterminingAuth = true;
     signedIn = false;
+    loggingOut = false;
     user: User | undefined = undefined;
     userLoading = false;
 
@@ -67,18 +68,49 @@ export class AuthStore {
     }
 
     forceRefreshAccessToken = async (): Promise<string | undefined> => {
-        return this.getAccessToken();
+        try {
+            const session = await fetchAuthSession({ forceRefresh: true });
+            return session.tokens?.accessToken.toString();
+        } catch {
+            return undefined;
+        }
     };
 
     handleAuthFailure = async (): Promise<void> => {
-        window.location.assign('/signin');
+        if (this.loggingOut) return;
+        this.loggingOut = true;
+        try {
+            await awsSignOut();
+            this.resetAllCallback?.();
+            this.signedIn = false;
+            document.cookie = 'aj_signed_in=; Path=/; Max-Age=0';
+            window.location.assign('/signin');
+        } finally {
+            this.loggingOut = false;
+        }
     };
 
     checkAuth = async () => {
         this.isDeterminingAuth = true;
-        const token = await this.getAccessToken();
-        this.signedIn = token !== undefined;
-        this.isDeterminingAuth = false;
+        try {
+            const session = await fetchAuthSession();
+            const token = session.tokens?.accessToken.toString();
+            if (!token) {
+                this.signedIn = false;
+                return;
+            }
+            try {
+                const user = await getUser();
+                this.user = user;
+                this.signedIn = true;
+            } catch {
+                this.signedIn = false;
+            }
+        } catch {
+            this.signedIn = false;
+        } finally {
+            this.isDeterminingAuth = false;
+        }
     }
 
     async submitSignIn(): Promise<void> {
@@ -88,7 +120,7 @@ export class AuthStore {
 
         try {
             await signIn({ email: this.email, password: this.password });
-            this.signedIn = true;
+            document.cookie = 'aj_signed_in=1; Path=/; SameSite=Lax';
         } catch (error) {
             this.signInError = (error as Error).message || 'Failed to sign in. Please try again.';
         } finally {
@@ -99,6 +131,7 @@ export class AuthStore {
     async signOut(): Promise<void> {
         try {
             await signOut();
+            document.cookie = 'aj_signed_in=; Path=/; Max-Age=0';
             this.resetAllCallback?.();
             this.reset();
             this.signedIn = false;

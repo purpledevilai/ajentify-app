@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Box, Flex, FormControl, FormLabel, Input, Button, Heading, Text, Stack } from '@chakra-ui/react';
 import { useAuthFlowStores } from '@/store/AuthFlowStoreContext';
 import { useRouter } from 'next/navigation';
-import { reaction } from 'mobx';
 import ForgotPasswordModal from './components/ForgotPasswordModal';
 
 const SignInPage = observer(() => {
@@ -13,30 +12,9 @@ const SignInPage = observer(() => {
     const { auth } = useAuthFlowStores();
     const [isForgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
-    const routeBasedOnAuth = (signedIn: boolean) => {
-        if (signedIn) {
-            router.push('/agents');
-        }
-    }
-
-    useEffect(() => {
-        const disposer = reaction(
-            () => auth.signedIn,
-            (signedIn) => {
-                routeBasedOnAuth(signedIn);
-            }
-        );
-
-        routeBasedOnAuth(auth.signedIn);
-
-        return () => {
-            disposer();
-        };
-    });
-
-
-    const handleSignIn = () => {
-        void auth.submitSignIn();
+    const handleSignIn = async () => {
+        await auth.submitSignIn();
+        if (!auth.signInError) router.replace('/agents');
     }
     
     return (

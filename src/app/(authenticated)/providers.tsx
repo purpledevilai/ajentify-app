@@ -6,7 +6,7 @@ import { AmplifyConfig } from '@/app/components/AmplifyConfig';
 import theme from '@/theme/theme';
 import { StoreProvider } from '@/store/StoreContext';
 import { ApiClientBinder } from './ApiClientBinder';
-// DashboardBoot will be added in deliverable F
+import { DashboardBoot } from '@/app/components/DashboardBoot';
 
 export function AuthenticatedProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -15,7 +15,9 @@ export function AuthenticatedProviders({ children }: { children: React.ReactNode
         <AmplifyConfig />
         <StoreProvider>
           <ApiClientBinder>
-            {children}
+            <DashboardBoot>
+              {children}
+            </DashboardBoot>
           </ApiClientBinder>
         </StoreProvider>
       </ChakraProvider>
