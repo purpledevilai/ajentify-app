@@ -1,5 +1,4 @@
-import { authStore } from "@/store/AuthStore";
-import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { request } from "@/api/client";
 
 export interface GenerateAPIKeyResponse {
     api_key_id: string;
@@ -13,21 +12,9 @@ export interface GenerateAPIKeyResponse {
 }
 
 export async function generateAPIKey(org_id: string): Promise<GenerateAPIKeyResponse> {
-    try {
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/generate-api-key`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': await authStore.getAccessToken() || '',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ org_id, type: 'org' }),
-            }
-        );
-        return await checkResponseAndGetJson(response) as unknown as GenerateAPIKeyResponse;
-    } catch (error) {
-        const errorMessage = (error as Error).message || 'An unknown error occurred generating API key';
-        throw Error(errorMessage);
-    }
+  return request<GenerateAPIKeyResponse>({
+    method: 'POST',
+    path: '/generate-api-key',
+    body: { org_id, type: 'org' },
+  });
 }

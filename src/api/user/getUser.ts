@@ -1,19 +1,10 @@
 import { User } from "@/types/user";
-import { authStore } from "@/store/AuthStore";
-import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { request } from "@/api/client";
 
 
 export async function getUser(): Promise<User> {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user`, {
-        headers: {
-            'Authorization': await authStore.getAccessToken() || '',
-            'Content-Type': 'application/json'
-        },
-    });
-    return await checkResponseAndGetJson(response) as unknown as User;
-  } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred getting the user';
-    throw Error(errorMessage);
-  }
+  return request<User>({
+    method: 'GET',
+    path: '/user',
+  });
 }

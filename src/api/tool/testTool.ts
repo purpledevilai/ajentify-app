@@ -1,5 +1,4 @@
-import { authStore } from "@/store/AuthStore";
-import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { request } from "@/api/client";
 import { AnyType } from "@/types/tools";
 
 
@@ -10,18 +9,10 @@ export interface TestToolPayload {
 }
 
 export async function testTool(payload: TestToolPayload): Promise<string> {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/test-tool`, {
-        method: 'POST',
-        headers: {
-            'Authorization': await authStore.getAccessToken() || '',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
-    return (await checkResponseAndGetJson(response) as {result: string}).result;
-  } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred creating the team';
-    throw Error(errorMessage);
-  }
+  const { result } = await request<{ result: string }>({
+    method: 'POST',
+    path: '/test-tool',
+    body: payload,
+  });
+  return result;
 }

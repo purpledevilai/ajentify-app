@@ -1,5 +1,4 @@
-import { authStore } from "@/store/AuthStore";
-import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { request } from "@/api/client";
 import { Context } from "@/types/context";
 
 export interface GetContextPayload {
@@ -8,21 +7,9 @@ export interface GetContextPayload {
 }
 
 export async function getContext({context_id, with_tool_calls}: GetContextPayload): Promise<Context> {
-  try {
-    let queryParams = '';
-    if (with_tool_calls) {
-      queryParams += `?with_tool_calls=true`;
-    }
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/context/${context_id}${queryParams}`, {
-        method: 'GET',
-        headers: {
-            'Authorization': await authStore.getAccessToken() || '',
-            'Content-Type': 'application/json'
-        },
-    });
-    return await checkResponseAndGetJson(response) as unknown as Context;
-  } catch (error) {
-    const errorMessage = (error as Error).message || 'An unknown error occurred creating the context';
-    throw Error(errorMessage);
-  }
+  return request<Context>({
+    method: 'GET',
+    path: `/context/${context_id}`,
+    query: { with_tool_calls: with_tool_calls || undefined },
+  });
 }
