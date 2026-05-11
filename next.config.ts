@@ -5,14 +5,6 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-const nextConfig: NextConfig = {
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      child_process: false,
-    };
-    return config;
-  },
-};
+const nextConfig: NextConfig = {};
 
 export default withBundleAnalyzer(nextConfig);
