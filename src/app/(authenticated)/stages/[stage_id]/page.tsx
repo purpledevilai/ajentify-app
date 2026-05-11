@@ -41,9 +41,7 @@ import AddExistingResourceModal, { PickableResource } from '../components/AddExi
 import DeleteStageDialog from '../components/DeleteStageDialog';
 import { DeleteStageMode } from '@/api/stage/deleteStage';
 import { deployManifest } from '@/api/deploy/deployManifest';
-import { refreshDashboardCaches } from '@/store/refreshDashboardCaches';
-import { stagesStore } from '@/store/StagesStore';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { Stage } from '@/types/stage';
 import { Agent } from '@/types/agent';
 import { Tool } from '@/types/tools';
@@ -96,6 +94,7 @@ const StageDetailPage = observer(() => {
     const stageId = params.stage_id;
     const router = useRouter();
     const toast = useToast();
+    const { stages: stagesStore, auth: authStore, refreshDashboardCaches } = useStores();
     const editModal = useDisclosure();
     const deployModal = useDisclosure();
     const cloneModal = useDisclosure();
@@ -675,6 +674,7 @@ const EditStageModal = ({
     stage: Stage | null;
     onUpdated: (stage: Stage) => void;
 }) => {
+    const { stages: stagesStore } = useStores();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);

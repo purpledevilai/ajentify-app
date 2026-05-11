@@ -3,9 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { jsonDocumentsStore } from '@/store/JsonDocumentsStore';
-import { jsonDocumentBuilderStore } from '@/store/JsonDocumentBuilderStore';
-import { stagesStore } from '@/store/StagesStore';
+import { jsonDocumentBuilderStore } from '../json-document-builder/jsonDocumentBuilderStore';
+import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { JsonDocument } from '@/types/jsondocument';
@@ -43,7 +42,6 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
 import { InlineError } from '@/app/components/InlineError';
-import { authStore } from '@/store/AuthStore';
 
 type SortField = 'name' | 'fields' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
@@ -255,6 +253,7 @@ const DocumentRow = ({
 
 const DocumentsPage = observer(() => {
   const router = useRouter();
+  const { jsonDocuments: jsonDocumentsStore, stages: stagesStore, auth: authStore } = useStores();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');

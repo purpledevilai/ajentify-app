@@ -19,7 +19,7 @@ import {
     Tooltip,
     useColorModeValue,
 } from '@chakra-ui/react';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { getUsage, UsageResponse } from '@/api/usage/getUsage';
 
 const MONTHS = [
@@ -40,6 +40,7 @@ function formatNumber(n: number): string {
 }
 
 const UsagePage = observer(() => {
+    const { auth } = useStores();
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -53,7 +54,7 @@ const UsagePage = observer(() => {
     const subtleBg = useColorModeValue('gray.50', 'gray.700');
 
     const fetchUsage = useCallback(async (year: number, month: number) => {
-        if (!authStore.signedIn) return;
+        if (!auth.signedIn) return;
         setLoading(true);
         setError(null);
         try {

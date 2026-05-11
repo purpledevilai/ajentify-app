@@ -3,13 +3,14 @@
 import React from 'react';
 import { Stack, Button, Heading, Text } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
-import { authStore } from '@/store/AuthStore';
+import { useAuthFlowStores } from '@/store/AuthFlowStoreContext';
 
 const SuccessStep = () => {
     const router = useRouter();
+    const { auth } = useAuthFlowStores();
 
     const handleGoToHome = async () => {
-        await authStore.checkAuth()
+        await auth.checkAuth();
         router.push('/');
     }
 

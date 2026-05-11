@@ -7,7 +7,7 @@ import {
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { observer } from "mobx-react-lite";
-import { modelsStore } from "@/store/ModelsStore";
+import { useStores } from "@/store/StoreContext";
 import { formatContextWindow } from "@/types/model";
 
 interface ModelSelectorProps {
@@ -16,6 +16,7 @@ interface ModelSelectorProps {
 }
 
 export const ModelSelector = observer(({ value, onChange }: ModelSelectorProps) => {
+    const { models: modelsStore } = useStores();
     const [isOpen, setIsOpen] = useState(false);
 
     const selectedBg = useColorModeValue("purple.50", "purple.900");
@@ -26,8 +27,8 @@ export const ModelSelector = observer(({ value, onChange }: ModelSelectorProps) 
     const subtextColor = useColorModeValue("gray.500", "gray.400");
 
     useEffect(() => {
-        modelsStore.loadModels();
-    }, []);
+        void modelsStore.loadModels();
+    }, [modelsStore]);
 
     if (modelsStore.isLoading) {
         return (

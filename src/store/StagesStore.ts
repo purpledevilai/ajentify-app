@@ -5,7 +5,7 @@ import { updateStage as updateStageApi, UpdateStagePayload } from '@/api/stage/u
 import { deleteStage as deleteStageApi, DeleteStageMode } from '@/api/stage/deleteStage';
 import { Stage } from '@/types/stage';
 
-class StagesStore {
+export class StagesStore {
     stagesError: string | null = null;
     createStageError: string | null = null;
     updateStageError: string | null = null;
@@ -86,4 +86,3 @@ class StagesStore {
     }
 }
 
-export const stagesStore = new StagesStore();

@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Stack, Button, Heading, Text, Input, Textarea } from '@chakra-ui/react';
 import { CloseIcon } from "@chakra-ui/icons";
-import { createTeamStore } from '@/store/CreateTeamStore';
+import { useStores } from '@/store/StoreContext';
 import { InlineError } from '@/app/components/InlineError';
 
 export const BusinessInformationStep = observer(() => {
+    const { createTeam: createTeamStore } = useStores();
 
     const [validationError, setValidationError] = useState<string | null>(null);
 

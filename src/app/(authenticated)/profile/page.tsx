@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import {
     Button,
     FormControl,
@@ -29,9 +29,10 @@ import { User } from '@/types/user';
 import { InlineError } from '@/app/components/InlineError';
 
 const ProfilePage = observer(() => {
+    const { auth } = useStores();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editedUser, setEditedUser] = useState<User | undefined>(authStore.user);
+    const [editedUser, setEditedUser] = useState<User | undefined>(auth.user);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
@@ -39,20 +40,20 @@ const ProfilePage = observer(() => {
     const cancelRef = useRef<any>(null);
 
     const handleEdit = () => {
-        if (!authStore.user) return;
-        setEditedUser({ ...authStore.user });
+        if (!auth.user) return;
+        setEditedUser({ ...auth.user });
         setIsEditing(true);
     };
 
     const handleCancel = () => {
-        if (!authStore.user) return;
+        if (!auth.user) return;
         setIsEditing(false);
-        setEditedUser({ ...authStore.user });
+        setEditedUser({ ...auth.user });
     };
 
     const handleSave = async () => {
         try {
-            await authStore.updateUserDetails(editedUser!);
+            await auth.updateUserDetails(editedUser!);
             setIsEditing(false);
         } catch (error) {
             console.error('Failed to save user updates:', error);
@@ -67,11 +68,11 @@ const ProfilePage = observer(() => {
     };
 
     const handleConfirmDeleteAccount = async () => {
-        if (!authStore.user) return;
+        if (!auth.user) return;
         setDeleteError(null);
         setIsDeleting(true);
         try {
-            await authStore.deleteAccount();
+            await auth.deleteAccount();
         } catch (error) {
             console.error('Failed to delete account:', error);
             setDeleteError('There was an error deleting your account. Please try again later.');
@@ -82,7 +83,7 @@ const ProfilePage = observer(() => {
     }
 
     return (
-        (!authStore.user) ? (
+        (!auth.user) ? (
             <Flex justify="center" align="center" h="100vh">
                 <Text>Loading...</Text>
             </Flex>
@@ -123,13 +124,13 @@ const ProfilePage = observer(() => {
                     {/* User ID */}
                     <FormControl>
                         <FormLabel>ID:</FormLabel>
-                        <Text>{authStore.user.id}</Text>
+                        <Text>{auth.user.id}</Text>
                     </FormControl>
 
                     {/* Email */}
                     <FormControl>
                         <FormLabel>Email:</FormLabel>
-                        <Text>{authStore.user.email}</Text>
+                        <Text>{auth.user.email}</Text>
                     </FormControl>
 
                     {/* First Name */}
@@ -141,7 +142,7 @@ const ProfilePage = observer(() => {
                                 onChange={(e) => handleChange('first_name', e.target.value)}
                             />
                         ) : (
-                            <Text>{authStore.user.first_name}</Text>
+                            <Text>{auth.user.first_name}</Text>
                         )}
                     </FormControl>
 
@@ -154,7 +155,7 @@ const ProfilePage = observer(() => {
                                 onChange={(e) => handleChange('last_name', e.target.value)}
                             />
                         ) : (
-                            <Text>{authStore.user.last_name}</Text>
+                            <Text>{auth.user.last_name}</Text>
                         )}
                     </FormControl>
 
@@ -162,7 +163,7 @@ const ProfilePage = observer(() => {
                     <FormControl>
                         <FormLabel>Organizations:</FormLabel>
                         <List spacing={2}>
-                            {authStore.user.organizations.map((org) => (
+                            {auth.user.organizations.map((org) => (
                                 <ListItem key={org.id}>
                                     <Text>- {org.name}</Text>
                                 </ListItem>

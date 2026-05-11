@@ -2,7 +2,7 @@ import { makeAutoObservable } from "mobx";
 import { Model } from "@/types/model";
 import { getModels } from "@/api/model/getModels";
 
-class ModelsStore {
+export class ModelsStore {
     models: Model[] = [];
     isLoading = false;
     hasLoaded = false;
@@ -26,6 +26,13 @@ class ModelsStore {
         }
     }
 
+    reset = () => {
+        this.models = [];
+        this.isLoading = false;
+        this.hasLoaded = false;
+        this.modelsError = null;
+    };
+
     getModelByName = (modelName: string): Model | undefined => {
         return this.models.find(m => m.model === modelName);
     }
@@ -37,4 +44,3 @@ class ModelsStore {
     }
 }
 
-export const modelsStore = new ModelsStore();

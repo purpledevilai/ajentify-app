@@ -38,13 +38,14 @@ import {
     AlertDialogOverlay,
 } from '@chakra-ui/react';
 import { CopyIcon, CheckIcon } from '@chakra-ui/icons';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { getAPIKeys, APIKeySummary } from '@/api/apikey/getAPIKeys';
 import { generateAPIKey } from '@/api/apikey/generateAPIKey';
 import { revokeAPIKey } from '@/api/apikey/revokeAPIKey';
 import { InlineError } from '@/app/components/InlineError';
 
 const APIKeysPage = observer(() => {
+    const { auth } = useStores();
     const [apiKeys, setApiKeys] = useState<APIKeySummary[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -64,7 +65,7 @@ const APIKeysPage = observer(() => {
     const cardBg = useColorModeValue('white', 'gray.800');
 
     const fetchKeys = useCallback(async () => {
-        if (!authStore.signedIn) return;
+        if (!auth.signedIn) return;
         setLoading(true);
         setError(null);
         try {
@@ -82,11 +83,11 @@ const APIKeysPage = observer(() => {
     }, [fetchKeys]);
 
     const handleCreate = async () => {
-        if (!authStore.user || authStore.user.organizations.length === 0) return;
+        if (!auth.user || auth.user.organizations.length === 0) return;
         setCreateError(null);
         setCreating(true);
         try {
-            const orgId = authStore.user.organizations[0].id;
+            const orgId = auth.user.organizations[0].id;
             const result = await generateAPIKey(orgId);
             setNewToken(result.token);
             onOpen();

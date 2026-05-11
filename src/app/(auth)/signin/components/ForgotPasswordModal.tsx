@@ -3,7 +3,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, Input, FormControl, FormLabel, Text } from '@chakra-ui/react';
-import { authStore } from '@/store/AuthStore';
+import { useAuthFlowStores } from '@/store/AuthFlowStoreContext';
 
 interface ForgotPasswordModalProps {
     isOpen: boolean;
@@ -11,16 +11,17 @@ interface ForgotPasswordModalProps {
 }
 
 const ForgotPasswordModal = observer(({ isOpen, onClose }: ForgotPasswordModalProps) => {
+    const { auth } = useAuthFlowStores();
     const handleForgotPassword = async () => {
-        await authStore.submitForgotPassword();
+        await auth.submitForgotPassword();
     };
 
     const handleResetPassword = async () => {
-        await authStore.submitResetPassword();
+        await auth.submitResetPassword();
     };
 
     const resetFlow = () => {
-        authStore.resetForgotPasswordFlow();
+        auth.resetForgotPasswordFlow();
         onClose();
     };
 
@@ -31,61 +32,61 @@ const ForgotPasswordModal = observer(({ isOpen, onClose }: ForgotPasswordModalPr
                 <ModalHeader>Forgot Password</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
-                    {authStore.forgotPasswordStep === 'email' && (
+                    {auth.forgotPasswordStep === 'email' && (
                         <FormControl isRequired>
                             <FormLabel>Email</FormLabel>
                             <Input
                                 type="email"
-                                value={authStore.email}
-                                onChange={(e) => authStore.setField('email', e.target.value)}
+                                value={auth.email}
+                                onChange={(e) => auth.setField('email', e.target.value)}
                                 placeholder="Enter your email"
                             />
-                            {authStore.forgotPasswordError && (
-                                <Text color="red.500">{authStore.forgotPasswordError}</Text>
+                            {auth.forgotPasswordError && (
+                                <Text color="red.500">{auth.forgotPasswordError}</Text>
                             )}
                         </FormControl>
                     )}
 
-                    {authStore.forgotPasswordStep === 'code' && (
+                    {auth.forgotPasswordStep === 'code' && (
                         <>
                             <FormControl isRequired>
                                 <FormLabel>Verification Code</FormLabel>
                                 <Input
                                     type="text"
-                                    value={authStore.resetPasswordCode}
-                                    onChange={(e) => authStore.setField('resetPasswordCode', e.target.value)}
+                                    value={auth.resetPasswordCode}
+                                    onChange={(e) => auth.setField('resetPasswordCode', e.target.value)}
                                 />
                             </FormControl>
                             <FormControl isRequired mt={4}>
                                 <FormLabel>New Password</FormLabel>
                                 <Input
                                     type="password"
-                                    value={authStore.newPassword}
-                                    onChange={(e) => authStore.setField('newPassword', e.target.value)}
+                                    value={auth.newPassword}
+                                    onChange={(e) => auth.setField('newPassword', e.target.value)}
                                 />
                             </FormControl>
-                            {authStore.forgotPasswordError && (
-                                <Text color="red.500">{authStore.forgotPasswordError}</Text>
+                            {auth.forgotPasswordError && (
+                                <Text color="red.500">{auth.forgotPasswordError}</Text>
                             )}
                         </>
                     )}
 
-                    {authStore.forgotPasswordStep === 'completed' && (
+                    {auth.forgotPasswordStep === 'completed' && (
                         <Text>Password reset successfully! Please log in with your new password.</Text>
                     )}
                 </ModalBody>
                 <ModalFooter>
-                    {authStore.forgotPasswordStep === 'email' && (
-                        <Button onClick={handleForgotPassword} isLoading={authStore.forgotPasswordLoading}>
+                    {auth.forgotPasswordStep === 'email' && (
+                        <Button onClick={handleForgotPassword} isLoading={auth.forgotPasswordLoading}>
                             Send Verification Code
                         </Button>
                     )}
-                    {authStore.forgotPasswordStep === 'code' && (
-                        <Button onClick={handleResetPassword} isLoading={authStore.forgotPasswordLoading}>
+                    {auth.forgotPasswordStep === 'code' && (
+                        <Button onClick={handleResetPassword} isLoading={auth.forgotPasswordLoading}>
                             Reset Password
                         </Button>
                     )}
-                    {authStore.forgotPasswordStep === 'completed' && (
+                    {auth.forgotPasswordStep === 'completed' && (
                         <Button onClick={resetFlow}>Close</Button>
                     )}
                 </ModalFooter>

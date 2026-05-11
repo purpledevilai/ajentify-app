@@ -3,10 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { structuredResponseEndpointsStore } from '@/store/StructuredResponseEndpointStore';
-import { sreBuilderStore } from '@/store/StructuredResponseEndpointBuilderStore';
-import { modelsStore } from '@/store/ModelsStore';
-import { stagesStore } from '@/store/StagesStore';
+import { sreBuilderStore } from '../sre-builder/sreBuilderStore';
+import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { StructuredResponseEndpoint } from '@/types/structuredresponseendpoint';
@@ -46,7 +44,6 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
 import { InlineError } from '@/app/components/InlineError';
-import { authStore } from '@/store/AuthStore';
 
 type SortField = 'name' | 'model' | 'is_public' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
@@ -145,6 +142,7 @@ const SRERow = observer(
     showStageColumns: boolean;
     onAssigned: () => void;
   }) => {
+    const { models: modelsStore } = useStores();
     const [idHovered, setIdHovered] = useState(false);
     const [isNavigating, setIsNavigating] = useState(false);
     const toast = useToast();
@@ -329,6 +327,7 @@ const SRERow = observer(
 
 const SREsPage = observer(() => {
   const router = useRouter();
+  const { sres: structuredResponseEndpointsStore, models: modelsStore, stages: stagesStore, auth: authStore } = useStores();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');

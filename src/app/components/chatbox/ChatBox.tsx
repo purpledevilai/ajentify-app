@@ -8,7 +8,7 @@ import { UserInput } from "./UserInput";
 import { Context, Message } from "@/types/context";
 import { ChatEvent } from "@/types/chatresponse";
 import { ChatBoxStyle } from "@/types/chatboxstyle";
-import { authStore } from "@/store/AuthStore";
+import { getAccessToken } from "@/api/client";
 
 
 export const defaultChatBoxStyle: ChatBoxStyle = {
@@ -82,7 +82,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                 const service = new TokenStreamingService(
                     process.env.NEXT_PUBLIC_LIVE_AGENT_URL || "",
                     context.context_id,
-                    await authStore.getAccessToken() || ''
+                    await getAccessToken() || ''
                 );
 
                 tokenStreamingServiceRef.current = service;

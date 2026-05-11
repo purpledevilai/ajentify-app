@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { agentsStore } from '@/store/AgentsStore';
+import { useStores } from '@/store/StoreContext';
 import {
   Box,
   Flex,
@@ -38,6 +38,7 @@ interface ChatBuilderPageProps {
 }
 
 const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
+  const { agents: agentsStore } = useStores();
 
   const sectionBackground = useColorModeValue('gray.50', 'gray.800');
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);

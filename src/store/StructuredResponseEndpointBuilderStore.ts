@@ -1,5 +1,5 @@
 import { makeAutoObservable, computed } from "mobx";
-import { authStore } from "./AuthStore";
+import { getSREs } from "@/api/structuredresponseendpoint/getSREs";
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { uiTreeToJsonSchema, jsonSchemaToUiTree } from "@/utils/jsonSchema";
 import { StructuredResponseEndpoint } from "@/types/structuredresponseendpoint";
@@ -9,7 +9,6 @@ import { createSRE } from "@/api/structuredresponseendpoint/createSRE";
 import { updateSRE } from "@/api/structuredresponseendpoint/updateSRE";
 import { deleteSRE } from "@/api/structuredresponseendpoint/deleteSRE";
 import { runSRE } from "@/api/structuredresponseendpoint/runSRE";
-import { structuredResponseEndpointsStore } from "./StructuredResponseEndpointStore";
 import { AnyType } from "@/types/tools";
 import { getParameterDefinition } from "@/api/parameterdefinition/getParameterDefinition";
 import { deleteParameterDefinition } from "@/api/parameterdefinition/deleteParameterDefinition";
@@ -39,7 +38,7 @@ const getCodeName = (name: string): string => {
     return name.replace(/ /g, '_').toLowerCase();
 };
 
-class StructuredResponseEndpointBuilderStore {
+export class StructuredResponseEndpointBuilderStore {
     isNewSme = false;
     useClickedSave = false;
     sre: StructuredResponseEndpoint = defaultSRE;
@@ -139,7 +138,7 @@ class StructuredResponseEndpointBuilderStore {
         this.isNewSme = true;
         this.sre = {
             ...defaultSRE,
-            org_id: authStore.user?.organizations[0].id || '',
+            org_id: '',
         };
         this.syncTemplateArgsInput();
         this.syncVariableNamesInput();
@@ -172,17 +171,17 @@ class StructuredResponseEndpointBuilderStore {
     setSREWithId = async (sreId: string) => {
         this.setSREWithIdError = null;
         this.isNewSme = false;
-        await structuredResponseEndpointsStore.loadSREs()
-        if (!structuredResponseEndpointsStore.sres) {
-            this.setSREWithIdError = 'There was a problem loading the SREs';
-            return;
+        try {
+            const sres = await getSREs();
+            const sre = sres.find((s) => s.sre_id === sreId);
+            if (!sre) {
+                this.setSREWithIdError = 'Could not find SRE';
+                return;
+            }
+            this.setSRE({ ...sre });
+        } catch (error) {
+            this.setSREWithIdError = (error as Error).message;
         }
-        const sre = structuredResponseEndpointsStore.sres.find((s) => s.sre_id === sreId);
-        if (!sre) {
-            this.setSREWithIdError = 'Could not find SRE';
-            return;
-        }
-        this.setSRE({ ...sre });
     }
 
     loadParameterDefinition = async (pdId: string) => {
@@ -511,4 +510,3 @@ class StructuredResponseEndpointBuilderStore {
     }
 }
 
-export const sreBuilderStore = new StructuredResponseEndpointBuilderStore();

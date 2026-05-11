@@ -1,4 +1,4 @@
-import { toolBuilderStore } from "@/store/ToolBuilderStore"
+import { toolBuilderStore } from "../../toolBuilderStore"
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { CloseIcon } from "@chakra-ui/icons";
 

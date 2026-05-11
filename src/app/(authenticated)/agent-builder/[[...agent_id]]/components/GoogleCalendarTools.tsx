@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
-import { integrationsStore } from "@/store/IntegrationsStore";
+import { agentBuilderStore } from "../../agentBuilderStore";
+import { useStores } from "@/store/StoreContext";
 import { Heading, Text, Button, Flex, Select, FormControl, FormLabel, Alert, AlertIcon, Box } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";
 import { Integration } from "@/types/integration";
 
 export const GoogleCalendarTools = observer(() => {
+    const { integrations: integrationsStore } = useStores();
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
 

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Flex, Box, Button } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
-import { signUpStore } from '@/store/SignUpStore';
+import { useAuthFlowStores } from '@/store/AuthFlowStoreContext';
 import UserDetailsStep from './components/UserDetailsStep';
 import VerificationStep from './components/VerificationStep';
 import CreateOrganizationStep from './components/CreateOrganizationStep';
@@ -15,13 +15,14 @@ import { useRouter } from 'next/navigation';
 
 const SignUpPage = observer(() => {
     const router = useRouter();
+    const { signUp: signUpStore } = useAuthFlowStores();
 
 
     useEffect(() => {
         return () => {
             signUpStore.reset();
         };
-    }, []);
+    }, [signUpStore]);
 
     const getCurrentStepComponent = () => {
         switch (signUpStore.step) {

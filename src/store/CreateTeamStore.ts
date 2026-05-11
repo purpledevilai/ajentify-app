@@ -2,8 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { scrapePage } from '@/api/scrapepage/scrapePage';
 import { createTeam } from '@/api/createteam/createTeam';
 import { getJob } from '@/api/job/getJob';
-import { agentsStore } from './AgentsStore';
-import { authStore } from './AuthStore';
+import { AgentsStore } from './AgentsStore';
 
 
 export const teamMemberTemplates = [
@@ -25,10 +24,10 @@ export const teamMemberTemplates = [
     },
 ];
 
-class CreateTeamStore {
+export class CreateTeamStore {
     
     // Business information
-    businessName: string = authStore.user?.organizations[0].name || '';
+    businessName: string = '';
     businessDescription: string = '';
     linkData: { link: string, data: string, placeholder: string }[] = [
         { link: '', data: '', placeholder: 'https://yourbusiness.com/landing-page' },
@@ -53,13 +52,16 @@ class CreateTeamStore {
     getLinkDataError: string | null = null;
     submitCreateTeamError: string | null = null;
     pollJobStatusError: string | null = null;
+
+    private readonly agentsRef: AgentsStore | undefined;
     
-    constructor() {
+    constructor(agents?: AgentsStore) {
+        this.agentsRef = agents;
         makeAutoObservable(this);
     }
 
     reset = () => {
-        this.businessName = authStore.user?.organizations[0].name || '';
+        this.businessName = '';
         this.businessDescription = '';
         this.linkData = [
             { link: '', data: '', placeholder: 'https://yourbusiness.com/landing-page' },
@@ -170,7 +172,7 @@ class CreateTeamStore {
             const job = await getJob(this.jobId);
             console.log("Job:", job);
             if (job.status === 'completed') {
-                agentsStore.loadAgents(true);
+                void this.agentsRef?.loadAgents(true);
                 this.stepForward();
             } else if (job.status === 'error') {
                 this.pollJobStatusError = job.message;
@@ -189,5 +191,3 @@ class CreateTeamStore {
     };
 
 }
-
-export const createTeamStore = new CreateTeamStore();

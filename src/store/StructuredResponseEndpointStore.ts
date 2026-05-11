@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { StructuredResponseEndpoint } from '@/types/structuredresponseendpoint';
 import { getSREs } from '@/api/structuredresponseendpoint/getSREs';
 
-class StructuredResponseEndpointsStore {
+export class StructuredResponseEndpointsStore {
     sresError: string | null = null;
     sres: StructuredResponseEndpoint[] | undefined = undefined;
     sresLoading = false;
@@ -32,4 +32,3 @@ class StructuredResponseEndpointsStore {
     }
 }
 
-export const structuredResponseEndpointsStore = new StructuredResponseEndpointsStore();

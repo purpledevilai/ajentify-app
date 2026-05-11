@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { getAgents } from '@/api/agent/getAgents';
 import { Agent } from '@/types/agent';
 
-class AgentsStore {
+export class AgentsStore {
     agentsError: string | null = null;
     agents: Agent[] | undefined = undefined;
     agentsLoading = true;
@@ -32,4 +32,3 @@ class AgentsStore {
     }
 }
 
-export const agentsStore = new AgentsStore();

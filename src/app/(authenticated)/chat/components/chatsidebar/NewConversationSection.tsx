@@ -1,9 +1,10 @@
-import { chatPageStore } from "@/store/ChatPageStore";
+import { useStores } from "@/store/StoreContext";
 import { ChevronUpIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { Box, Flex, Spinner, Menu, MenuButton, MenuList, MenuItem, Text, useColorModeValue, useDisclosure } from "@chakra-ui/react";
 import { observer } from "mobx-react-lite";
 
 export const NewConversationSection = observer(() => {
+    const { chat: chatPageStore } = useStores();
 
     const {
         isOpen: isAgentMenuOpen,

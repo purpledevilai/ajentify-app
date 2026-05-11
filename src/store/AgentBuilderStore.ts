@@ -7,7 +7,7 @@ import { createAgent } from "@/api/agent/createAgent";
 import { deleteAgent } from "@/api/agent/deleteAgent";
 import { updateAgent } from "@/api/agent/updateAgent";
 import { getTools } from "@/api/tool/getTools";
-import { agentsStore } from "./AgentsStore";
+import { getAgents } from "@/api/agent/getAgents";
 import { Tool } from "@/types/tools";
 
 // Default Ajentify tools that are recognized by the backend but not stored in the tools database
@@ -53,7 +53,7 @@ interface AgentBooleanFields {
 }
 
 
-class AgentBuilderStore {
+export class AgentBuilderStore {
 
     isNewAgent = false;
     currentAgent: Agent = {
@@ -213,17 +213,17 @@ class AgentBuilderStore {
 
     async setCurrentAgentWithId(agentId: string) {
         this.setCurrentAgentError = null;
-        await agentsStore.loadAgents(); // not forced, will only load if data not available
-        if (!agentsStore.agents) {
-            this.setCurrentAgentError = 'There was a problem loading the agents';
-            return;
+        try {
+            const agents = await getAgents();
+            const agent = agents.find((a) => a.agent_id === agentId);
+            if (!agent) {
+                this.setCurrentAgentError = 'Could not find agent';
+                return;
+            }
+            this.setCurrentAgent(agent);
+        } catch (error) {
+            this.setCurrentAgentError = (error as Error).message;
         }
-        const agent = agentsStore.agents.find((a) => a.agent_id === agentId);
-        if (!agent) {
-            this.setCurrentAgentError = 'Could not find agent';
-            return;
-        }
-        this.setCurrentAgent(agent);
     }
 
     setStringField(field: keyof AgentStringFields, value: string) {
@@ -473,4 +473,3 @@ class AgentBuilderStore {
         this.hasUpdates = true;
     }
 }
-export const agentBuilderStore = new AgentBuilderStore();

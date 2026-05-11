@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { agentBuilderStore } from "../../agentBuilderStore";
 import { Heading, Text, Button, Flex, Input, Select, FormControl, FormLabel, useToast } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";

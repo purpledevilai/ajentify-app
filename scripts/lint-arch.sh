@@ -9,14 +9,15 @@ fi
 echo "✓ No 'use client' in root layout"
 
 echo "=== lint:arch check 2: no module-level store singletons ==="
-# TODO(deliverable-E): Enable this check once deliverable E removes all module-level store singletons.
-# Until then, running it would fail CI because all stores are still exported as singletons.
-# Uncomment and activate this check when deliverable E lands:
-#   if grep -rE "^export const \w+Store = new \w+Store" src/store/ 2>/dev/null; then
-#     echo "ERROR: Found module-level store singleton. Remove it."
-#     exit 1
-#   fi
-echo "(skipped — gated on deliverable E)"
+# Carve-outs (both deleted in project 08 when the deprecated chat-pages surface is removed):
+#   ChatPagesStore.ts       — chatPagesStore singleton (deprecated chat-pages feature)
+#   ChatPageBuilderStore.ts — chatPageBuilderStore singleton (deprecated chat-page-builder feature)
+if grep -rE "^export const [a-z][A-Za-z]*Store = new [A-Z][A-Za-z]*Store" src/store/ \
+  --exclude="ChatPagesStore.ts" --exclude="ChatPageBuilderStore.ts" 2>/dev/null | grep .; then
+  echo "ERROR: Found module-level store singleton. Use RootStore or AuthFlowStore instead."
+  exit 1
+fi
+echo "✓ No module-level store singletons"
 
 echo "=== lint:arch check 3: no token-shaped console logs ==="
 if grep -rEi "console\.(log|debug|info)\([^)]*['\"](token|access[-_ ]?token|api[-_ ]?key|bearer)" src/ 2>/dev/null; then

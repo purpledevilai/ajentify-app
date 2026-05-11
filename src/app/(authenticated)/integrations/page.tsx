@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { integrationsStore } from '@/store/IntegrationsStore';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { getGmailAuthUrl } from '@/api/integration/getGmailAuthUrl';
 import { getOutlookAuthUrl } from '@/api/integration/getOutlookAuthUrl';
 import { getGoogleCalendarAuthUrl } from '@/api/integration/getGoogleCalendarAuthUrl';
@@ -62,6 +61,7 @@ const CopyableIntegrationId = ({ integrationId }: { integrationId: string }) => 
 };
 
 const IntegrationsPage = observer(() => {
+  const { integrations: integrationsStore, auth: authStore } = useStores();
   const [connectGmailError, setConnectGmailError] = useState<string | null>(null);
   const [connectOutlookError, setConnectOutlookError] = useState<string | null>(null);
   const [connectCalendarError, setConnectCalendarError] = useState<string | null>(null);

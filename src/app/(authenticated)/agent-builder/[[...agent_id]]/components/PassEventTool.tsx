@@ -1,5 +1,5 @@
 import React from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { agentBuilderStore } from "../../agentBuilderStore";
 import { Heading, Text, Button, Flex } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 

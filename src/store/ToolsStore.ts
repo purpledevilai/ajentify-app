@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { Tool } from '@/types/tools';
 import { getTools } from '@/api/tool/getTools';
 
-class ToolsStore {
+export class ToolsStore {
     toolsError: string | null = null;
     tools: Tool[] | undefined = undefined;
     toolsLoading = false;
@@ -32,4 +32,3 @@ class ToolsStore {
     }
 }
 
-export const toolsStore = new ToolsStore();

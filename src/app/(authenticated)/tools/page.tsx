@@ -3,9 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { toolsStore } from '@/store/ToolsStore';
-import { toolBuilderStore } from '@/store/ToolBuilderStore';
-import { stagesStore } from '@/store/StagesStore';
+import { toolBuilderStore } from '../tool-builder/toolBuilderStore';
+import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { Tool } from '@/types/tools';
@@ -44,7 +43,6 @@ import {
 } from '@chakra-ui/react';
 import { ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
 import { InlineError } from '@/app/components/InlineError';
-import { authStore } from '@/store/AuthStore';
 
 type SortField = 'function' | 'language' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
@@ -266,6 +264,7 @@ const ToolRow = ({
 
 const ToolsPage = observer(() => {
   const router = useRouter();
+  const { tools: toolsStore, stages: stagesStore, auth: authStore } = useStores();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [pdMap, setPdMap] = useState<Record<string, string[]>>({});

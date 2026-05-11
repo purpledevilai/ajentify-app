@@ -10,7 +10,7 @@ const defaultDocument: JsonDocument = {
     data: {},
 };
 
-class JsonDocumentBuilderStore {
+export class JsonDocumentBuilderStore {
     document: JsonDocument = { ...defaultDocument };
     dataString = '{}';
     dataError: string | null = null;
@@ -127,4 +127,3 @@ class JsonDocumentBuilderStore {
     }
 }
 
-export const jsonDocumentBuilderStore = new JsonDocumentBuilderStore();

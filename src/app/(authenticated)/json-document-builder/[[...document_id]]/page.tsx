@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
-import { jsonDocumentBuilderStore } from '@/store/JsonDocumentBuilderStore';
-import { jsonDocumentsStore } from '@/store/JsonDocumentsStore';
+import { jsonDocumentBuilderStore } from '../jsonDocumentBuilderStore';
+import { useStores } from '@/store/StoreContext';
 import {
     Flex,
     FormControl,
@@ -37,6 +37,7 @@ interface PageProps {
 
 const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
     const router = useRouter();
+    const { jsonDocuments: jsonDocumentsStore } = useStores();
     const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cancelRef = useRef<any>(null);

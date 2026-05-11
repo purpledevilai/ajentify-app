@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { getJsonDocuments } from '@/api/jsondocument/getJsonDocuments';
 import { JsonDocument } from '@/types/jsondocument';
 
-class JsonDocumentsStore {
+export class JsonDocumentsStore {
     documentsError: string | null = null;
     documents: JsonDocument[] | undefined = undefined;
     documentsLoading = true;
@@ -32,4 +32,3 @@ class JsonDocumentsStore {
     }
 }
 
-export const jsonDocumentsStore = new JsonDocumentsStore();

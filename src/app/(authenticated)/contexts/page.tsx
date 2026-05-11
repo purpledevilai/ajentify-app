@@ -26,9 +26,7 @@ import {
     useColorModeValue,
 } from '@chakra-ui/react';
 import { RepeatIcon, SearchIcon } from '@chakra-ui/icons';
-import { agentsStore } from '@/store/AgentsStore';
-import { authStore } from '@/store/AuthStore';
-import { contextsStore } from '@/store/ContextsStore';
+import { useStores } from '@/store/StoreContext';
 import { InlineError } from '@/app/components/InlineError';
 import { CopyButton } from './CopyButton';
 
@@ -48,6 +46,7 @@ const truncateId = (id: string): string =>
 
 const ContextsPage = observer(() => {
     const router = useRouter();
+    const { agents: agentsStore, auth: authStore, contexts: contextsStore } = useStores();
 
     // Draft filter inputs (typed but not yet applied). Initialised from the
     // store's currently-applied filters so the inputs reflect the data the

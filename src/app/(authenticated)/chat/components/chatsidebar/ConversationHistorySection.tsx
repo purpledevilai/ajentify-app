@@ -1,9 +1,10 @@
-import { chatPageStore } from "@/store/ChatPageStore";
+import { useStores } from "@/store/StoreContext";
 import { Box, Flex, Spinner, Text, useColorModeValue } from "@chakra-ui/react";
 import { observer } from "mobx-react-lite";
 import { ConversationRow } from "./ConversationRow";
 
 export const ConversationHistorySection = observer(() => {
+    const { chat: chatPageStore } = useStores();
 
     const bgColor = useColorModeValue("gray.100", "gray.800");
     const dividerColor = useColorModeValue("gray.300", "gray.600");

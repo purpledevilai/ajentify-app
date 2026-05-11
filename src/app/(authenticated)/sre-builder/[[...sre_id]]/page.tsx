@@ -13,8 +13,9 @@ import { ArrowBackIcon, AddIcon, SmallCloseIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { observer } from "mobx-react-lite";
 import { InlineError } from "@/app/components/InlineError";
-import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore";
-import { structuredResponseEndpointsStore } from "@/store/StructuredResponseEndpointStore";
+import { sreBuilderStore } from '../sreBuilderStore';
+import { useStores } from "@/store/StoreContext";
+
 import { ParameterView } from "./components/Parameter";
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { ModelSelector } from "@/app/components/ModelSelector";
@@ -27,6 +28,7 @@ interface SREBuilderPageProps {
 }
 
 const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
+  const { sres: structuredResponseEndpointsStore } = useStores();
 
   // Nav Guard to detect page navigation - Really dump NextJS limitiation
   const navGuard = useNavigationGuard({});

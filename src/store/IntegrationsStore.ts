@@ -3,7 +3,7 @@ import { getIntegrations } from '@/api/integration/getIntegrations';
 import { deleteIntegration } from '@/api/integration/deleteIntegration';
 import { Integration } from '@/types/integration';
 
-class IntegrationsStore {
+export class IntegrationsStore {
     integrationsError: string | null = null;
     deleteIntegrationError: string | null = null;
     integrations: Integration[] | undefined = undefined;
@@ -60,4 +60,3 @@ class IntegrationsStore {
     }
 }
 
-export const integrationsStore = new IntegrationsStore();

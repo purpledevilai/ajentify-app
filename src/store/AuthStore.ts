@@ -8,23 +8,12 @@ import { resetPassword } from '@/api/auth/resetPassword';
 import { deleteUser } from '@/api/user/deleteUser';
 import { User } from '@/types/user';
 import { getUser } from '@/api/user/getUser';
-import { agentsStore } from './AgentsStore';
-import { agentBuilderStore } from './AgentBuilderStore';
-import { chatPageBuilderStore } from './ChatPageBuilderStore';
-import { chatPagesStore } from './ChatPagesStore';
-import { chatPageStore } from './ChatPageStore';
-import { structuredResponseEndpointsStore } from './StructuredResponseEndpointStore';
-import { sreBuilderStore } from './StructuredResponseEndpointBuilderStore';
-import { jsonDocumentsStore } from './JsonDocumentsStore';
-import { jsonDocumentBuilderStore } from './JsonDocumentBuilderStore';
-import { integrationsStore } from './IntegrationsStore';
-import { toolsStore } from './ToolsStore';
-import { toolBuilderStore } from './ToolBuilderStore';
-import { stagesStore } from './StagesStore';
-import { contextsStore } from './ContextsStore';
 
+interface AuthStoreOptions {
+    resetAll?: () => void;
+}
 
-class AuthStore {
+export class AuthStore {
     email = '';
     password = '';
     signInLoading = false;
@@ -41,7 +30,10 @@ class AuthStore {
     resetPasswordCode = '';
     newPassword = '';
 
-    constructor() {
+    private readonly resetAllCallback: (() => void) | undefined;
+
+    constructor(options: AuthStoreOptions = {}) {
+        this.resetAllCallback = options.resetAll;
         makeAutoObservable(this);
     }
 
@@ -74,6 +66,14 @@ class AuthStore {
         }
     }
 
+    forceRefreshAccessToken = async (): Promise<string | undefined> => {
+        return this.getAccessToken();
+    };
+
+    handleAuthFailure = async (): Promise<void> => {
+        window.location.assign('/signin');
+    };
+
     checkAuth = async () => {
         this.isDeterminingAuth = true;
         const token = await this.getAccessToken();
@@ -99,20 +99,7 @@ class AuthStore {
     async signOut(): Promise<void> {
         try {
             await signOut();
-            agentBuilderStore.reset();
-            agentsStore.reset();
-            chatPageBuilderStore.reset();
-            chatPagesStore.reset();
-            chatPageStore.reset();
-            structuredResponseEndpointsStore.reset();
-            sreBuilderStore.reset();
-            jsonDocumentsStore.reset();
-            jsonDocumentBuilderStore.reset();
-            integrationsStore.reset();
-            toolsStore.reset();
-            toolBuilderStore.reset();
-            stagesStore.reset();
-            contextsStore.reset();
+            this.resetAllCallback?.();
             this.reset();
             this.signedIn = false;
         } catch (error) {
@@ -205,5 +192,3 @@ class AuthStore {
         }
     }
 }
-
-export const authStore = new AuthStore();

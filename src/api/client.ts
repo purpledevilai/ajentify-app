@@ -34,6 +34,11 @@ export function bindApiClientAuth(bindings: ApiClientAuthBindings): void {
   authBindings = bindings;
 }
 
+/** Returns the current access token via the bound auth provider. */
+export async function getAccessToken(): Promise<string | undefined> {
+  return authBindings?.getAccessToken();
+}
+
 /** The single function every src/api/**\/*.ts file calls */
 export async function request<TResponse, TBody = unknown>(
   input: RequestInput<TBody>

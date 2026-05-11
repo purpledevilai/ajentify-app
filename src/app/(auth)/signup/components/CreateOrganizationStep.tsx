@@ -3,10 +3,11 @@
 import React from 'react';
 import { Stack, FormControl, FormLabel, Input, Button, Heading } from '@chakra-ui/react';
 import { observer } from 'mobx-react-lite';
-import { signUpStore } from '@/store/SignUpStore';
+import { useAuthFlowStores } from '@/store/AuthFlowStoreContext';
 import { InlineError } from '@/app/components/InlineError';
 
 const CreateOrganizationStep = observer(() => {
+    const { signUp: signUpStore } = useAuthFlowStores();
     return (
         <Stack spacing={4}>
             <Heading as="h1" size="lg" textAlign="center">

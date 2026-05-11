@@ -12,8 +12,9 @@ import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
 import { observer } from "mobx-react-lite";
 import { InlineError } from "@/app/components/InlineError";
-import { toolBuilderStore } from "@/store/ToolBuilderStore";
-import { toolsStore } from "@/store/ToolsStore";
+import { toolBuilderStore } from '../toolBuilderStore';
+import { useStores } from "@/store/StoreContext";
+
 import { ParameterView } from "./components/Parameter";
 import MonacoEditor, { Monaco } from "@monaco-editor/react";
 import type monaco from 'monaco-editor';
@@ -29,6 +30,7 @@ interface ToolBuilderPageProps {
 }
 
 const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
+    const { tools: toolsStore } = useStores();
 
     const { colorMode } = useColorMode();
     const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();

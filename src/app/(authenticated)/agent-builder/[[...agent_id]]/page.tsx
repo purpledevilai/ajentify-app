@@ -14,8 +14,9 @@ import {
 import { ArrowBackIcon, CheckIcon, CopyIcon, SmallCloseIcon, AddIcon, HamburgerIcon } from "@chakra-ui/icons";
 import ChatBox, { defaultChatBoxStyle, defaultDarkChatBoxStyle } from "@/app/components/chatbox/ChatBox";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
-import { agentsStore } from "@/store/AgentsStore";
+import { agentBuilderStore } from '../agentBuilderStore';
+import { useStores } from "@/store/StoreContext";
+
 import { ContentOrSpinner } from "@/app/components/ContentOrSpinner";
 import { InlineError } from "@/app/components/InlineError";
 import { ChatEvent } from "@/types/chatresponse";
@@ -30,8 +31,8 @@ import { OutlookTools } from "./components/OutlookTools";
 import { GoogleCalendarTools } from "./components/GoogleCalendarTools";
 import { GoogleMapsTools } from "./components/GoogleMapsTools";
 import { UtilityTools } from "./components/UtilityTools";
-import { toolsStore } from "@/store/ToolsStore";
-import { modelsStore } from "@/store/ModelsStore";
+
+
 import { ModelSelector } from "@/app/components/ModelSelector";
 import StageAssignmentField from "@/app/(authenticated)/stages/components/StageAssignmentField";
 
@@ -42,6 +43,7 @@ interface AgentBuilderPageProps {
 }
 
 const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
+    const { agents: agentsStore, tools: toolsStore, models: modelsStore } = useStores();
 
     // Nav Guard to detect page navigation - Really dump NextJS limitiation
     const navGuard = useNavigationGuard({});

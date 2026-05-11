@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
-import { stagesStore } from '@/store/StagesStore';
+import { useStores } from '@/store/StoreContext';
 import { Stage } from '@/types/stage';
 import {
     Box,
@@ -40,9 +40,7 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
 import { InlineError } from '@/app/components/InlineError';
-import { authStore } from '@/store/AuthStore';
 import { DeleteStageMode } from '@/api/stage/deleteStage';
-import { refreshDashboardCaches } from '@/store/refreshDashboardCaches';
 import DeployFromJSONModal from './components/DeployFromJSONModal';
 import DeleteStageDialog from './components/DeleteStageDialog';
 
@@ -145,6 +143,7 @@ const StageRow = observer(({
 const StagesPage = observer(() => {
     const router = useRouter();
     const toast = useToast();
+    const { stages: stagesStore, auth: authStore, refreshDashboardCaches } = useStores();
     const [search, setSearch] = useState('');
     const createModal = useDisclosure();
     const deployModal = useDisclosure();
@@ -320,6 +319,7 @@ const CreateStageModal = ({
     onClose: () => void;
     onCreated: (stage: Stage) => void;
 }) => {
+    const { stages: stagesStore } = useStores();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);

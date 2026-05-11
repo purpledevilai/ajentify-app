@@ -1,5 +1,5 @@
 import React from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { agentBuilderStore } from "../../agentBuilderStore";
 import { Heading, Text, Button, Flex, Box } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";

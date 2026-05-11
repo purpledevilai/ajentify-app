@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Box, Flex, FormControl, FormLabel, Input, Button, Heading, Text, Stack } from '@chakra-ui/react';
-import { authStore } from '@/store/AuthStore';
+import { useAuthFlowStores } from '@/store/AuthFlowStoreContext';
 import { useRouter } from 'next/navigation';
 import { reaction } from 'mobx';
 import ForgotPasswordModal from './components/ForgotPasswordModal';
 
 const SignInPage = observer(() => {
     const router = useRouter();
+    const { auth } = useAuthFlowStores();
     const [isForgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
     const routeBasedOnAuth = (signedIn: boolean) => {
@@ -20,13 +21,13 @@ const SignInPage = observer(() => {
 
     useEffect(() => {
         const disposer = reaction(
-            () => authStore.signedIn,
+            () => auth.signedIn,
             (signedIn) => {
                 routeBasedOnAuth(signedIn);
             }
         );
 
-        routeBasedOnAuth(authStore.signedIn);
+        routeBasedOnAuth(auth.signedIn);
 
         return () => {
             disposer();
@@ -35,7 +36,7 @@ const SignInPage = observer(() => {
 
 
     const handleSignIn = () => {
-        authStore.submitSignIn()
+        void auth.submitSignIn();
     }
     
     return (
@@ -59,8 +60,8 @@ const SignInPage = observer(() => {
                         <FormLabel>Email</FormLabel>
                         <Input
                             type="email"
-                            value={authStore.email}
-                            onChange={(e) => authStore.setField('email', e.target.value)}
+                            value={auth.email}
+                            onChange={(e) => auth.setField('email', e.target.value)}
                             placeholder="Enter your email"
                         />
                     </FormControl>
@@ -70,8 +71,8 @@ const SignInPage = observer(() => {
                         <FormLabel>Password</FormLabel>
                         <Input
                             type="password"
-                            value={authStore.password}
-                            onChange={(e) => authStore.setField('password', e.target.value)}
+                            value={auth.password}
+                            onChange={(e) => auth.setField('password', e.target.value)}
                             placeholder="Enter your password"
                         />
                     </FormControl>
@@ -85,7 +86,7 @@ const SignInPage = observer(() => {
 
                     {/* Sign In Button */}
                     <Button
-                        isLoading={authStore.signInLoading}
+                        isLoading={auth.signInLoading}
                         onClick={handleSignIn}
                     >
                         Log In
@@ -93,7 +94,7 @@ const SignInPage = observer(() => {
 
                     {/* Sign Up Link */}
                     <Text textAlign="center" fontSize="sm">
-                        Don’t have an account?{' '}
+                        Don&apos;t have an account?{' '}
                         <Button
                             variant="link"
 
@@ -105,9 +106,9 @@ const SignInPage = observer(() => {
                 </Stack>
 
                 {/* Error Message */}
-                {authStore.signInError && (
+                {auth.signInError && (
                     <Text color="red.500" mt={4} textAlign="center">
-                        {authStore.signInError}
+                        {auth.signInError}
                     </Text>
                 )}
 

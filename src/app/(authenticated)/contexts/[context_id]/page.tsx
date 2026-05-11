@@ -17,7 +17,7 @@ import {
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { getContext } from '@/api/context/getContext';
 import { Context, Message } from '@/types/context';
 import { CopyButton } from '../CopyButton';
@@ -206,6 +206,7 @@ export default function ContextDetailPage() {
     const router = useRouter();
     const params = useParams<{ context_id: string }>();
     const contextId = params?.context_id as string;
+    const { auth: authStore } = useStores();
 
     const [context, setContext] = useState<Context | null>(null);
     const [loading, setLoading] = useState(true);

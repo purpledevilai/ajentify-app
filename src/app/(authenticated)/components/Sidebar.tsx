@@ -26,7 +26,7 @@ import { VscJson } from "react-icons/vsc";
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { observer } from 'mobx-react-lite';
 
 interface SidebarProps {
@@ -38,6 +38,7 @@ interface SidebarProps {
 const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
     const router = useRouter();
     const pathname = usePathname();
+    const { auth } = useStores();
     const [orgMenuOpen, setOrgMenuOpen] = useState(false);
     const hoverColor = useColorModeValue('gray.200', 'gray.700');
 
@@ -67,7 +68,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
             <Box as="nav" bg="gray.100" _dark={{ bg: 'gray.800' }} height="100%" shadow="md" p={4} display="flex" flexDirection="column">
                 {/* Organization Selector */}
                 <Box mb={4}>
-                    {authStore.userLoading ? (
+                    {auth.userLoading ? (
                         <Flex justify="center" align="center" height="40px">
                             <Spinner size="sm" />
                         </Flex>
@@ -82,12 +83,12 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                             >
                                 {/* Use Flex for space-between alignment */}
                                 <Flex justify="space-between" align="center">
-                                    <Text fontWeight="bold">{authStore.user?.organizations[0]?.name || 'No Organization'}</Text>
+                                    <Text fontWeight="bold">{auth.user?.organizations[0]?.name || 'No Organization'}</Text>
                                     {orgMenuOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
                                 </Flex>
                             </MenuButton>
                             <MenuList>
-                                {authStore.user?.organizations.map((org) => (
+                                {auth.user?.organizations.map((org) => (
                                     <MenuItem key={org.id} onClick={() => console.log(`Switch to ${org.name}`)}>
                                         {org.name}
                                     </MenuItem>
@@ -136,7 +137,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
 
                 {/* User Cell */}
                 <Box mt={4}>
-                    {authStore.userLoading ? (
+                    {auth.userLoading ? (
                         <Flex justify="center" align="center" height="40px">
                             <Spinner size="sm" />
                         </Flex>
@@ -151,15 +152,15 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                                 {/* Use Flex for row alignment */}
                                 <Flex justify="space-between" align="center">
                                     {/* Avatar on the left */}
-                                    <Avatar name={`${authStore.user?.first_name} ${authStore.user?.last_name}`} size="sm" />
+                                    <Avatar name={`${auth.user?.first_name} ${auth.user?.last_name}`} size="sm" />
 
                                     {/* User Details in the middle */}
                                     <Box flex="1" ml={2} textAlign="left">
                                         <Text fontWeight="bold" fontSize="sm" isTruncated>
-                                            {`${authStore.user?.first_name} ${authStore.user?.last_name}`}
+                                            {`${auth.user?.first_name} ${auth.user?.last_name}`}
                                         </Text>
                                         <Text fontSize="small" color="gray.500" isTruncated>
-                                            {authStore.user?.email}
+                                            {auth.user?.email}
                                         </Text>
                                     </Box>
 
@@ -174,7 +175,7 @@ const Sidebar = observer(({ isMobile, isOpen, onClose }: SidebarProps) => {
                                 <MenuItem onClick={() => router.push('/usage')}>Usage</MenuItem>
                                 <MenuItem onClick={() => router.push('/api-keys')}>API Keys</MenuItem>
                                 <MenuDivider />
-                                <MenuItem onClick={() => authStore.signOut()}>Logout</MenuItem>
+                                <MenuItem onClick={() => void auth.signOut()}>Logout</MenuItem>
                             </MenuList>
                         </Menu>
                     )}

@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { authStore } from './AuthStore';
+import { getTools } from '@/api/tool/getTools';
 import { AnyType, TestInput, Tool } from '@/types/tools';
 import { UIParameterNode } from '@/types/parameterdefinition';
 import { uiTreeToJsonSchema, jsonSchemaToUiTree } from '@/utils/jsonSchema';
@@ -11,7 +11,6 @@ import { createTool } from '@/api/tool/createTool';
 import { updateTool } from '@/api/tool/updateTool';
 import { deleteTool } from '@/api/tool/deleteTool';
 import { testTool } from '@/api/tool/testTool';
-import { toolsStore } from './ToolsStore';
 
 export const paramTypes = [
     'string',
@@ -109,7 +108,7 @@ const getTestObject = (testInputs: TestInput[], isArrayItem: boolean = false): R
     return testObject;
 }
 
-class ToolBuilderStore {
+export class ToolBuilderStore {
 
     tool: Tool = defaultTool;
     isLoadingParameterDefinition = false;
@@ -152,7 +151,7 @@ class ToolBuilderStore {
     initiateNew = () => {
         this.tool = {
             ...defaultTool,
-            org_id: authStore.user?.organizations[0].id || '',
+            org_id: '',
         };
     }
 
@@ -169,17 +168,17 @@ class ToolBuilderStore {
 
     setToolWithId = async (toolId: string) => {
         this.setToolWithIdError = null;
-        await toolsStore.loadTools();
-        if (!toolsStore.tools) {
-            this.setToolWithIdError = 'There was a problem loading the tools';
-            return;
+        try {
+            const tools = await getTools();
+            const tool = tools.find((t) => t.tool_id === toolId);
+            if (!tool) {
+                this.setToolWithIdError = 'Could not find tool';
+                return;
+            }
+            this.setTool(tool);
+        } catch (error) {
+            this.setToolWithIdError = (error as Error).message;
         }
-        const tool = toolsStore.tools.find((t) => t.tool_id === toolId);
-        if (!tool) {
-            this.setToolWithIdError = 'Could not find tool';
-            return;
-        }
-        this.setTool(tool);
     }
 
     loadParameterDefinition = async (pdId: string) => {
@@ -553,4 +552,3 @@ class ToolBuilderStore {
 
 }
 
-export const toolBuilderStore = new ToolBuilderStore();

@@ -1,4 +1,4 @@
-import { sreBuilderStore } from "@/store/StructuredResponseEndpointBuilderStore";
+import { sreBuilderStore } from "../../sreBuilderStore";
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { CloseIcon } from "@chakra-ui/icons";
 

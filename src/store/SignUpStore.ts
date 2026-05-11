@@ -15,7 +15,7 @@ interface SignUpStoreSetFields {
     organizationName: string;
 }
 
-class SignUpStore {
+export class SignUpStore {
     // User Details
     firstName: string = '';
     lastName: string = '';
@@ -132,4 +132,3 @@ class SignUpStore {
     }
 }
 
-export const signUpStore = new SignUpStore();

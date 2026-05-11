@@ -1,13 +1,16 @@
 'use client';
+import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { AmplifyConfig } from '@/app/components/AmplifyConfig';
-// AuthFlowStoreProvider will be added in deliverable E
+import { AuthFlowStoreProvider } from '@/store/AuthFlowStoreContext';
 
 export function AuthProviders({ children }: { children: React.ReactNode }) {
   return (
     <ChakraProvider>
       <AmplifyConfig />
-      {children}
+      <AuthFlowStoreProvider>
+        {children}
+      </AuthFlowStoreProvider>
     </ChakraProvider>
   );
 }

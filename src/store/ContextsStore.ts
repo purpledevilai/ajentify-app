@@ -42,7 +42,7 @@ const contextToSummary = (c: Context): OrgContextSummary => {
     };
 };
 
-class ContextsStore {
+export class ContextsStore {
     contexts: OrgContextSummary[] = [];
     nextCursor: string | null = null;
     loading = false;
@@ -152,5 +152,4 @@ class ContextsStore {
     };
 }
 
-export const contextsStore = new ContextsStore();
 export const CONTEXTS_PAGE_SIZE = PAGE_SIZE;

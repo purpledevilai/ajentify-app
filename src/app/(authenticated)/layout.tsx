@@ -7,12 +7,13 @@ import { useBreakpointValue } from '@chakra-ui/react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import { useRouter } from 'next/navigation';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { reaction } from 'mobx';
 import { AuthenticatedProviders } from './providers';
 
 const AuthenticatedLayoutInner = observer(({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
+    const { auth } = useStores();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     const routeBasedOnAuth = (isSignedIn: boolean) => {
@@ -20,20 +21,20 @@ const AuthenticatedLayoutInner = observer(({ children }: { children: React.React
             router.push('/signin');
             return;
         }
-        if (!authStore.user) {
-            authStore.loadUser();
+        if (!auth.user) {
+            void auth.loadUser();
         }
     }
 
     useEffect(() => {
         const disposer = reaction(
-            () => authStore.signedIn,
+            () => auth.signedIn,
             (isSignedIn) => {
                 routeBasedOnAuth(isSignedIn);
             }
         );
 
-        routeBasedOnAuth(authStore.signedIn);
+        routeBasedOnAuth(auth.signedIn);
 
         return () => {
             disposer();

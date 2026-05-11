@@ -8,7 +8,7 @@ import { Agent } from '@/types/agent';
 import { Context } from '@/types/context';
 import { ContextHistory } from '@/types/contexthistory';
 
-class ChatPageStore {
+export class ChatPageStore {
     hasInitiatedLoad: boolean = false;
     agents: Agent[] | undefined = undefined;
     agentsLoading: boolean = true;
@@ -156,4 +156,3 @@ class ChatPageStore {
     }
 }
 
-export const chatPageStore = new ChatPageStore();

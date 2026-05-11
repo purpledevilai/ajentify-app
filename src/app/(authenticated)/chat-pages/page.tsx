@@ -16,13 +16,14 @@ import {
 import { ChatPageData } from '@/types/chatpagedata';
 import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 import { ChatPageCard } from './components/ChatPageCard';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 
 const ChatPagesPage = observer(() => {
   const router = useRouter();
+  const { auth } = useStores();
 
   useEffect(() => {
-    if (!authStore.signedIn) return;
+    if (!auth.signedIn) return;
     chatPagesStore.loadChatPages();
   });
 

@@ -1,4 +1,4 @@
-import { toolBuilderStore } from "@/store/ToolBuilderStore"
+import { toolBuilderStore } from "../../toolBuilderStore"
 import { TestInput } from "@/types/tools";
 import { CloseIcon } from "@chakra-ui/icons";
 

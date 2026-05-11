@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Stack, Button, Heading, Text, Grid, useColorModeValue, GridItem, Box } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
-import { createTeamStore, teamMemberTemplates } from '@/store/CreateTeamStore';
+import { teamMemberTemplates } from '@/store/CreateTeamStore';
+import { useStores } from '@/store/StoreContext';
 import { InlineError } from '@/app/components/InlineError';
 
 export const SelectMembersStep = observer(() => {
+    const { createTeam: createTeamStore } = useStores();
 
     const cardBg = useColorModeValue("gray.100", "gray.800");
     const [validationError, setValidationError] = useState<string | null>(null);
