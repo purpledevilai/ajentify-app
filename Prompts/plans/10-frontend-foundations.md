@@ -95,16 +95,19 @@ Order:
 Ship before any structural changes. Tiny PR; biggest correctness-per-line in the project.
 
 - [ ] Add `vitest`, `@vitejs/plugin-react`, `@testing-library/react`, `@testing-library/jest-dom`, and `jsdom` to `devDependencies`. Add a `test` script in `package.json` (`vitest run` for CI, `vitest` for watch). CI runs `test` alongside `lint`, `typecheck`, and `lint:arch`. (vitest is the boring choice over jest given Next 15 + Vite-shaped test infra; if the team has already standardized on jest elsewhere, stick.)
+- [ ] Add a `typecheck` script to `package.json` (`"typecheck": "tsc --noEmit"`). The script does not currently exist — `package.json` only has `dev`, `build`, `start`, and `lint`. Every subsequent deliverable's PR must pass `typecheck` before merging.
 - [ ] Migrate `.eslintrc.json` to flat `eslint.config.mjs` (or keep the legacy file — Next 15 supports both). Enable:
   - `@typescript-eslint/no-floating-promises` (error)
   - `react/jsx-no-target-blank` (error)
-  - `@typescript-eslint/no-explicit-any` (warn — promote to error in a later cleanup project)
+  - `@typescript-eslint/no-explicit-any` — already active via the `next/typescript` preset; no explicit entry needed. Leave the inherited severity at `warn` (promote to error in a later cleanup project).
 - [ ] **Leave `react-hooks/exhaustive-deps` at warn.** It's already enabled at warn level via the `next/core-web-vitals` preset that `.eslintrc.json` extends. Promoting it to error now would fail on dozens of files that deliverables C and E delete entirely, producing busywork that gets thrown away. Deliverable G promotes it to error after C and E land.
 - [ ] Add a `lint:arch` script in `package.json` running three regex checks (each one bash line, exits non-zero on a hit). CI runs `lint:arch` alongside `lint`, `typecheck`, and `test`:
   1. **No `'use client'` in layouts.** `! grep -lE "^['\"]use client['\"]" src/app/**/layout.tsx`
   2. **No module-level store singletons.** `! grep -rE "^export const \w+Store = new \w+Store" src/store/`
   3. **No token-shaped console logs.** `! grep -rEi "console\\.(log|debug|info)\\([^)]*['\"](token|access[-_ ]?token|api[-_ ]?key|bearer)" src/`
 - [ ] Confirm there is no surviving `console.log('Token:', token)` in `src/`. (As of 2026-05-07 there is none; the CI guard above prevents regression.)
+- [ ] Address the three files carrying whole-file `/* eslint-disable */` suppressions at line 1: `src/api/tokenstreamingservice/TokenStreamingService.ts`, `src/lib/JSONRPCPeer.ts`, and `src/types/context.ts`. Either fix the underlying violations and remove the suppression, or add them to an explicit ESLint `ignorePatterns` / `overrides` block with a comment naming the reason. Unaddressed whole-file disables give those files zero ESLint coverage.
+- [ ] Create a CI workflow from scratch — no `.github/workflows/`, `.circleci/`, or any other CI configuration currently exists in the repository. The workflow must run `lint`, `typecheck`, `test`, and `lint:arch` and must gate merges on all four passing.
 
 #### B. The layout split
 
