@@ -16,7 +16,7 @@ import {
     useColorModeValue,
 } from '@chakra-ui/react';
 import { observer } from 'mobx-react-lite';
-import { stagesStore } from '@/store/StagesStore';
+import { useStores } from '@/store/StoreContext';
 
 /**
  * Same regex the backend's manifest schema uses for logical names
@@ -89,12 +89,13 @@ export const StageAssignmentField = observer((props: StageAssignmentFieldProps) 
         lockedStageId,
     } = props;
 
+    const { stages: stagesStore } = useStores();
     const subtextColor = useColorModeValue('gray.500', 'gray.400');
 
     React.useEffect(() => {
         // Lazy-load the cache. Cheap; bails immediately if already populated.
-        stagesStore.loadStages();
-    }, []);
+        void stagesStore.loadStages();
+    }, [stagesStore]);
 
     React.useEffect(() => {
         if (lockedStageId && value.stage_id !== lockedStageId) {

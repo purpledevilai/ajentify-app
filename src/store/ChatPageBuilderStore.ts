@@ -1,8 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { ChatPageData } from '@/types/chatpagedata';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
-import { authStore } from './AuthStore';
-import { agentsStore } from './AgentsStore';
+interface ShowAlertParams { title: string; message: string; actions?: { label: string; onClick?: () => void }[]; onClose?: () => void; }
 import { chatPagesStore } from './ChatPagesStore';
 import {defaultChatBoxStyle, defaultDarkChatBoxStyle} from '@/app/components/chatbox/ChatBox'
 import { Context } from '@/types/context';
@@ -61,8 +59,8 @@ class ChatPageBuilderStore {
     initiateNew = () => {
         this.chatPage = {
             ...defaultChatPage,
-            org_id: authStore.user?.organizations[0].id || '',
-            agent_id: agentsStore.agents ? agentsStore.agents[0].agent_id : '',
+            org_id: '',
+            agent_id: '',
         };
     }
 

@@ -2,12 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { observer } from 'mobx-react-lite';
-import { agentsStore } from '@/store/AgentsStore';
-import { agentBuilderStore } from '@/store/AgentBuilderStore';
-import { toolsStore } from '@/store/ToolsStore';
-import { modelsStore } from '@/store/ModelsStore';
-import { stagesStore } from '@/store/StagesStore';
+import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { Agent } from '@/types/agent';
@@ -45,10 +42,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  useToast,
 } from '@chakra-ui/react';
 import { CopyIcon, ChevronDownIcon, ChevronUpIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
-import { useAlert } from '@/app/components/AlertProvider';
-import { authStore } from '@/store/AuthStore';
+import { InlineError } from '@/app/components/InlineError';
 
 type SortField = 'name' | 'model' | 'is_public' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
@@ -138,10 +135,11 @@ const AgentRow = observer(({
   showStageColumns: boolean;
   onAssigned: () => void;
 }) => {
+  const { models: modelsStore, tools: toolsStore } = useStores();
   const [idHovered, setIdHovered] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const selectedBg = useColorModeValue('blue.50', 'blue.900');
@@ -161,7 +159,7 @@ const AgentRow = observer(({
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(agent.agent_id);
-    showAlert({ title: 'Copied', message: 'Agent ID copied to clipboard' });
+    toast({ title: 'Copied', description: 'Agent ID copied to clipboard', status: 'success', duration: 2000 });
   };
 
   return (
@@ -318,6 +316,7 @@ const AgentRow = observer(({
 
 const AgentsPage = observer(() => {
   const router = useRouter();
+  const { agents: agentsStore, auth: authStore, stages: stagesStore, tools: toolsStore, models: modelsStore } = useStores();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [search, setSearch] = useState('');
@@ -327,16 +326,13 @@ const AgentsPage = observer(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cancelRef = useRef<any>(null);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const tableBorder = useColorModeValue('gray.200', 'gray.700');
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    router.prefetch('/agent-builder');
-    agentsStore.setShowAlert(showAlert);
-    stagesStore.setShowAlert(showAlert);
     agentsStore.loadAgents();
     toolsStore.loadTools();
     modelsStore.loadModels();
@@ -354,13 +350,7 @@ const AgentsPage = observer(() => {
     }
   };
 
-  const handleAddAgentClick = () => {
-    agentBuilderStore.setIsNewAgent(true);
-    router.push('/agent-builder');
-  };
-
   const handleAgentClick = (agent: Agent) => {
-    agentBuilderStore.setCurrentAgent({ ...agent });
     router.push(`/agent-builder/${agent.agent_id}`);
   };
 
@@ -393,12 +383,9 @@ const AgentsPage = observer(() => {
       setSelectedIds(new Set());
       setSelectMode(false);
       setIsConfirmOpen(false);
-      showAlert({
-        title: 'Deleted',
-        message: `${selectedIds.size} agent${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
-      });
+      toast({ title: 'Deleted', description: `${selectedIds.size} agent${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`, status: 'success', duration: 3000, isClosable: true });
     } catch {
-      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+      toast({ title: 'Error', description: 'One or more deletions failed. Please try again.', status: 'error', duration: 4000, isClosable: true });
     } finally {
       setIsDeleting(false);
     }
@@ -469,9 +456,11 @@ const AgentsPage = observer(() => {
           >
             {selectMode ? 'Cancel' : 'Select'}
           </Button>
-          <Button size="sm" colorScheme="brand" onClick={handleAddAgentClick}>
-            + Add Agent
-          </Button>
+          <NextLink href="/agent-builder">
+            <Button size="sm" colorScheme="brand">
+              + Add Agent
+            </Button>
+          </NextLink>
         </Flex>
       </Flex>
 
@@ -488,11 +477,15 @@ const AgentsPage = observer(() => {
         />
       </InputGroup>
 
-      {agentsStore.agentsLoading ? (
+      {agentsStore.agentsLoading && (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
-      ) : (
+      )}
+      {agentsStore.agentsError && (
+        <InlineError message={agentsStore.agentsError} onRetry={() => agentsStore.loadAgents(true)} />
+      )}
+      {!agentsStore.agentsLoading && !agentsStore.agentsError && (
         <Flex direction="column" gap={4}>
           {sortedAgents.length > 0 && (
             <TableContainer

@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
-import { integrationsStore } from "@/store/IntegrationsStore";
+import React, { useCallback, useEffect, useState } from "react";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
+import { useStores } from "@/store/StoreContext";
 import { Heading, Text, Button, Flex, Select, FormControl, FormLabel, Alert, AlertIcon, Box } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";
 import { Integration } from "@/types/integration";
 
 export const GoogleCalendarTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
+    const { integrations: integrationsStore } = useStores();
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -30,22 +32,22 @@ export const GoogleCalendarTools = observer(() => {
 
     const hasAnyCalendarTools = hasReadOnly || hasManage || hasDelete;
 
-    useEffect(() => {
-        loadIntegrations();
-    }, []);
-
-    const loadIntegrations = async () => {
+    const loadIntegrations = useCallback(async () => {
         try {
             setIsLoading(true);
             await integrationsStore.loadIntegrations();
             const calendarIntegrations = integrationsStore.getGoogleCalendarIntegrations();
-            if (calendarIntegrations.length > 0 && !selectedIntegrationId) {
-                setSelectedIntegrationId(calendarIntegrations[0].integration_id);
+            if (calendarIntegrations.length > 0) {
+                setSelectedIntegrationId((prev) => prev || calendarIntegrations[0].integration_id);
             }
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [integrationsStore]);
+
+    useEffect(() => {
+        void loadIntegrations();
+    }, [loadIntegrations]);
 
     const toggleToolGroup = (tools: string[], isEnabled: boolean) => {
         if (isEnabled) {

@@ -3,9 +3,8 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import ChatBox from '@/app/components/chatbox/ChatBox';
-import { useAlert } from '@/app/components/AlertProvider';
 import { defaultChatBoxStyle, defaultDarkChatBoxStyle } from '@/app/components/chatbox/ChatBox';
-import { chatPageStore } from '@/store/ChatPageStore';
+import { useStores } from '@/store/StoreContext';
 import { ChatSideBar } from './components/chatsidebar/ChatSideBar';
 import { ChatHeading } from './components/ChatHeading';
 import {
@@ -25,6 +24,7 @@ import {
 
 
 const ChatPage = observer(() => {
+    const { chat: chatPageStore } = useStores();
 
     const isMobile = useBreakpointValue({ base: true, lg: false });
     const chatBoxStyle = useColorMode().colorMode === 'dark' ? defaultDarkChatBoxStyle : defaultChatBoxStyle;
@@ -34,21 +34,10 @@ const ChatPage = observer(() => {
         onOpen: onMobileChatDrawerOpen,
         onClose: onMobileChatDrawereClose
     } = useDisclosure();
-    const { showAlert } = useAlert();
-
     // Initiate load
     useEffect(() => {
-        chatPageStore.loadData();
-    }, [])
-
-    // Show alerts
-    useEffect(() => {
-        setAlertOnStore();
-    })
-
-    const setAlertOnStore = () => {
-        chatPageStore.setShowAlert(showAlert);
-    }
+        void chatPageStore.loadData();
+    }, [chatPageStore])
 
     return (
         <Flex direction="column" height="100%" p={2}>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { Heading, Text, Button, Flex, Select, FormControl, FormLabel, Box } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";
@@ -44,6 +44,7 @@ const TIMEZONE_OPTIONS = [
 ];
 
 export const UtilityTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
     const [selectedTimezone, setSelectedTimezone] = useState<string>("America/New_York");
 
     // Tool IDs

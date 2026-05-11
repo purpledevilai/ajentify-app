@@ -1,51 +1,15 @@
-'use client';
+import type { Metadata } from 'next';
+import './globals.css';
 
-import { useEffect } from 'react';
-import ChakraProviders from "@/app/components/ChakraProviders";
-import { AlertProvider } from "@/app/components/AlertProvider";
-import { Amplify } from 'aws-amplify';
-import { authStore } from '@/store/AuthStore';
-import { NavigationGuardProvider } from 'next-navigation-guard';
-import { observer } from 'mobx-react-lite';
-import { Flex, Spinner } from '@chakra-ui/react';
+export const metadata: Metadata = {
+  title: 'Ajentify',
+  description: 'Ajentify — AI agent management platform',
+};
 
-Amplify.configure({
-  Auth: {
-    Cognito: {
-      userPoolId: process.env.NEXT_PUBLIC_AWS_USER_POOL_ID ?? '',
-      userPoolClientId: process.env.NEXT_PUBLIC_AWS_USER_POOL_WEB_CLIENT_ID ?? '',
-    }
-  },
-})
-
-const RootLayout = observer(({ children }: { children: React.ReactNode }) => {
-
-  useEffect(() => {
-    authStore.checkAuth();
-  }, []);
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <title>Ajentify</title>
-      </head>
-      <body>
-        <NavigationGuardProvider>
-          <ChakraProviders>
-            <AlertProvider>
-              {authStore.isDeterminingAuth ? (
-                <Flex justify="center" align="center" width="100vw" height="100vh">
-                  <Spinner size="lg" />
-                </Flex>
-              ) : (
-                children
-              )}
-            </AlertProvider>
-          </ChakraProviders>
-        </NavigationGuardProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
-});
-
-export default RootLayout;
+}

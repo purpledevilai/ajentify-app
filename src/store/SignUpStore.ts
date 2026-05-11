@@ -15,7 +15,7 @@ interface SignUpStoreSetFields {
     organizationName: string;
 }
 
-class SignUpStore {
+export class SignUpStore {
     // User Details
     firstName: string = '';
     lastName: string = '';
@@ -32,10 +32,11 @@ class SignUpStore {
     signUpLoading = false;
     confirmSignInLoading = false;
     createOrgLoading = false;
-    showAlertFlag = false;
-    alertTitle = '';
-    alertMessage = '';
-    alertActions: { label: string; handler?: () => void }[] = [];
+
+    // Per-action error fields
+    signUpError: string | null = null;
+    confirmSignUpError: string | null = null;
+    createOrgError: string | null = null;
 
     constructor() {
         makeAutoObservable(this);
@@ -53,35 +54,21 @@ class SignUpStore {
         this.signUpLoading = false;
         this.confirmSignInLoading = false;
         this.createOrgLoading = false;
-        this.showAlertFlag = false;
-        this.alertTitle = '';
-        this.alertMessage = '';
-        this.alertActions = [];
+        this.signUpError = null;
+        this.confirmSignUpError = null;
+        this.createOrgError = null;
     }
 
     setField(field: keyof SignUpStoreSetFields, value: string) {
         this[field] = value;
     }
 
-    showAlert(title: string, message: string, actions: { label: string; handler?: () => void }[]) {
-        this.alertTitle = title;
-        this.alertMessage = message;
-        this.alertActions = actions;
-        this.showAlertFlag = true;
-    }
-
-    clearAlert() {
-        this.showAlertFlag = false;
-        this.alertTitle = '';
-        this.alertMessage = '';
-        this.alertActions = [];
-    }
-
     async submitSignUp() {
         if (this.password !== this.confirmPassword) {
-            this.showAlert('Passwords Do Not Match', 'Please ensure the passwords match', [{ label: 'Ok' }]);
+            this.signUpError = 'Passwords do not match. Please ensure the passwords match.';
             return;
         }
+        this.signUpError = null;
         this.signUpLoading = true;
         try {
             const payload: SignUpPayload = {
@@ -93,13 +80,14 @@ class SignUpStore {
             await signUp(payload);
             this.step = 'verification';
         } catch (error) {
-            this.showAlert('Sign Up Failed', (error as Error).message, [{ label: 'Ok' }]);
+            this.signUpError = (error as Error).message;
         } finally {
             this.signUpLoading = false;
         }
     }
 
     async confirmSignInCode() {
+        this.confirmSignUpError = null;
         this.confirmSignInLoading = true;
         try {
             // Confirm
@@ -115,19 +103,21 @@ class SignUpStore {
                 password: this.password
             };
             await signIn(signInPayload);
+            document.cookie = 'aj_signed_in=1; Path=/; SameSite=Lax';
 
             // Create User
             await createUser();
 
             this.step = 'createOrganization';
         } catch (error) {
-            this.showAlert('Verification Failed', (error as Error).message, [{ label: 'Ok' }]);
+            this.confirmSignUpError = (error as Error).message;
         } finally {
             this.confirmSignInLoading = false;
         }
     }
 
     async createOrganization() {
+        this.createOrgError = null;
         this.createOrgLoading = true;
         try {
             const payload: CreateOrganizationPayload = {
@@ -136,11 +126,10 @@ class SignUpStore {
             await createOrganization(payload);
             this.step = 'success';
         } catch (error) {
-            this.showAlert('Organization Creation Failed', (error as Error).message, [{ label: 'Ok' }]);
+            this.createOrgError = (error as Error).message;
         } finally {
             this.createOrgLoading = false;
         }
     }
 }
 
-export const signUpStore = new SignUpStore();

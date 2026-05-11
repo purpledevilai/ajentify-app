@@ -1,4 +1,4 @@
-import { chatPageStore } from "@/store/ChatPageStore";
+import { useStores } from "@/store/StoreContext";
 import { ContextHistory } from "@/types/contexthistory";
 import { formatTimestamp } from "@/utils/formattimestamp";
 import { CloseIcon } from "@chakra-ui/icons";
@@ -10,6 +10,7 @@ interface ConversationRowProps {
 }
 
 export const ConversationRow = observer(({ contextHistory }: ConversationRowProps) => {
+    const { chat: chatPageStore } = useStores();
 
     const hoverBgColor = useColorModeValue("gray.200", "gray.700");
     const textColor = useColorModeValue("gray.800", "whiteAlpha.900");

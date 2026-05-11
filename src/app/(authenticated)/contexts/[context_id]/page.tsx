@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import NextLink from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
     Box,
@@ -17,7 +18,7 @@ import {
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import { getContext } from '@/api/context/getContext';
 import { Context, Message } from '@/types/context';
 import { CopyButton } from '../CopyButton';
@@ -206,6 +207,7 @@ export default function ContextDetailPage() {
     const router = useRouter();
     const params = useParams<{ context_id: string }>();
     const contextId = params?.context_id as string;
+    const { auth: authStore } = useStores();
 
     const [context, setContext] = useState<Context | null>(null);
     const [loading, setLoading] = useState(true);
@@ -230,19 +232,20 @@ export default function ContextDetailPage() {
         };
         load();
         return () => { cancelled = true; };
-    }, [contextId]);
+    }, [contextId, authStore.signedIn]);
 
     return (
         <Box p={{ base: 4, md: 6 }} h="100%" overflowY="auto">
             <Flex align="center" mb={4} gap={2}>
-                <Button
-                    leftIcon={<ArrowBackIcon />}
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => router.push('/contexts')}
-                >
-                    Back
-                </Button>
+                <NextLink href="/contexts">
+                    <Button
+                        leftIcon={<ArrowBackIcon />}
+                        size="sm"
+                        variant="ghost"
+                    >
+                        Back
+                    </Button>
+                </NextLink>
                 <Heading as="h1" size="lg" flex="1" noOfLines={1}>
                     Context
                 </Heading>

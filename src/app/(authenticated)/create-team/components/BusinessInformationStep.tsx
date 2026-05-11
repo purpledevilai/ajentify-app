@@ -1,25 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Stack, Button, Heading, Text, Input, Textarea } from '@chakra-ui/react';
 import { CloseIcon } from "@chakra-ui/icons";
-import { createTeamStore } from '@/store/CreateTeamStore';
-import { useAlert } from '@/app/components/AlertProvider';
+import { useStores } from '@/store/StoreContext';
+import { InlineError } from '@/app/components/InlineError';
 
 export const BusinessInformationStep = observer(() => {
+    const { createTeam: createTeamStore } = useStores();
 
-    const { showAlert } = useAlert();
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const handleNext = () => {
-        // Check if the business name and description are not empty
         if (!createTeamStore.businessName || !createTeamStore.businessDescription) {
-            showAlert({
-                title: 'Error',
-                message: 'Please fill in the business name and description.',
-            });
+            setValidationError('Please fill in the business name and description.');
             return;
         }
 
-        // Get links data if any
+        setValidationError(null);
+
         if (createTeamStore.linkData.some((link) => link.link)) {
             createTeamStore.getLinkData();
         }
@@ -31,9 +29,9 @@ export const BusinessInformationStep = observer(() => {
         <Stack
             spacing={4}
             overflow="scroll"
-            width="100%" // Ensure full width
-            maxWidth="600px" // Prevent restricting width
-            px={4} // Add padding for better spacing
+            width="100%"
+            maxWidth="600px"
+            px={4}
         >
             <Heading as="h1" size="lg">
                 Business Information
@@ -75,7 +73,7 @@ export const BusinessInformationStep = observer(() => {
                         value={link.link}
                         onChange={(e) => createTeamStore.setLink(index, e.target.value)}
                         minH="40px"
-                        width="100%" // Ensure the input respects the available width
+                        width="100%"
                     />
                     {link.link && (
                         <CloseIcon
@@ -93,17 +91,22 @@ export const BusinessInformationStep = observer(() => {
                 onClick={() => createTeamStore.addLink()}
                 minH="40px"
                 mb={6}
-                width="100%" // Button stretches to container width
+                width="100%"
             >
                 Add Link
             </Button>
+
+            {validationError && <InlineError message={validationError} />}
+            {createTeamStore.getLinkDataError && (
+                <InlineError message={createTeamStore.getLinkDataError} />
+            )}
 
             <Button
                 bg="brand.500"
                 _hover={{ bg: "brand.300" }}
                 onClick={handleNext}
                 minH="40px"
-                width="100%" // Button stretches to container width
+                width="100%"
             >
                 Next
             </Button>

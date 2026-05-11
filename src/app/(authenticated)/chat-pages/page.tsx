@@ -16,22 +16,16 @@ import {
 import { ChatPageData } from '@/types/chatpagedata';
 import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 import { ChatPageCard } from './components/ChatPageCard';
-import { useAlert } from '@/app/components/AlertProvider';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 
 const ChatPagesPage = observer(() => {
   const router = useRouter();
-  const { showAlert } = useAlert();
+  const { auth } = useStores();
 
   useEffect(() => {
-    if (!authStore.signedIn) return;
-    setAlertOnStore();
+    if (!auth.signedIn) return;
     chatPagesStore.loadChatPages();
   });
-
-  const setAlertOnStore = () => {
-    chatPagesStore.setShowAlert(showAlert);
-  };
 
   const handleAddChatPageClick = () => {
     chatPageBuilderStore.initiateNew();

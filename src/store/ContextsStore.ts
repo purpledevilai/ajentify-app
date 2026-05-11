@@ -2,7 +2,6 @@ import { makeAutoObservable } from 'mobx';
 import { getOrgContexts } from '@/api/context/getOrgContexts';
 import { getContext } from '@/api/context/getContext';
 import { Context, Message, OrgContextSummary } from '@/types/context';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
 
 const PAGE_SIZE = 25;
 const PREVIEW_LEN = 140;
@@ -43,7 +42,7 @@ const contextToSummary = (c: Context): OrgContextSummary => {
     };
 };
 
-class ContextsStore {
+export class ContextsStore {
     contexts: OrgContextSummary[] = [];
     nextCursor: string | null = null;
     loading = false;
@@ -60,15 +59,12 @@ class ContextsStore {
     appliedClientId = '';
     appliedContextId = '';
 
-    showAlert: (params: ShowAlertParams) => void = () => undefined;
+    contextsError: string | null = null;
+    loadMoreError: string | null = null;
 
     constructor() {
         makeAutoObservable(this);
     }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
-    };
 
     setFilters = (filters: {
         agentId?: string;
@@ -85,6 +81,7 @@ class ContextsStore {
             return;
         }
         try {
+            this.contextsError = null;
             this.loading = true;
 
             // Direct lookup by context_id uses the single-context endpoint
@@ -115,10 +112,7 @@ class ContextsStore {
             this.nextCursor = response.next_cursor ?? null;
             this.loaded = true;
         } catch (error) {
-            this.showAlert({
-                title: 'Failed to load contexts',
-                message: (error as Error).message || 'Unknown error',
-            });
+            this.contextsError = (error as Error).message || 'Unknown error';
         } finally {
             this.loading = false;
         }
@@ -129,6 +123,7 @@ class ContextsStore {
             return;
         }
         try {
+            this.loadMoreError = null;
             this.loadingMore = true;
             const response = await getOrgContexts({
                 agent_id: this.appliedAgentId || undefined,
@@ -139,10 +134,7 @@ class ContextsStore {
             this.contexts = [...this.contexts, ...response.contexts];
             this.nextCursor = response.next_cursor ?? null;
         } catch (error) {
-            this.showAlert({
-                title: 'Failed to load more contexts',
-                message: (error as Error).message || 'Unknown error',
-            });
+            this.loadMoreError = (error as Error).message || 'Unknown error';
         } finally {
             this.loadingMore = false;
         }
@@ -160,5 +152,4 @@ class ContextsStore {
     };
 }
 
-export const contextsStore = new ContextsStore();
 export const CONTEXTS_PAGE_SIZE = PAGE_SIZE;

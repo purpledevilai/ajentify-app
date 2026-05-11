@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import {
@@ -26,10 +26,8 @@ import {
     useColorModeValue,
 } from '@chakra-ui/react';
 import { RepeatIcon, SearchIcon } from '@chakra-ui/icons';
-import { agentsStore } from '@/store/AgentsStore';
-import { authStore } from '@/store/AuthStore';
-import { contextsStore } from '@/store/ContextsStore';
-import { useAlert } from '@/app/components/AlertProvider';
+import { useStores } from '@/store/StoreContext';
+import { InlineError } from '@/app/components/InlineError';
 import { CopyButton } from './CopyButton';
 
 const formatTimestamp = (ts: number | undefined | null): string => {
@@ -48,7 +46,7 @@ const truncateId = (id: string): string =>
 
 const ContextsPage = observer(() => {
     const router = useRouter();
-    const { showAlert } = useAlert();
+    const { agents: agentsStore, auth: authStore, contexts: contextsStore } = useStores();
 
     // Draft filter inputs (typed but not yet applied). Initialised from the
     // store's currently-applied filters so the inputs reflect the data the
@@ -57,30 +55,18 @@ const ContextsPage = observer(() => {
     const [clientDraft, setClientDraft] = useState<string>(contextsStore.appliedClientId);
     const [contextIdDraft, setContextIdDraft] = useState<string>(contextsStore.appliedContextId);
 
-    // `showAlert` from AlertProvider is recreated on every render of the
-    // provider (e.g. when an alert opens/closes), so we keep a ref to it to
-    // avoid invalidating effects and re-running them every time the user
-    // copies an ID.
-    const showAlertRef = useRef(showAlert);
-    useEffect(() => {
-        showAlertRef.current = showAlert;
-    }, [showAlert]);
-
     const subtextColor = useColorModeValue('gray.500', 'gray.400');
     const tableBorder = useColorModeValue('gray.200', 'gray.700');
     const hoverBg = useColorModeValue('gray.50', 'gray.700');
 
     useEffect(() => {
         if (!authStore.signedIn) return;
-        agentsStore.setShowAlert(showAlertRef.current);
         agentsStore.loadAgents();
-        contextsStore.setShowAlert(showAlertRef.current);
         // Honours the cache: only fetches if the store hasn't been loaded yet
         // in this session, so navigating into a context and back doesn't
         // trigger a refetch.
         contextsStore.loadContexts();
-        router.prefetch('/contexts');
-    }, [router]);
+    }, [agentsStore, authStore.signedIn, contextsStore]);
 
     const handleApplyFilters = () => {
         contextsStore.setFilters({
@@ -225,11 +211,15 @@ const ContextsPage = observer(() => {
                 </Flex>
             </Flex>
 
-            {loading ? (
+            {loading && (
                 <Flex justify="center" align="center" height="200px">
                     <Spinner size="xl" />
                 </Flex>
-            ) : (
+            )}
+            {contextsStore.contextsError && (
+                <InlineError message={contextsStore.contextsError} onRetry={() => contextsStore.loadContexts(true)} />
+            )}
+            {!loading && !contextsStore.contextsError && (
                 <Flex direction="column" gap={4}>
                     {contexts.length > 0 ? (
                         <TableContainer

@@ -1,15 +1,17 @@
 import React, { useEffect } from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { Heading, Text, Flex, Spinner } from "@chakra-ui/react";
-import { toolsStore } from "@/store/ToolsStore";
 import { observer } from "mobx-react-lite";
+import { useStores } from "@/store/StoreContext";
 import { Tool } from "@/types/tools";
 
 export const CustomAgentTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
+    const { tools: toolsStore } = useStores();
 
     useEffect(() => {
-        toolsStore.loadTools();
-    }, []);
+        void toolsStore.loadTools();
+    }, [toolsStore]);
 
     const addOrRemoveTool = (tool: Tool) => {
         if (agentBuilderStore.currentAgent?.tools?.includes(tool.tool_id)) {

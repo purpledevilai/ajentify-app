@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { fetchAuthSession } from "aws-amplify/auth";
+import { fetchAuthSession, signOut as awsSignOut } from "aws-amplify/auth";
 import { signIn } from '@/api/auth/signIn'; 
 import { signOut } from '@/api/auth/signOut';
 import { updateUser } from '@/api/user/updateUser';
@@ -8,29 +8,19 @@ import { resetPassword } from '@/api/auth/resetPassword';
 import { deleteUser } from '@/api/user/deleteUser';
 import { User } from '@/types/user';
 import { getUser } from '@/api/user/getUser';
-import { agentsStore } from './AgentsStore';
-import { agentBuilderStore } from './AgentBuilderStore';
-import { chatPageBuilderStore } from './ChatPageBuilderStore';
-import { chatPagesStore } from './ChatPagesStore';
-import { chatPageStore } from './ChatPageStore';
-import { structuredResponseEndpointsStore } from './StructuredResponseEndpointStore';
-import { sreBuilderStore } from './StructuredResponseEndpointBuilderStore';
-import { jsonDocumentsStore } from './JsonDocumentsStore';
-import { jsonDocumentBuilderStore } from './JsonDocumentBuilderStore';
-import { integrationsStore } from './IntegrationsStore';
-import { toolsStore } from './ToolsStore';
-import { toolBuilderStore } from './ToolBuilderStore';
-import { stagesStore } from './StagesStore';
-import { contextsStore } from './ContextsStore';
 
+interface AuthStoreOptions {
+    resetAll?: () => void;
+}
 
-class AuthStore {
+export class AuthStore {
     email = '';
     password = '';
     signInLoading = false;
     signInError = '';
     isDeterminingAuth = true;
     signedIn = false;
+    loggingOut = false;
     user: User | undefined = undefined;
     userLoading = false;
 
@@ -41,7 +31,10 @@ class AuthStore {
     resetPasswordCode = '';
     newPassword = '';
 
-    constructor() {
+    private readonly resetAllCallback: (() => void) | undefined;
+
+    constructor(options: AuthStoreOptions = {}) {
+        this.resetAllCallback = options.resetAll;
         makeAutoObservable(this);
     }
 
@@ -74,11 +67,50 @@ class AuthStore {
         }
     }
 
+    forceRefreshAccessToken = async (): Promise<string | undefined> => {
+        try {
+            const session = await fetchAuthSession({ forceRefresh: true });
+            return session.tokens?.accessToken.toString();
+        } catch {
+            return undefined;
+        }
+    };
+
+    handleAuthFailure = async (): Promise<void> => {
+        if (this.loggingOut) return;
+        this.loggingOut = true;
+        try {
+            await awsSignOut();
+            this.resetAllCallback?.();
+            this.signedIn = false;
+            document.cookie = 'aj_signed_in=; Path=/; Max-Age=0';
+            window.location.assign('/signin');
+        } finally {
+            this.loggingOut = false;
+        }
+    };
+
     checkAuth = async () => {
         this.isDeterminingAuth = true;
-        const token = await this.getAccessToken();
-        this.signedIn = token !== undefined;
-        this.isDeterminingAuth = false;
+        try {
+            const session = await fetchAuthSession();
+            const token = session.tokens?.accessToken.toString();
+            if (!token) {
+                this.signedIn = false;
+                return;
+            }
+            try {
+                const user = await getUser();
+                this.user = user;
+                this.signedIn = true;
+            } catch {
+                this.signedIn = false;
+            }
+        } catch {
+            this.signedIn = false;
+        } finally {
+            this.isDeterminingAuth = false;
+        }
     }
 
     async submitSignIn(): Promise<void> {
@@ -88,7 +120,7 @@ class AuthStore {
 
         try {
             await signIn({ email: this.email, password: this.password });
-            this.signedIn = true;
+            document.cookie = 'aj_signed_in=1; Path=/; SameSite=Lax';
         } catch (error) {
             this.signInError = (error as Error).message || 'Failed to sign in. Please try again.';
         } finally {
@@ -99,20 +131,8 @@ class AuthStore {
     async signOut(): Promise<void> {
         try {
             await signOut();
-            agentBuilderStore.reset();
-            agentsStore.reset();
-            chatPageBuilderStore.reset();
-            chatPagesStore.reset();
-            chatPageStore.reset();
-            structuredResponseEndpointsStore.reset();
-            sreBuilderStore.reset();
-            jsonDocumentsStore.reset();
-            jsonDocumentBuilderStore.reset();
-            integrationsStore.reset();
-            toolsStore.reset();
-            toolBuilderStore.reset();
-            stagesStore.reset();
-            contextsStore.reset();
+            document.cookie = 'aj_signed_in=; Path=/; Max-Age=0';
+            this.resetAllCallback?.();
             this.reset();
             this.signedIn = false;
         } catch (error) {
@@ -205,5 +225,3 @@ class AuthStore {
         }
     }
 }
-
-export const authStore = new AuthStore();

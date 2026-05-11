@@ -1,6 +1,5 @@
 import { makeAutoObservable, computed } from "mobx";
-import { ShowAlertParams } from "@/app/components/AlertProvider";
-import { authStore } from "./AuthStore";
+import { getSREs } from "@/api/structuredresponseendpoint/getSREs";
 import { UIParameterNode } from "@/types/parameterdefinition";
 import { uiTreeToJsonSchema, jsonSchemaToUiTree } from "@/utils/jsonSchema";
 import { StructuredResponseEndpoint } from "@/types/structuredresponseendpoint";
@@ -10,10 +9,9 @@ import { createSRE } from "@/api/structuredresponseendpoint/createSRE";
 import { updateSRE } from "@/api/structuredresponseendpoint/updateSRE";
 import { deleteSRE } from "@/api/structuredresponseendpoint/deleteSRE";
 import { runSRE } from "@/api/structuredresponseendpoint/runSRE";
-import { structuredResponseEndpointsStore } from "./StructuredResponseEndpointStore";
 import { AnyType } from "@/types/tools";
-import { getParameterDefinition } from "@/api/parameterdefinition/getParameterDefinition";
 import { deleteParameterDefinition } from "@/api/parameterdefinition/deleteParameterDefinition";
+import { ParameterDefinitionsStore } from "./ParameterDefinitionsStore";
 
 const defaultSRE: StructuredResponseEndpoint = {
     sre_id: '',
@@ -40,8 +38,7 @@ const getCodeName = (name: string): string => {
     return name.replace(/ /g, '_').toLowerCase();
 };
 
-class StructuredResponseEndpointBuilderStore {
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+export class StructuredResponseEndpointBuilderStore {
     isNewSme = false;
     useClickedSave = false;
     sre: StructuredResponseEndpoint = defaultSRE;
@@ -64,6 +61,13 @@ class StructuredResponseEndpointBuilderStore {
     // Test section inputs for legacy SREs (keyed by {variable} placeholders parsed from template)
     templateArgsInput: Record<string, string> = {};
 
+    // Error fields
+    setSREWithIdError: string | null = null;
+    loadParameterDefinitionError: string | null = null;
+    saveSREError: string | null = null;
+    deleteSREError: string | null = null;
+    runSREError: string | null = null;
+
     // Parsed {variable} placeholders from the prompt template — used only for legacy SRE testing
     get templateArgs(): string[] {
         const matches = this.sre.prompt_template?.match(/\{([^}]+)\}/g) || [];
@@ -81,7 +85,10 @@ class StructuredResponseEndpointBuilderStore {
         return this.useVariableNames;
     }
 
-    constructor() {
+    private parameterDefinitions: ParameterDefinitionsStore;
+
+    constructor({ parameterDefinitions }: { parameterDefinitions: ParameterDefinitionsStore }) {
+        this.parameterDefinitions = parameterDefinitions;
         makeAutoObservable(this, {
             templateArgs: computed,
             isLegacySRE: computed,
@@ -122,18 +129,19 @@ class StructuredResponseEndpointBuilderStore {
         this.useVariableNames = false;
         this.variableNamesInput = {};
         this.templateArgsInput = {};
+        this.setSREWithIdError = null;
+        this.loadParameterDefinitionError = null;
+        this.saveSREError = null;
+        this.deleteSREError = null;
+        this.runSREError = null;
         this.syncTemplateArgsInput();
-    }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
     }
 
     initiateNew = () => {
         this.isNewSme = true;
         this.sre = {
             ...defaultSRE,
-            org_id: authStore.user?.organizations[0].id || '',
+            org_id: '',
         };
         this.syncTemplateArgsInput();
         this.syncVariableNamesInput();
@@ -164,36 +172,33 @@ class StructuredResponseEndpointBuilderStore {
     }
 
     setSREWithId = async (sreId: string) => {
+        this.setSREWithIdError = null;
         this.isNewSme = false;
-        await structuredResponseEndpointsStore.loadSREs()
-        if (!structuredResponseEndpointsStore.sres) {
-            this.showAlert({
-                title: 'Whoops',
-                message: 'There was a problem loading the SREs',
-            });
-            return;
+        try {
+            const sres = await getSREs();
+            const sre = sres.find((s) => s.sre_id === sreId);
+            if (!sre) {
+                this.setSREWithIdError = 'Could not find SRE';
+                return;
+            }
+            this.setSRE({ ...sre });
+        } catch (error) {
+            this.setSREWithIdError = (error as Error).message;
         }
-        const sre = structuredResponseEndpointsStore.sres.find((s) => s.sre_id === sreId);
-        if (!sre) {
-            this.showAlert({
-                title: 'Whoops',
-                message: 'Could not find sre',
-            });
-            return;
-        }
-        this.setSRE({ ...sre });
     }
 
     loadParameterDefinition = async (pdId: string) => {
         try {
+            this.loadParameterDefinitionError = null;
             this.isLoadingParameterDefinition = true;
-            const parameterDefinition = await getParameterDefinition(pdId);
+            const parameterDefinition = await this.parameterDefinitions.ensurePdId(pdId);
+            if (!parameterDefinition) {
+                this.loadParameterDefinitionError = this.parameterDefinitions.parameterDefinitionsError ?? 'Failed to load parameter definition';
+                return;
+            }
             this.parameters = jsonSchemaToUiTree(parameterDefinition.schema);
         } catch (error) {
-            this.showAlert({
-                title: 'Whoops',
-                message: (error as Error).message,
-            })
+            this.loadParameterDefinitionError = (error as Error).message;
         } finally {
             this.isLoadingParameterDefinition = false;
         }
@@ -417,6 +422,7 @@ class StructuredResponseEndpointBuilderStore {
 
     saveSRE = async (): Promise<boolean> => {
         try {
+            this.saveSREError = null;
             this.sreSaving = true;
             this.codifyNames();
             this.validate();
@@ -455,10 +461,7 @@ class StructuredResponseEndpointBuilderStore {
             
             return true;
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message,
-            });
+            this.saveSREError = (error as Error).message;
             return false;
         } finally {
             this.sreSaving = false;
@@ -467,6 +470,7 @@ class StructuredResponseEndpointBuilderStore {
 
     deleteSRE = async (): Promise<boolean> => {
         try {
+            this.deleteSREError = null;
             this.sreDeleting = true;
             try {
                 await deleteParameterDefinition(this.sre.pd_id);
@@ -477,10 +481,7 @@ class StructuredResponseEndpointBuilderStore {
             await deleteSRE(this.sre.sre_id);
             return true;
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message,
-            });
+            this.deleteSREError = (error as Error).message;
             return false;
         } finally {
             this.sreDeleting = false;
@@ -491,6 +492,7 @@ class StructuredResponseEndpointBuilderStore {
 
     runSRE = async (): Promise<void> => {
         try {
+            this.runSREError = null;
             this.isRunningSRE = true;
 
             // New-style SREs use variableNamesInput; legacy SREs use templateArgsInput
@@ -504,10 +506,7 @@ class StructuredResponseEndpointBuilderStore {
             });
             this.runResult = result;
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message,
-            });
+            this.runSREError = (error as Error).message;
         } finally {
             this.isRunningSRE = false;
         }
@@ -518,4 +517,3 @@ class StructuredResponseEndpointBuilderStore {
     }
 }
 
-export const sreBuilderStore = new StructuredResponseEndpointBuilderStore();

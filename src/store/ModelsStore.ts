@@ -2,10 +2,11 @@ import { makeAutoObservable } from "mobx";
 import { Model } from "@/types/model";
 import { getModels } from "@/api/model/getModels";
 
-class ModelsStore {
+export class ModelsStore {
     models: Model[] = [];
     isLoading = false;
     hasLoaded = false;
+    modelsError: string | null = null;
 
     constructor() {
         makeAutoObservable(this);
@@ -14,15 +15,23 @@ class ModelsStore {
     loadModels = async (force = false) => {
         if (this.hasLoaded && !force) return;
         try {
+            this.modelsError = null;
             this.isLoading = true;
             this.models = await getModels();
             this.hasLoaded = true;
         } catch (error) {
-            console.error("Failed to load models:", error);
+            this.modelsError = (error as Error).message;
         } finally {
             this.isLoading = false;
         }
     }
+
+    reset = () => {
+        this.models = [];
+        this.isLoading = false;
+        this.hasLoaded = false;
+        this.modelsError = null;
+    };
 
     getModelByName = (modelName: string): Model | undefined => {
         return this.models.find(m => m.model === modelName);
@@ -35,4 +44,3 @@ class ModelsStore {
     }
 }
 
-export const modelsStore = new ModelsStore();

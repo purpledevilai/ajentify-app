@@ -2,14 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { TokenStreamingService } from "@/api/tokenstreamingservice/TokenStreamingService";
-import { Box } from "@chakra-ui/react";
+import { Box, useToast } from "@chakra-ui/react";
 import { MessagesArea } from "./MessagesArea";
 import { UserInput } from "./UserInput";
 import { Context, Message } from "@/types/context";
 import { ChatEvent } from "@/types/chatresponse";
-import { useAlert } from "../AlertProvider";
 import { ChatBoxStyle } from "@/types/chatboxstyle";
-import { authStore } from "@/store/AuthStore";
+import { getAccessToken } from "@/api/client";
 
 
 export const defaultChatBoxStyle: ChatBoxStyle = {
@@ -62,7 +61,7 @@ interface ChatBoxProps {
 export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_display = false }: ChatBoxProps) => {
     const [responseLoading, setResponseLoading] = useState<boolean>(false);
     const [messages, setMessages] = useState<Message[]>(context.messages)
-    const { showAlert } = useAlert();
+    const toast = useToast();
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [isConnecting, setIsConnecting] = useState<boolean>(false);
     const startNewAIMessageRef = useRef<boolean>(true);
@@ -70,11 +69,12 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
     const [activeToolCall, setActiveToolCall] = useState<{ name: string, input: string } | null>(null);
 
 
-    const hasInitialized = useRef(false);
-    useEffect(() => {
-        if (hasInitialized.current) return;
-        hasInitialized.current = true;
+    // Keep onEvents in a ref so the WebSocket callback always uses the latest
+    // version without needing to recreate the connection when the prop changes.
+    const onEventsRef = useRef(onEvents);
+    onEventsRef.current = onEvents;
 
+    useEffect(() => {
         if (for_display) return;
 
         const init = async () => {
@@ -83,7 +83,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                 const service = new TokenStreamingService(
                     process.env.NEXT_PUBLIC_LIVE_AGENT_URL || "",
                     context.context_id,
-                    await authStore.getAccessToken() || ''
+                    await getAccessToken() || ''
                 );
 
                 tokenStreamingServiceRef.current = service;
@@ -110,8 +110,8 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 service.setOnEvents((events, responseId) => {
                     console.log("Received events:", events);
-                    if (onEvents) {
-                        onEvents(events);
+                    if (onEventsRef.current) {
+                        onEventsRef.current(events);
                     }
                 });
 
@@ -119,13 +119,13 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                     console.log("WebSocket closed");
                     setIsConnected(false);
                     setIsConnecting(false);
-                    showAlert({ title: "Connection Lost", message: "The connection to the context has been lost." });
+                    toast({ title: "Connection Lost", description: "The connection to the context has been lost.", status: "warning", duration: 4000, isClosable: true });
                 });
 
                 await service.connect();
                 setIsConnected(true);
             } catch (err) {
-                showAlert({ title: "Whoops", message: "Failed to connect to context." });
+                toast({ title: "Connection Failed", description: "Failed to connect to context.", status: "error", duration: 4000, isClosable: true });
                 console.error("Failed to connect to context:", err);
                 setIsConnected(false);
             } finally {
@@ -133,24 +133,17 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
             }
         };
 
-        init();
+        void init();
 
         return () => {
             tokenStreamingServiceRef.current?.close();
         };
-    }, []);
+    }, [context.context_id, for_display, toast]);
 
 
     const sendMessage = async (message: string) => {
         if (!isConnected) {
-            showAlert({
-                title: "Whoops",
-                message: "Not connected to context",
-                actions: [
-                    { label: "close", onClick: undefined },
-                    { label: "Reconnect", onClick: () => tokenStreamingServiceRef.current?.connect() }
-                ]
-            });
+            toast({ title: "Not Connected", description: "Not connected to context", status: "warning", duration: 4000, isClosable: true });
             return;
         }
 
@@ -160,7 +153,7 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
             setResponseLoading(true);
             await tokenStreamingServiceRef.current?.addMessage(message);
         } catch (error) {
-            showAlert({ title: "Whoops", message: (error as Error).message });
+            toast({ title: "Error", description: (error as Error).message, status: "error", duration: 4000, isClosable: true });
         }
     };
 

@@ -1,17 +1,21 @@
 'use client';
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Flex, FormControl, Heading, IconButton, Input, Button, Tooltip,
     useColorMode,
-    Spinner, Switch
+    Spinner, Switch,
+    AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogOverlay, useDisclosure, Text, Box,
 } from "@chakra-ui/react";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FormLabelToolTip } from "@/app/components/FormLableToolTip";
-import { useAlert } from "@/app/components/AlertProvider";
 import { observer } from "mobx-react-lite";
-import { toolBuilderStore } from "@/store/ToolBuilderStore";
-import { toolsStore } from "@/store/ToolsStore";
+import { InlineError } from "@/app/components/InlineError";
+import { useToolBuilder } from "@/store/useToolBuilder";
+import { ToolBuilderStoreContext } from '../ToolBuilderContext';
+import { useStores } from "@/store/StoreContext";
+
 import { ParameterView } from "./components/Parameter";
 import MonacoEditor, { Monaco } from "@monaco-editor/react";
 import type monaco from 'monaco-editor';
@@ -27,24 +31,16 @@ interface ToolBuilderPageProps {
 }
 
 const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
+    const toolBuilderStore = useToolBuilder();
+    const { tools: toolsStore } = useStores();
 
-    const { showAlert } = useAlert();
     const { colorMode } = useColorMode();
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cancelRef = useRef<any>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        setShowAlertOnStore();
-        loadToolId(); // Load tool id from URL
-
-        return () => {
-            toolBuilderStore.reset();
-        }
-    }, []);
-
-    const setShowAlertOnStore = () => {
-        toolBuilderStore.setShowAlert(showAlert);
-    }
-
-    const loadToolId = async () => {
+    const loadToolId = useCallback(async () => {
         const paramArray = (await params).tool_id ?? undefined;
         const tool_id = paramArray ? paramArray[0] : undefined;
         if (tool_id) {
@@ -52,7 +48,15 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 toolBuilderStore.setToolWithId(tool_id);
             }
         }
-    }
+    }, [params, toolBuilderStore]);
+
+    useEffect(() => {
+        void loadToolId(); // Load tool id from URL
+
+        return () => {
+            toolBuilderStore.reset();
+        };
+    }, [loadToolId, toolBuilderStore]);
 
     const onSaveTool = async () => {
         const success = await toolBuilderStore.saveTool();
@@ -62,22 +66,13 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
         window.history.back();
     }
 
-    const onDeleteToolClick = async () => {
-        showAlert({
-            title: "Delete Tool",
-            message: "Are you sure you want to delete this tool?",
-            actions: [
-                { label: "Cancel", onClick: () => { } },
-                {
-                    label: "Delete", onClick: async () => {
-                        await toolBuilderStore.deleteTool();
-                        toolsStore.loadTools(true);
-                        // Navigate back
-                        window.history.back();
-                    }
-                }
-            ]
-        })
+    const handleConfirmDelete = async () => {
+        setIsDeleting(true);
+        await toolBuilderStore.deleteTool();
+        setIsDeleting(false);
+        onDeleteClose();
+        toolsStore.loadTools(true);
+        window.history.back();
     }
 
     // Lock the first line using decorations
@@ -108,7 +103,8 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
 
 
     return (
-        <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
+        <ToolBuilderStoreContext.Provider value={toolBuilderStore}>
+            <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             {/* Header Section */}
             <Flex direction="row" w="100%" mb={8} gap={4} align="center">
                 <IconButton
@@ -294,6 +290,15 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                                 isDisabled={toolBuilderStore.tool.pass_context}
                             >Test</Button>
                         </Tooltip>
+                        {toolBuilderStore.executeTestInputError && (
+                            <InlineError message={toolBuilderStore.executeTestInputError} />
+                        )}
+                        {toolBuilderStore.executeTestInputResult && (
+                            <Box p={4} borderRadius="md" bg="green.50" borderWidth={1} borderColor="green.200">
+                                <Text fontWeight="semibold" color="green.700" mb={1}>Test Result</Text>
+                                <Text color="green.800" fontSize="sm" whiteSpace="pre-wrap">{toolBuilderStore.executeTestInputResult}</Text>
+                            </Box>
+                        )}
                     </>
                 )}
 
@@ -312,10 +317,17 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                     >{toolBuilderStore.isUpdating ? "Update" : "Save"}</Button>
                 </Tooltip>
 
+                {toolBuilderStore.saveToolError && (
+                    <InlineError message={toolBuilderStore.saveToolError} />
+                )}
+                {toolBuilderStore.setToolWithIdError && (
+                    <InlineError message={toolBuilderStore.setToolWithIdError} />
+                )}
+
                 {/* Delete Button */}
                 {toolBuilderStore.isUpdating && (
                     <Button
-                        onClick={onDeleteToolClick}
+                        onClick={onDeleteOpen}
                         variant="outline"
                         size="lg"
                         isLoading={toolBuilderStore.toolDeleting}
@@ -323,7 +335,19 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 )}
             </Flex>
 
-        </Flex>
+            <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={cancelRef} onClose={onDeleteClose} isCentered>
+                <AlertDialogOverlay />
+                <AlertDialogContent>
+                    <AlertDialogHeader fontSize="lg" fontWeight="bold">Delete Tool</AlertDialogHeader>
+                    <AlertDialogBody>Are you sure you want to delete this tool?</AlertDialogBody>
+                    <AlertDialogFooter gap={3}>
+                        <Button ref={cancelRef} onClick={onDeleteClose} isDisabled={isDeleting}>Cancel</Button>
+                        <Button colorScheme="red" onClick={handleConfirmDelete} isLoading={isDeleting} loadingText="Deleting…">Delete</Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            </Flex>
+        </ToolBuilderStoreContext.Provider>
     );
 });
 

@@ -1,6 +1,5 @@
 import { DeployRequest, DeployResponse, Manifest } from "@/types/manifest";
-import { authStore } from "@/store/AuthStore";
-import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { request } from "@/api/client";
 
 
 /**
@@ -19,20 +18,11 @@ export async function deployManifest(
     manifest: Manifest,
     opts?: { orgId?: string }
 ): Promise<DeployResponse> {
-    try {
-        const body: DeployRequest = { stage, manifest };
-        if (opts?.orgId) body.org_id = opts.orgId;
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/deploy`, {
-            method: 'POST',
-            headers: {
-                'Authorization': await authStore.getAccessToken() || '',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body),
-        });
-        return await checkResponseAndGetJson(response) as unknown as DeployResponse;
-    } catch (error) {
-        const errorMessage = (error as Error).message || 'An unknown error occurred deploying the manifest';
-        throw Error(errorMessage);
-    }
+  const body: DeployRequest = { stage, manifest };
+  if (opts?.orgId) body.org_id = opts.orgId;
+  return request<DeployResponse>({
+    method: 'POST',
+    path: '/deploy',
+    body,
+  });
 }

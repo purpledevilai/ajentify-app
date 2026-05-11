@@ -1,9 +1,10 @@
 import React from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { Heading, Text, Button, Flex } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 
 export const PassEventTool = () => {
+    const agentBuilderStore = useAgentBuilderStore();
     const hasTool = agentBuilderStore.currentAgent.tools?.some(tool => tool === "pass_event");
 
     const addOrRemoveTool = () => {

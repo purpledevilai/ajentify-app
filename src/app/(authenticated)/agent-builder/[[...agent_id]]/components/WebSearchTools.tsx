@@ -1,10 +1,11 @@
 import React from "react";
-import { agentBuilderStore } from "@/store/AgentBuilderStore";
+import { useAgentBuilderStore } from "../../AgentBuilderContext";
 import { Heading, Text, Button, Flex } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
 import { observer } from "mobx-react-lite";
 
 export const WebSearchTools = observer(() => {
+    const agentBuilderStore = useAgentBuilderStore();
     const webSearchTools = ["web_search", "view_url"];
 
     const hasWebSearchTools = webSearchTools.some(tool =>

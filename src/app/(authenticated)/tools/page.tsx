@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { observer } from 'mobx-react-lite';
-import { toolsStore } from '@/store/ToolsStore';
-import { toolBuilderStore } from '@/store/ToolBuilderStore';
-import { stagesStore } from '@/store/StagesStore';
+import { useStores } from '@/store/StoreContext';
 import { LogicalNameCell, StageCell } from '@/app/(authenticated)/components/StageCells';
 import StageBindingActionCell from '@/app/(authenticated)/components/StageBindingActionCell';
 import { Tool } from '@/types/tools';
@@ -40,10 +39,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  useToast,
 } from '@chakra-ui/react';
 import { ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons';
-import { useAlert } from '@/app/components/AlertProvider';
-import { authStore } from '@/store/AuthStore';
+import { InlineError } from '@/app/components/InlineError';
 
 type SortField = 'function' | 'language' | 'created_at' | 'updated_at';
 type SortDir = 'asc' | 'desc';
@@ -265,6 +264,7 @@ const ToolRow = ({
 
 const ToolsPage = observer(() => {
   const router = useRouter();
+  const { tools: toolsStore, stages: stagesStore, auth: authStore } = useStores();
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [pdMap, setPdMap] = useState<Record<string, string[]>>({});
@@ -275,24 +275,21 @@ const ToolsPage = observer(() => {
   const [isDeleting, setIsDeleting] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cancelRef = useRef<any>(null);
-  const { showAlert } = useAlert();
+  const toast = useToast();
 
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const tableBorder = useColorModeValue('gray.200', 'gray.700');
 
   useEffect(() => {
     if (!authStore.signedIn) return;
-    router.prefetch('/tool-builder');
-    toolsStore.setShowAlert(showAlert);
-    stagesStore.setShowAlert(showAlert);
-    toolsStore.loadTools();
-    stagesStore.loadStages();
+    void toolsStore.loadTools();
+    void stagesStore.loadStages();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
       const map: Record<string, string[]> = {};
       pds.forEach((pd) => { map[pd.pd_id] = schemaParamNames(pd.schema); });
       setPdMap(map);
     }).catch(() => {});
-  }, []);
+  }, [authStore.signedIn, router, toolsStore, stagesStore]);
 
   const showStageColumns = stagesStore.hasAnyStage;
 
@@ -305,12 +302,7 @@ const ToolsPage = observer(() => {
     }
   };
 
-  const handleAddToolClick = () => {
-    router.push('/tool-builder');
-  };
-
   const handleToolClick = (tool: Tool) => {
-    toolBuilderStore.setTool({ ...tool });
     router.push(`/tool-builder/${tool.tool_id}`);
   };
 
@@ -343,12 +335,9 @@ const ToolsPage = observer(() => {
       setSelectedIds(new Set());
       setSelectMode(false);
       setIsConfirmOpen(false);
-      showAlert({
-        title: 'Deleted',
-        message: `${selectedIds.size} tool${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`,
-      });
+      toast({ title: 'Deleted', description: `${selectedIds.size} tool${selectedIds.size !== 1 ? 's' : ''} deleted successfully.`, status: 'success', duration: 3000, isClosable: true });
     } catch {
-      showAlert({ title: 'Error', message: 'One or more deletions failed. Please try again.' });
+      toast({ title: 'Error', description: 'One or more deletions failed. Please try again.', status: 'error', duration: 4000, isClosable: true });
     } finally {
       setIsDeleting(false);
     }
@@ -419,9 +408,11 @@ const ToolsPage = observer(() => {
           >
             {selectMode ? 'Cancel' : 'Select'}
           </Button>
-          <Button size="sm" colorScheme="brand" onClick={handleAddToolClick}>
-            + Add Tool
-          </Button>
+          <NextLink href="/tool-builder">
+            <Button size="sm" colorScheme="brand">
+              + Add Tool
+            </Button>
+          </NextLink>
         </Flex>
       </Flex>
 
@@ -438,11 +429,15 @@ const ToolsPage = observer(() => {
         />
       </InputGroup>
 
-      {toolsStore.toolsLoading ? (
+      {toolsStore.toolsLoading && (
         <Flex justify="center" align="center" height="200px">
           <Spinner size="xl" />
         </Flex>
-      ) : (
+      )}
+      {toolsStore.toolsError && (
+        <InlineError message={toolsStore.toolsError} onRetry={() => toolsStore.loadTools(true)} />
+      )}
+      {!toolsStore.toolsLoading && !toolsStore.toolsError && (
         <Flex direction="column" gap={4}>
           {sortedTools.length > 0 && (
             <TableContainer

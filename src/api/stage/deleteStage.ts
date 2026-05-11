@@ -1,5 +1,4 @@
-import { authStore } from "@/store/AuthStore";
-import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
+import { request } from "@/api/client";
 
 /**
  * How `DELETE /stage/{id}` should treat the resources owned by the stage.
@@ -17,21 +16,9 @@ import { checkResponseAndGetJson } from "@/utils/api/checkResponseAndParseJson";
 export type DeleteStageMode = 'destroy' | 'detach';
 
 export async function deleteStage(stageId: string, mode: DeleteStageMode): Promise<void> {
-    try {
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/stage/${encodeURIComponent(stageId)}`,
-            {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': await authStore.getAccessToken() || '',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ mode }),
-            },
-        );
-        await checkResponseAndGetJson(response);
-    } catch (error) {
-        const errorMessage = (error as Error).message || 'An unknown error occurred deleting the stage';
-        throw Error(errorMessage);
-    }
+  await request<void>({
+    method: 'DELETE',
+    path: `/stage/${encodeURIComponent(stageId)}`,
+    body: { mode },
+  });
 }

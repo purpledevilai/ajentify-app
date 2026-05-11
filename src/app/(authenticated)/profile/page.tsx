@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { authStore } from '@/store/AuthStore';
+import { useStores } from '@/store/StoreContext';
 import {
     Button,
     FormControl,
@@ -16,32 +16,44 @@ import {
     List,
     ListItem,
     Spacer,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 import { User } from '@/types/user';
-import { useAlert } from '@/app/components/AlertProvider';
+import { InlineError } from '@/app/components/InlineError';
 
 const ProfilePage = observer(() => {
+    const { auth } = useStores();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editedUser, setEditedUser] = useState<User | undefined>(authStore.user);
-    const { showAlert } = useAlert();
+    const [editedUser, setEditedUser] = useState<User | undefined>(auth.user);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cancelRef = useRef<any>(null);
 
     const handleEdit = () => {
-        if (!authStore.user) return;
-        setEditedUser({ ...authStore.user }); // Create a copy of the current user
+        if (!auth.user) return;
+        setEditedUser({ ...auth.user });
         setIsEditing(true);
     };
 
     const handleCancel = () => {
-        if (!authStore.user) return;
+        if (!auth.user) return;
         setIsEditing(false);
-        setEditedUser({ ...authStore.user }); // Reset to original user state
+        setEditedUser({ ...auth.user });
     };
 
     const handleSave = async () => {
         try {
-            await authStore.updateUserDetails(editedUser!);
+            await auth.updateUserDetails(editedUser!);
             setIsEditing(false);
         } catch (error) {
             console.error('Failed to save user updates:', error);
@@ -55,38 +67,23 @@ const ProfilePage = observer(() => {
         });
     };
 
-    const handleDeleteAccount = () => {
-        showAlert({
-            title: "Delete Account",
-            message: "Are you sure you want to delete your account? This action is irreversible.",
-            actions: [
-                {
-                    label: "Cancel",
-                    onClick: () => { },
-                },
-                {
-                    label: "Delete Account",
-                    onClick: handleConfirmDeleteAccount,
-                }
-            ]
-        });
-    }
-
     const handleConfirmDeleteAccount = async () => {
-        if (!authStore.user) return;
+        if (!auth.user) return;
+        setDeleteError(null);
+        setIsDeleting(true);
         try {
-            await authStore.deleteAccount();
+            await auth.deleteAccount();
         } catch (error) {
             console.error('Failed to delete account:', error);
-            showAlert({
-                title: "Whoops",
-                message: "There was an error deleting your account. Please try again later.",
-            })
+            setDeleteError('There was an error deleting your account. Please try again later.');
+        } finally {
+            setIsDeleting(false);
+            onDeleteClose();
         }
     }
 
     return (
-        (!authStore.user) ? (
+        (!auth.user) ? (
             <Flex justify="center" align="center" h="100vh">
                 <Text>Loading...</Text>
             </Flex>
@@ -127,13 +124,13 @@ const ProfilePage = observer(() => {
                     {/* User ID */}
                     <FormControl>
                         <FormLabel>ID:</FormLabel>
-                        <Text>{authStore.user.id}</Text>
+                        <Text>{auth.user.id}</Text>
                     </FormControl>
 
                     {/* Email */}
                     <FormControl>
                         <FormLabel>Email:</FormLabel>
-                        <Text>{authStore.user.email}</Text>
+                        <Text>{auth.user.email}</Text>
                     </FormControl>
 
                     {/* First Name */}
@@ -145,7 +142,7 @@ const ProfilePage = observer(() => {
                                 onChange={(e) => handleChange('first_name', e.target.value)}
                             />
                         ) : (
-                            <Text>{authStore.user.first_name}</Text>
+                            <Text>{auth.user.first_name}</Text>
                         )}
                     </FormControl>
 
@@ -158,7 +155,7 @@ const ProfilePage = observer(() => {
                                 onChange={(e) => handleChange('last_name', e.target.value)}
                             />
                         ) : (
-                            <Text>{authStore.user.last_name}</Text>
+                            <Text>{auth.user.last_name}</Text>
                         )}
                     </FormControl>
 
@@ -166,7 +163,7 @@ const ProfilePage = observer(() => {
                     <FormControl>
                         <FormLabel>Organizations:</FormLabel>
                         <List spacing={2}>
-                            {authStore.user.organizations.map((org) => (
+                            {auth.user.organizations.map((org) => (
                                 <ListItem key={org.id}>
                                     <Text>- {org.name}</Text>
                                 </ListItem>
@@ -174,6 +171,8 @@ const ProfilePage = observer(() => {
                         </List>
                     </FormControl>
                 </Stack>
+
+                {deleteError && <InlineError message={deleteError} />}
 
                 {/* Save and Cancel Buttons for Mobile */}
                 {isEditing ? (
@@ -192,11 +191,27 @@ const ProfilePage = observer(() => {
                         color="red.300"
                         borderColor="red.300"
                         _hover={{bg: "red.300", color: "white"}}
-                        onClick={handleDeleteAccount}
+                        onClick={onDeleteOpen}
                     >
                         Delete Account
                     </Button>
                 )}
+
+                <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={cancelRef} onClose={onDeleteClose} isCentered>
+                    <AlertDialogOverlay />
+                    <AlertDialogContent>
+                        <AlertDialogHeader fontSize="lg" fontWeight="bold">Delete Account</AlertDialogHeader>
+                        <AlertDialogBody>
+                            Are you sure you want to delete your account? This action is irreversible.
+                        </AlertDialogBody>
+                        <AlertDialogFooter gap={3}>
+                            <Button ref={cancelRef} onClick={onDeleteClose} isDisabled={isDeleting}>Cancel</Button>
+                            <Button colorScheme="red" onClick={handleConfirmDeleteAccount} isLoading={isDeleting} loadingText="Deleting…">
+                                Delete Account
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </Flex>
         )
     );

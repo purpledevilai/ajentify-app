@@ -4,19 +4,17 @@ import { createStage as createStageApi, CreateStagePayload } from '@/api/stage/c
 import { updateStage as updateStageApi, UpdateStagePayload } from '@/api/stage/updateStage';
 import { deleteStage as deleteStageApi, DeleteStageMode } from '@/api/stage/deleteStage';
 import { Stage } from '@/types/stage';
-import { ShowAlertParams } from "@/app/components/AlertProvider";
 
-class StagesStore {
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+export class StagesStore {
+    stagesError: string | null = null;
+    createStageError: string | null = null;
+    updateStageError: string | null = null;
+    deleteStageError: string | null = null;
     stages: Stage[] | undefined = undefined;
     stagesLoading = true;
 
     constructor() {
         makeAutoObservable(this);
-    }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
     }
 
     /**
@@ -33,13 +31,11 @@ class StagesStore {
         }
 
         try {
+            this.stagesError = null;
             this.stagesLoading = true;
             this.stages = await getStages();
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            })
+            this.stagesError = (error as Error).message;
         } finally {
             this.stagesLoading = false;
         }
@@ -47,46 +43,40 @@ class StagesStore {
 
     async createStage(payload: CreateStagePayload): Promise<Stage | undefined> {
         try {
+            this.createStageError = null;
             const stage = await createStageApi(payload);
             this.stages = [...(this.stages ?? []), stage];
             return stage;
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            });
+            this.createStageError = (error as Error).message;
             return undefined;
         }
     }
 
     async updateStage(stageId: string, payload: UpdateStagePayload): Promise<Stage | undefined> {
         try {
+            this.updateStageError = null;
             const updated = await updateStageApi(stageId, payload);
             if (this.stages) {
                 this.stages = this.stages.map((s) => (s.stage_id === stageId ? updated : s));
             }
             return updated;
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            });
+            this.updateStageError = (error as Error).message;
             return undefined;
         }
     }
 
     async deleteStage(stageId: string, mode: DeleteStageMode): Promise<boolean> {
         try {
+            this.deleteStageError = null;
             await deleteStageApi(stageId, mode);
             if (this.stages) {
                 this.stages = this.stages.filter((s) => s.stage_id !== stageId);
             }
             return true;
         } catch (error) {
-            this.showAlert({
-                title: "Whoops",
-                message: (error as Error).message
-            });
+            this.deleteStageError = (error as Error).message;
             return false;
         }
     }
@@ -96,4 +86,3 @@ class StagesStore {
     }
 }
 
-export const stagesStore = new StagesStore();

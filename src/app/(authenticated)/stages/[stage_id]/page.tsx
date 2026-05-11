@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import NextLink from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { observer } from 'mobx-react-lite';
 import {
@@ -32,6 +33,7 @@ import {
     useDisclosure,
     FormControl,
     FormLabel,
+    useToast,
 } from '@chakra-ui/react';
 import { AddIcon, ArrowBackIcon, CopyIcon, DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import { FiCode } from 'react-icons/fi';
@@ -40,10 +42,7 @@ import AddExistingResourceModal, { PickableResource } from '../components/AddExi
 import DeleteStageDialog from '../components/DeleteStageDialog';
 import { DeleteStageMode } from '@/api/stage/deleteStage';
 import { deployManifest } from '@/api/deploy/deployManifest';
-import { refreshDashboardCaches } from '@/store/refreshDashboardCaches';
-import { stagesStore } from '@/store/StagesStore';
-import { authStore } from '@/store/AuthStore';
-import { useAlert } from '@/app/components/AlertProvider';
+import { useStores } from '@/store/StoreContext';
 import { Stage } from '@/types/stage';
 import { Agent } from '@/types/agent';
 import { Tool } from '@/types/tools';
@@ -95,7 +94,8 @@ const StageDetailPage = observer(() => {
     const params = useParams<{ stage_id: string }>();
     const stageId = params.stage_id;
     const router = useRouter();
-    const { showAlert } = useAlert();
+    const toast = useToast();
+    const { stages: stagesStore, auth: authStore, refreshDashboardCaches } = useStores();
     const editModal = useDisclosure();
     const deployModal = useDisclosure();
     const cloneModal = useDisclosure();
@@ -118,7 +118,6 @@ const StageDetailPage = observer(() => {
 
     useEffect(() => {
         if (!authStore.signedIn) return;
-        stagesStore.setShowAlert(showAlert);
 
         let cancelled = false;
         (async () => {
@@ -133,7 +132,7 @@ const StageDetailPage = observer(() => {
         return () => {
             cancelled = true;
         };
-    }, [stageId, showAlert]);
+    }, [stageId, authStore.signedIn]);
 
     useEffect(() => {
         if (!stage) return;
@@ -190,7 +189,7 @@ const StageDetailPage = observer(() => {
     const handleCopyId = () => {
         if (!stage) return;
         navigator.clipboard.writeText(stage.stage_id);
-        showAlert({ title: 'Copied', message: 'Stage ID copied to clipboard' });
+        toast({ title: 'Copied', description: 'Stage ID copied to clipboard', status: 'success', duration: 2000 });
     };
 
     const handleOpenDeploy = async () => {
@@ -205,7 +204,7 @@ const StageDetailPage = observer(() => {
             });
             deployModal.onOpen();
         } catch (err) {
-            showAlert({ title: 'Could not load manifest', message: (err as Error).message });
+            toast({ title: 'Could not load manifest', description: (err as Error).message, status: 'error', duration: 4000, isClosable: true });
         } finally {
             setOpeningDeploy(false);
         }
@@ -290,12 +289,14 @@ const StageDetailPage = observer(() => {
             // Both modes touch resource caches; refresh them so the dashboard
             // tabs reflect the new state when the user navigates away.
             refreshDashboardCaches();
-            showAlert({
+            toast({
                 title: mode === 'destroy' ? 'Destroyed' : 'Detached',
-                message:
-                    mode === 'destroy'
-                        ? `Stage "${target.name}" and all its resources were deleted.`
-                        : `Stage "${target.name}" deleted; its resources were detached and remain in your org.`,
+                description: mode === 'destroy'
+                    ? `Stage "${target.name}" and all its resources were deleted.`
+                    : `Stage "${target.name}" deleted; its resources were detached and remain in your org.`,
+                status: 'success',
+                duration: 4000,
+                isClosable: true,
             });
             router.push('/stages');
         }
@@ -304,9 +305,11 @@ const StageDetailPage = observer(() => {
     if (stageError) {
         return (
             <Box p={{ base: 4, md: 6 }}>
-                <Button leftIcon={<ArrowBackIcon />} variant="ghost" onClick={() => router.push('/stages')}>
-                    Stages
-                </Button>
+                <NextLink href="/stages">
+                    <Button leftIcon={<ArrowBackIcon />} variant="ghost">
+                        Stages
+                    </Button>
+                </NextLink>
                 <Box mt={6}>
                     <Heading size="md" mb={2}>Stage not found</Heading>
                     <Text color={subtextColor}>{stageError}</Text>
@@ -317,15 +320,16 @@ const StageDetailPage = observer(() => {
 
     return (
         <Box p={{ base: 4, md: 6 }}>
-            <Button
-                leftIcon={<ArrowBackIcon />}
-                variant="ghost"
-                size="sm"
-                mb={4}
-                onClick={() => router.push('/stages')}
-            >
-                All stages
-            </Button>
+            <NextLink href="/stages">
+                <Button
+                    leftIcon={<ArrowBackIcon />}
+                    variant="ghost"
+                    size="sm"
+                    mb={4}
+                >
+                    All stages
+                </Button>
+            </NextLink>
 
             <Flex align="flex-start" gap={4} mb={2} wrap="wrap">
                 <Box flex="1" minW="240px">
@@ -495,10 +499,7 @@ const StageDetailPage = observer(() => {
                     await handleAttachExisting(addKind, resourceId, logicalName);
                 }}
                 onAttached={() => {
-                    showAlert({
-                        title: 'Attached',
-                        message: `Resource added to ${stage?.name ?? 'stage'}.`,
-                    });
+                    toast({ title: 'Attached', description: `Resource added to ${stage?.name ?? 'stage'}.`, status: 'success', duration: 3000, isClosable: true });
                     setResourcesReloadKey((n) => n + 1);
                 }}
             />
@@ -519,10 +520,7 @@ const StageDetailPage = observer(() => {
                 initialManifest={redeployManifest}
                 defaultStageName={stage?.name}
                 onDeployed={async (response) => {
-                    showAlert({
-                        title: 'Deployed',
-                        message: `${response.summary.create} created, ${response.summary.update} updated, ${response.summary.delete} deleted.`,
-                    });
+                    toast({ title: 'Deployed', description: `${response.summary.create} created, ${response.summary.update} updated, ${response.summary.delete} deleted.`, status: 'success', duration: 5000, isClosable: true });
                     try {
                         const fresh = await getStage(stageId);
                         setStage(fresh);
@@ -680,6 +678,7 @@ const EditStageModal = ({
     stage: Stage | null;
     onUpdated: (stage: Stage) => void;
 }) => {
+    const { stages: stagesStore } = useStores();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -777,7 +776,7 @@ const CloneStageModal = ({
     sourceStage: Stage | null;
     onCloned: (newStageId: string) => void;
 }) => {
-    const { showAlert } = useAlert();
+    const toast = useToast();
     const [name, setName] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [touched, setTouched] = useState(false);
@@ -813,13 +812,10 @@ const CloneStageModal = ({
         try {
             const manifest = await getStageManifest(sourceStage.stage_id);
             const result = await deployManifest(name, manifest);
-            showAlert({
-                title: 'Cloned',
-                message: `Stage "${name}" created from "${sourceStage.name}": ${result.summary.create} created, ${result.summary.update} updated.`,
-            });
+            toast({ title: 'Cloned', description: `Stage "${name}" created from "${sourceStage.name}": ${result.summary.create} created, ${result.summary.update} updated.`, status: 'success', duration: 4000, isClosable: true });
             onCloned(result.stage_id);
         } catch (err) {
-            showAlert({ title: 'Clone failed', message: (err as Error).message });
+            toast({ title: 'Clone failed', description: (err as Error).message, status: 'error', duration: 4000, isClosable: true });
         } finally {
             setSubmitting(false);
         }

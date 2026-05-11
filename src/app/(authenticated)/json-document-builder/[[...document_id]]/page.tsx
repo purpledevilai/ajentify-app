@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
-import { jsonDocumentBuilderStore } from '@/store/JsonDocumentBuilderStore';
-import { jsonDocumentsStore } from '@/store/JsonDocumentsStore';
+import { useJsonDocumentBuilder } from '@/store/useJsonDocumentBuilder';
+import { JsonDocumentBuilderStoreContext } from '../JsonDocumentBuilderContext';
+import { useStores } from '@/store/StoreContext';
 import {
     Flex,
     FormControl,
@@ -16,11 +17,18 @@ import {
     Tooltip,
     Text,
     useColorMode,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogOverlay,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import MonacoEditor from '@monaco-editor/react';
-import { useAlert } from '@/app/components/AlertProvider';
 import StageAssignmentField from '@/app/(authenticated)/stages/components/StageAssignmentField';
+import { InlineError } from '@/app/components/InlineError';
 
 type Params = Promise<{ document_id: string[] }>;
 
@@ -29,18 +37,15 @@ interface PageProps {
 }
 
 const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
+    const jsonDocumentBuilderStore = useJsonDocumentBuilder();
     const router = useRouter();
-    const { showAlert } = useAlert();
+    const { jsonDocuments: jsonDocumentsStore } = useStores();
+    const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cancelRef = useRef<any>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        jsonDocumentBuilderStore.setShowAlert(showAlert);
-        loadDocumentId();
-        return () => {
-            jsonDocumentBuilderStore.reset();
-        }
-    }, []);
-
-    const loadDocumentId = async () => {
+    const loadDocumentId = useCallback(async () => {
         const paramArray = (await params).document_id ?? undefined;
         const id = paramArray ? paramArray[0] : undefined;
         if (!id) {
@@ -52,13 +57,16 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
         if (doc) {
             jsonDocumentBuilderStore.setDocument(doc);
         } else {
-            showAlert({
-                title: 'Error',
-                message: 'Could not find document',
-            })
             router.push('/documents');
         }
-    }
+    }, [params, jsonDocumentsStore, router, jsonDocumentBuilderStore]);
+
+    useEffect(() => {
+        void loadDocumentId();
+        return () => {
+            jsonDocumentBuilderStore.reset();
+        };
+    }, [loadDocumentId, jsonDocumentBuilderStore]);
 
     const onSaveDocument = async () => {
         await jsonDocumentBuilderStore.onSaveDocumentClick();
@@ -66,26 +74,18 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
         window.history.back();
     }
 
-    const onDeleteDocumentClick = async () => {
-        showAlert({
-            title: 'Delete Document',
-            message: 'Are you sure you want to delete this document?',
-            actions: [
-                { label: 'Cancel', onClick: () => { } },
-                {
-                    label: 'Delete',
-                    onClick: async () => {
-                        await jsonDocumentBuilderStore.deleteDocument();
-                        jsonDocumentsStore.loadDocuments(true);
-                        window.history.back();
-                    }
-                }
-            ]
-        })
+    const handleConfirmDelete = async () => {
+        setIsDeleting(true);
+        await jsonDocumentBuilderStore.deleteDocument();
+        setIsDeleting(false);
+        onDeleteClose();
+        jsonDocumentsStore.loadDocuments(true);
+        window.history.back();
     }
 
     return (
-        <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
+        <JsonDocumentBuilderStoreContext.Provider value={jsonDocumentBuilderStore}>
+            <Flex p={4} direction="column" alignItems="center" h="100%" w="100%">
             <Flex direction="row" w="100%" mb={4} gap={4} align="center">
                 <IconButton
                     aria-label="Back"
@@ -150,6 +150,15 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
                         <Text color="red.500" mt={2}>{jsonDocumentBuilderStore.dataError}</Text>
                     )}
                 </FormControl>
+                {jsonDocumentBuilderStore.createDocumentError && (
+                    <InlineError message={jsonDocumentBuilderStore.createDocumentError} />
+                )}
+                {jsonDocumentBuilderStore.updateDocumentError && (
+                    <InlineError message={jsonDocumentBuilderStore.updateDocumentError} />
+                )}
+                {jsonDocumentBuilderStore.deleteDocumentError && (
+                    <InlineError message={jsonDocumentBuilderStore.deleteDocumentError} />
+                )}
                 <Tooltip
                     isDisabled={!(!jsonDocumentBuilderStore.document.name || jsonDocumentBuilderStore.dataError)}
                     label="You must enter a name and valid JSON to save"
@@ -165,14 +174,27 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
                 </Tooltip>
                 {jsonDocumentBuilderStore.document.document_id && (
                     <Button
-                        onClick={onDeleteDocumentClick}
+                        onClick={onDeleteOpen}
                         variant="outline"
                         size="lg"
                         isLoading={jsonDocumentBuilderStore.deleting}
                     >Delete Document</Button>
                 )}
             </Flex>
-        </Flex>
+
+            <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={cancelRef} onClose={onDeleteClose} isCentered>
+                <AlertDialogOverlay />
+                <AlertDialogContent>
+                    <AlertDialogHeader fontSize="lg" fontWeight="bold">Delete Document</AlertDialogHeader>
+                    <AlertDialogBody>Are you sure you want to delete this document?</AlertDialogBody>
+                    <AlertDialogFooter gap={3}>
+                        <Button ref={cancelRef} onClick={onDeleteClose} isDisabled={isDeleting}>Cancel</Button>
+                        <Button colorScheme="red" onClick={handleConfirmDelete} isLoading={isDeleting} loadingText="Deleting…">Delete</Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            </Flex>
+        </JsonDocumentBuilderStoreContext.Provider>
     );
 });
 

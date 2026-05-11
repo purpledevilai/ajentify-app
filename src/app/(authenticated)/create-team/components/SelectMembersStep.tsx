@@ -1,33 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Stack, Button, Heading, Text, Grid, useColorModeValue, GridItem, Box } from '@chakra-ui/react';
 import Card from '@/app/components/Card';
-import { createTeamStore, teamMemberTemplates } from '@/store/CreateTeamStore';
-import { useAlert } from '@/app/components/AlertProvider';
+import { teamMemberTemplates } from '@/store/CreateTeamStore';
+import { useStores } from '@/store/StoreContext';
+import { InlineError } from '@/app/components/InlineError';
 
 export const SelectMembersStep = observer(() => {
+    const { createTeam: createTeamStore } = useStores();
 
     const cardBg = useColorModeValue("gray.100", "gray.800");
-
-    const { showAlert } = useAlert();
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     const handleNext = () => {
 
         if (createTeamStore.gettingLinkData) {
-            showAlert({
-                title: 'Whoops!',
-                message: 'Still fetching data for the links you provided. Should be just a moment!',
-            });
+            setValidationError('Still fetching data for the links you provided. Should be just a moment!');
             return;
         }
         if (createTeamStore.selectedMembers.length === 0) {
-            showAlert({
-                title: 'Error',
-                message: 'Please select at least one team member.',
-            });
+            setValidationError('Please select at least one team member.');
             return;
         }
 
+        setValidationError(null);
         createTeamStore.submitCreateTeam()
         createTeamStore.stepForward();
     };
@@ -35,10 +31,10 @@ export const SelectMembersStep = observer(() => {
     return (
         <Stack
             spacing={4}
-            overflow="auto" // Ensure the content scrolls if it overflows vertically
-            width="100%" // Ensure Stack doesn't overflow horizontally
-            maxWidth="600px" // Prevent horizontal overflow on mobile
-            px={4} // Add horizontal padding for better mobile spacing
+            overflow="auto"
+            width="100%"
+            maxWidth="600px"
+            px={4}
         >
             <Heading as="h1">
                 Select Team Members
@@ -48,12 +44,12 @@ export const SelectMembersStep = observer(() => {
             </Text>
             <Grid
                 templateColumns={{
-                    base: "repeat(1, 1fr)", // 1 column for small screens
-                    md: "repeat(2, 1fr)",   // 2 columns for medium screens
+                    base: "repeat(1, 1fr)",
+                    md: "repeat(2, 1fr)",
                 }}
                 gap={4}
                 width="100%"
-                maxWidth="100%" // Prevent horizontal overflow
+                maxWidth="100%"
                 mb={4}
             >
                 {teamMemberTemplates.map((template) => (
@@ -66,7 +62,7 @@ export const SelectMembersStep = observer(() => {
                             cursor="pointer"
                             onClick={() => createTeamStore.toggleMember(template.id)}
                             minHeight="150px"
-                            width="100%" // Ensure Card fills its parent container
+                            width="100%"
                         >
                             <Heading as="h2" size="md">
                                 {template.name}
@@ -75,6 +71,10 @@ export const SelectMembersStep = observer(() => {
                     </GridItem>
                 ))}
             </Grid>
+            {validationError && <InlineError message={validationError} />}
+            {createTeamStore.submitCreateTeamError && (
+                <InlineError message={createTeamStore.submitCreateTeamError} />
+            )}
             <Box display="flex" justifyContent="space-between" gap={4}>
                 <Button
                     variant={'outline'}

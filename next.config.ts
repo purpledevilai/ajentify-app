@@ -1,13 +1,10 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from '@next/bundle-analyzer';
 
-const nextConfig: NextConfig = {
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      child_process: false, // Ignore 'child_process' in the client-side build
-    };
-    return config;
-  },
-};
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
-export default nextConfig;
+const nextConfig: NextConfig = {};
+
+export default withBundleAnalyzer(nextConfig);

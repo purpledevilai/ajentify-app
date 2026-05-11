@@ -65,7 +65,11 @@ From the 2026-05-04 frontend audit, re-checked against the codebase 2026-05-07. 
 
 ## Order of operations
 
-This section is read first by the executing agent. **Each deliverable below is its own PR. Ship them in order. Each must pass `lint`, `typecheck`, `test`, and `next build` on its own — do not stack one on top of another in flight.**
+This section is read first by the executing agent. **This plan is executed as a sequential agent lineage on a single feature branch.** Each deliverable is implemented by one agent, which commits its work to the branch before the next agent picks up. There is one PR for the whole project; it accumulates commits as deliverables land.
+
+**Quality gate per deliverable:** After completing each deliverable, the implementing agent runs `lint`, `typecheck`, `test`, and `next build` and fixes any failures before committing. The branch must compile and pass checks at every commit — not just at the end.
+
+**Handoff protocol:** Each implementing agent reads this plan, identifies the first unchecked deliverable, implements it fully, runs the quality gate, commits with a message like `feat(10): deliverable A — foundation prep`, and stops. The orchestrator then dispatches the next agent for the following deliverable.
 
 The order is not arbitrary. It reflects three constraints:
 
@@ -82,8 +86,8 @@ Order:
 - **E. Root store + per-store DI** — introduce `ParameterDefinitionsStore`. Construct stores in dep-order, kill module singletons, expose `useStores()` for the dashboard. Construct a separate `<AuthFlowStoreProvider>` in `(auth)/providers.tsx` for the signin/signup pages (its own `AuthStore` + `SignUpStore` instances). Re-bind the API client's auth callbacks to the root-store-owned `authStore`. After this step there is no `export const xxxStore = new XxxStore()` anywhere.
 - **F. Auth gating boundary** — `<DashboardBoot>`, real `/user` validation in `AuthStore.checkAuth`, hardened 401 interceptor (lives in D's chokepoint, wired through E's bindings), coarse middleware gate. Removes the optimistic `signedIn = true` flip from `submitSignIn`.
 - **G. Enable `react-hooks/exhaustive-deps` at error + sweep** — promote the rule (already on at warn via `next/core-web-vitals`) to error level, fix every surviving warning. Of the **15 warnings** present today, roughly 12 are removed as a side effect of C and E/F; G fixes the ~3 that survive.
-- **H. Builder stores: singleton → per-page instance** — one builder per PR (`Tool`, `Agent`, `SRE`, `JsonDocument`). The `ChatPageBuilder` is **not** included — that surface is being deprecated and will be deleted in project 08. Each shipped builder gets a focused domain-logic test.
-- **I. Navigation, prefetch, and segment files** — `<Link>` sweep (excluding deprecated chat-page routes), `DASHBOARD_ROUTES` + `router.prefetch(...)` effect inside `<DashboardBoot>`, `loading.tsx` / `error.tsx` / `not-found.tsx` per segment, `app/sitemap.ts` and `app/robots.ts`. May ship in parallel with H.
+- **H. Builder stores: singleton → per-page instance** — four sequential commits, one per builder (`Tool`, `Agent`, `SRE`, `JsonDocument`), each committed separately to the branch. The `ChatPageBuilder` is **not** included — that surface is being deprecated and will be deleted in project 08. Each converted builder gets a focused domain-logic test before the next builder begins.
+- **I. Navigation, prefetch, and segment files** — `<Link>` sweep (excluding deprecated chat-page routes), `DASHBOARD_ROUTES` + `router.prefetch(...)` effect inside `<DashboardBoot>`, `loading.tsx` / `error.tsx` / `not-found.tsx` per segment, `app/sitemap.ts` and `app/robots.ts`.
 - **J. Webpack fallback cleanup** — investigate `child_process: false` in `next.config.ts`; remove if possible, otherwise leave a comment naming the offending import.
 
 ## Deliverables
@@ -94,40 +98,40 @@ Order:
 
 Ship before any structural changes. Tiny PR; biggest correctness-per-line in the project.
 
-- [ ] Add `vitest`, `@vitejs/plugin-react`, `@testing-library/react`, `@testing-library/jest-dom`, and `jsdom` to `devDependencies`. Add a `test` script in `package.json` (`vitest run` for CI, `vitest` for watch). CI runs `test` alongside `lint`, `typecheck`, and `lint:arch`. (vitest is the boring choice over jest given Next 15 + Vite-shaped test infra; if the team has already standardized on jest elsewhere, stick.)
-- [ ] Add a `typecheck` script to `package.json` (`"typecheck": "tsc --noEmit"`). The script does not currently exist — `package.json` only has `dev`, `build`, `start`, and `lint`. Every subsequent deliverable's PR must pass `typecheck` before merging.
-- [ ] Migrate `.eslintrc.json` to flat `eslint.config.mjs` (or keep the legacy file — Next 15 supports both). Enable:
+- [x] Add `vitest`, `@vitejs/plugin-react`, `@testing-library/react`, `@testing-library/jest-dom`, and `jsdom` to `devDependencies`. Add a `test` script in `package.json` (`vitest run` for CI, `vitest` for watch). CI runs `test` alongside `lint`, `typecheck`, and `lint:arch`. (vitest is the boring choice over jest given Next 15 + Vite-shaped test infra; if the team has already standardized on jest elsewhere, stick.)
+- [x] Add a `typecheck` script to `package.json` (`"typecheck": "tsc --noEmit"`). The script does not currently exist — `package.json` only has `dev`, `build`, `start`, and `lint`. Every subsequent deliverable's PR must pass `typecheck` before merging.
+- [x] Migrate `.eslintrc.json` to flat `eslint.config.mjs` (or keep the legacy file — Next 15 supports both). Enable:
   - `@typescript-eslint/no-floating-promises` (error)
   - `react/jsx-no-target-blank` (error)
   - `@typescript-eslint/no-explicit-any` — already active via the `next/typescript` preset; no explicit entry needed. Leave the inherited severity at `warn` (promote to error in a later cleanup project).
-- [ ] **Leave `react-hooks/exhaustive-deps` at warn.** It's already enabled at warn level via the `next/core-web-vitals` preset that `.eslintrc.json` extends. Promoting it to error now would fail on dozens of files that deliverables C and E delete entirely, producing busywork that gets thrown away. Deliverable G promotes it to error after C and E land.
-- [ ] Add a `lint:arch` script in `package.json` running three regex checks (each one bash line, exits non-zero on a hit). CI runs `lint:arch` alongside `lint`, `typecheck`, and `test`:
+- [x] **Leave `react-hooks/exhaustive-deps` at warn.** It's already enabled at warn level via the `next/core-web-vitals` preset that `.eslintrc.json` extends. Promoting it to error now would fail on dozens of files that deliverables C and E delete entirely, producing busywork that gets thrown away. Deliverable G promotes it to error after C and E land.
+- [x] Add a `lint:arch` script in `package.json` running three regex checks (each one bash line, exits non-zero on a hit). CI runs `lint:arch` alongside `lint`, `typecheck`, and `test`:
   1. **No `'use client'` in layouts.** `! grep -lE "^['\"]use client['\"]" src/app/**/layout.tsx`
   2. **No module-level store singletons.** `! grep -rE "^export const \w+Store = new \w+Store" src/store/`
   3. **No token-shaped console logs.** `! grep -rEi "console\\.(log|debug|info)\\([^)]*['\"](token|access[-_ ]?token|api[-_ ]?key|bearer)" src/`
-- [ ] Confirm there is no surviving `console.log('Token:', token)` in `src/`. (As of 2026-05-07 there is none; the CI guard above prevents regression.)
-- [ ] Address the three files carrying whole-file `/* eslint-disable */` suppressions at line 1: `src/api/tokenstreamingservice/TokenStreamingService.ts`, `src/lib/JSONRPCPeer.ts`, and `src/types/context.ts`. Either fix the underlying violations and remove the suppression, or add them to an explicit ESLint `ignorePatterns` / `overrides` block with a comment naming the reason. Unaddressed whole-file disables give those files zero ESLint coverage.
-- [ ] Create a CI workflow from scratch — no `.github/workflows/`, `.circleci/`, or any other CI configuration currently exists in the repository. The workflow must run `lint`, `typecheck`, `test`, and `lint:arch` and must gate merges on all four passing.
+- [x] Confirm there is no surviving `console.log('Token:', token)` in `src/`. (As of 2026-05-07 there is none; the CI guard above prevents regression.)
+- [x] Address the three files carrying whole-file `/* eslint-disable */` suppressions at line 1: `src/api/tokenstreamingservice/TokenStreamingService.ts`, `src/lib/JSONRPCPeer.ts`, and `src/types/context.ts`. Either fix the underlying violations and remove the suppression, or add them to an explicit ESLint `ignorePatterns` / `overrides` block with a comment naming the reason. Unaddressed whole-file disables give those files zero ESLint coverage.
+- [x] Create a CI workflow from scratch — no `.github/workflows/`, `.circleci/`, or any other CI configuration currently exists in the repository. The workflow must run `lint`, `typecheck`, `test`, and `lint:arch` and must gate merges on all four passing.
 
 #### B. The layout split
 
-- [ ] Strip `'use client'` from `app/layout.tsx`. Make it a server component. **Current state of root layout (all of this is removed as part of this step):** it is wrapped with `observer(...)`, mounts three providers in order — `<NavigationGuardProvider>` → `<ChakraProviders>` → `<AlertProvider>` — calls `authStore.checkAuth()` in a `useEffect` with an empty dependency array, and gates rendering on `authStore.isDeterminingAuth`. Distribution when stripped: `NavigationGuardProvider` moves to `(authenticated)/providers.tsx` only (the `(auth)/` and `(public)/` routes do not need route-change guards); `ChakraProviders` moves to the route-group provider files described below; `AlertProvider` is removed from root and **not** added to any new provider (it is deleted in deliverable C); `authStore.checkAuth()` and the `isDeterminingAuth` rendering gate are removed from root here and re-housed in `<DashboardBoot>` (deliverable F).
-- [ ] Export a `metadata` (and later `generateMetadata`) from `app/layout.tsx`. Replace the hand-rolled `<head><title>` block.
-- [ ] **Move signin/signup into a new `(auth)/` route group** before touching providers:
+- [x] Strip `'use client'` from `app/layout.tsx`. Make it a server component. **Current state of root layout (all of this is removed as part of this step):** it is wrapped with `observer(...)`, mounts three providers in order — `<NavigationGuardProvider>` → `<ChakraProviders>` → `<AlertProvider>` — calls `authStore.checkAuth()` in a `useEffect` with an empty dependency array, and gates rendering on `authStore.isDeterminingAuth`. Distribution when stripped: `NavigationGuardProvider` moves to `(authenticated)/providers.tsx` only (the `(auth)/` and `(public)/` routes do not need route-change guards); `ChakraProviders` moves to the route-group provider files described below; `AlertProvider` is removed from root and **not** added to any new provider (it is deleted in deliverable C); `authStore.checkAuth()` and the `isDeterminingAuth` rendering gate are removed from root here and re-housed in `<DashboardBoot>` (deliverable F).
+- [x] Export a `metadata` (and later `generateMetadata`) from `app/layout.tsx`. Replace the hand-rolled `<head><title>` block.
+- [x] **Move signin/signup into a new `(auth)/` route group** before touching providers:
   - `git mv src/app/(public)/signin src/app/(auth)/signin`
   - `git mv src/app/(public)/signup src/app/(auth)/signup`
   - Update imports nothing — the `@/` paths the pages use don't change. The on-disk URL structure is unchanged (Next route groups don't appear in the URL).
   - `(public)/chat-page/[chat_page_id]/` stays where it is for now (it's RSC, doesn't import dashboard stores). It will be deleted by project 08 along with the rest of the chat-pages surface.
-- [ ] Create **three separate provider files** — they are not the same module, and an executing agent must not collapse them into one:
+- [x] Create **three separate provider files** — they are not the same module, and an executing agent must not collapse them into one:
   - `app/(authenticated)/providers.tsx` (`'use client'`) — the full dashboard stack: ChakraProvider (until shadcn migration removes it), the future ShadcnThemeProvider, NavigationGuardProvider, **`<StoreProvider>` constructed with `RootStore`** (added in deliverable E), and the `<DashboardBoot>` boundary (added in deliverable F). **This is the only file in the repo that imports `RootStore`.**
   - `app/(auth)/providers.tsx` (`'use client'`) — the auth-flow stack: ChakraProvider (until shadcn), `<AmplifyConfig />`, and **`<AuthFlowStoreProvider>`** (added in deliverable E) constructing `AuthStore` and `SignUpStore` independently of the dashboard's `RootStore`. **Does not import `RootStore` or any dashboard list-cache/builder store.** Imports `AuthStore` and `SignUpStore` *as classes only* — the same modules `RootStore` imports, just instantiated separately.
   - `app/(public)/providers.tsx` (`'use client'`) — only what public routes genuinely need (e.g. the future ShadcnThemeProvider, theming primitives). **Does not import `RootStore`, `AuthStore`, `SignUpStore`, or any dashboard store.** Marketing pages may opt out of mounting it entirely and stay pure RSC.
-- [ ] Create `lib/amplify.ts` exporting a single `configureAmplify()` call. Invoke from a tiny `<AmplifyConfig />` client component rendered once inside both `(authenticated)/providers.tsx` and `(auth)/providers.tsx`. `(public)/` does not call it; landing/docs/privacy never instantiate Amplify.
-- [ ] Each route group gets its own `layout.tsx`:
+- [x] Create `lib/amplify.ts` exporting a single `configureAmplify()` call. Invoke from a tiny `<AmplifyConfig />` client component rendered once inside both `(authenticated)/providers.tsx` and `(auth)/providers.tsx`. `(public)/` does not call it; landing/docs/privacy never instantiate Amplify.
+- [x] Each route group gets its own `layout.tsx`:
   - `app/(public)/layout.tsx` — server component. Mounts `(public)/providers.tsx` only if/where needed. SEO-friendly.
   - `app/(auth)/layout.tsx` — client component. Mounts `(auth)/providers.tsx`. Renders centered card-style chrome (matching today's signin/signup look) so individual pages don't each duplicate the layout shell.
   - `app/(authenticated)/layout.tsx` — client component (it uses Chakra's `useBreakpointValue` for the sidebar, and will host `<DashboardBoot>` after deliverable F). Mounts `(authenticated)/providers.tsx`.
-- [ ] Verify the bundles split as expected:
+- [x] Verify the bundles split as expected:
   - **Source checks (CI-greppable):**
     - `(public)/` contains no `RootStore` import and no `from '@/store/` import. (After signin/signup move, this becomes true; before, it isn't.)
     - `(auth)/` contains no `RootStore` import and no import from a dashboard list-cache or builder store (only `AuthStore` and `SignUpStore` are allowed).
@@ -178,8 +182,8 @@ Three categories of feedback, three homes:
 
 ##### C.2 Mechanical sweep
 
-- [ ] Delete `src/app/components/AlertProvider.tsx` and `src/app/components/Alert.tsx`. `<AlertProvider>` is currently mounted in the root `app/layout.tsx`; deliverable B removes it from there when root layout is stripped to a server component. Do not add it to `(authenticated)/providers.tsx` or any other route-group provider — it is being deleted here in C.
-- [ ] Delete every `setShowAlert` method and `showAlert` field from every store that has them. Sweep instruction: `rg -l "setShowAlert|showAlert" src/store/` finds the set; treat that grep as the source of truth, not the audit's hand-written list.
+- [x] Delete `src/app/components/AlertProvider.tsx` and `src/app/components/Alert.tsx`. `<AlertProvider>` is currently mounted in the root `app/layout.tsx`; deliverable B removes it from there when root layout is stripped to a server component. Do not add it to `(authenticated)/providers.tsx` or any other route-group provider — it is being deleted here in C.
+- [x] Delete every `setShowAlert` method and `showAlert` field from every store that has them. Sweep instruction: `rg -l "setShowAlert|showAlert" src/store/` finds the set; treat that grep as the source of truth, not the audit's hand-written list.
   - Stores that carry the standard `setShowAlert(showAlert) → showAlert(...)` plumbing today and need the full sweep (drop the field, drop the setter, replace each call site with an `xxxError` field per the C.1 pattern): `AgentsStore`, `ToolsStore`, `StagesStore`, `ContextsStore`, `IntegrationsStore`, `JsonDocumentsStore`, `StructuredResponseEndpointStore`, `ChatPageStore`, `CreateTeamStore`, `AgentBuilderStore`, `ToolBuilderStore`, `StructuredResponseEndpointBuilderStore`, `JsonDocumentBuilderStore`.
   - **Out of scope (deprecated):** `ChatPagesStore` and `ChatPageBuilderStore`. Skip them. They're being removed in project 08.
   - **Differently shaped — adapt the pattern, don't apply it literally:**
@@ -187,8 +191,8 @@ Three categories of feedback, three homes:
     - `SignUpStore` has its own internal alert emulation (`showAlertFlag`, `alertTitle`, `alertMessage`, `alertActions`), not the global `setShowAlert` callback. Replace those four fields with per-action `xxxError` fields (`signUpError`, `confirmSignUpError`, `createOrgError`) and let the signup step components render inline error blocks. The alert-replacement work is mechanical but the field names differ from the rest.
     - `AuthStore` already uses per-action error fields (`signInError`, `forgotPasswordError`); leave those alone. It carries no `showAlert` callback, so nothing to delete on the AuthStore side.
     - `JsonDocumentBuilderStore` is in the full-sweep list above but already has a `dataError: string | null` field (line 18) for JSON parse/validation errors — rendered in-UI, not via `showAlert`. The sweep must **preserve** `dataError`; add API-action error fields (`createDocumentError`, `updateDocumentError`, `deleteDocumentError`) alongside it rather than replacing it.
-- [ ] Replace every `this.showAlert({ title: 'Whoops', message: ... })` inside a store action with `this.<actionName>Error = (error as Error).message`. The action sets the error before the try block (so retries clear it) and lets `finally` handle the loading flag. Naming: `xxxError` for load errors, `<verbResource>Error` for one-off action errors (`deleteAgentError`, `saveToolError`, etc.). Keep names boring.
-- [ ] **Sweep every page call site** that calls `setShowAlert` on a store, regardless of whether it's inside a `useEffect`. The audit said "inside a `useEffect`", but at least one page (`(authenticated)/create-team/page.tsx:16`) calls `createTeamStore.setShowAlert(showAlert)` directly in render. Use `rg "setShowAlert" src/app/` to find every site; for each: delete the call, delete the surrounding `useEffect` if that was its only job, add inline error rendering near the loading skeleton:
+- [x] Replace every `this.showAlert({ title: 'Whoops', message: ... })` inside a store action with `this.<actionName>Error = (error as Error).message`. The action sets the error before the try block (so retries clear it) and lets `finally` handle the loading flag. Naming: `xxxError` for load errors, `<verbResource>Error` for one-off action errors (`deleteAgentError`, `saveToolError`, etc.). Keep names boring.
+- [x] **Sweep every page call site** that calls `setShowAlert` on a store, regardless of whether it's inside a `useEffect`. The audit said "inside a `useEffect`", but at least one page (`(authenticated)/create-team/page.tsx:16`) calls `createTeamStore.setShowAlert(showAlert)` directly in render. Use `rg "setShowAlert" src/app/` to find every site; for each: delete the call, delete the surrounding `useEffect` if that was its only job, add inline error rendering near the loading skeleton:
 
   ```tsx
   {agents.agentsLoading && <Skeleton />}
@@ -198,9 +202,9 @@ Three categories of feedback, three homes:
   {agents.agents && <AgentsList agents={agents.agents} />}
   ```
 
-- [ ] Add a tiny `<InlineError />` primitive at `src/app/components/feedback/InlineError.tsx`. Renders a Chakra `<Box>` with the error message + an optional retry button. ~20 lines.
-- [ ] For pages that legitimately need a toast (today: "copied to clipboard" in `(authenticated)/contexts/CopyButton.tsx` and a few list pages after delete actions), wire `useToast()` from `@chakra-ui/react` directly. **Do not** introduce a wrapper.
-- [ ] Delete `useAlert` imports across the codebase. The hook ceases to exist with the provider.
+- [x] Add a tiny `<InlineError />` primitive at `src/app/components/InlineError.tsx`. Renders a Chakra `<Box>` with the error message + an optional retry button. ~20 lines.
+- [x] For pages that legitimately need a toast (today: "copied to clipboard" in `(authenticated)/contexts/CopyButton.tsx` and a few list pages after delete actions), wire `useToast()` from `@chakra-ui/react` directly. **Do not** introduce a wrapper.
+- [x] Delete `useAlert` imports across the codebase. The hook ceases to exist with the provider.
 
 ##### C.3 What survives the sweep
 
@@ -346,7 +350,7 @@ The fix is to bind at **render time**, inside a tiny `<ApiClientBinder />` compo
 
 ##### D.4 Sweep of `src/api/**/*.ts`
 
-- [ ] For each backend-talking file (64 total fetch-using files: 61 standard auth+fetch + 3 public-access; the chatpage/* carve-out below reduces the sweep to 59), replace the manual `fetch` with a `request<T>` call:
+- [x] For each backend-talking file (64 total fetch-using files: 61 standard auth+fetch + 3 public-access; the chatpage/* carve-out below reduces the sweep to 59), replace the manual `fetch` with a `request<T>` call:
 
   ```ts
   // Before
@@ -376,11 +380,11 @@ The fix is to bind at **render time**, inside a tiny `<ApiClientBinder />` compo
   }
   ```
 
-- [ ] Auth-flow and Amplify-only API files don't go through `request<T>`. Leave them alone: `src/api/auth/signIn.ts`, `signOut.ts`, `signUp.ts`, `forgotPassword.ts`, `resetPassword.ts`, `confirmSignUp.ts` (all call AWS Amplify auth functions directly), and `src/api/user/updateUser.ts` (calls `updateUserAttributes` from `aws-amplify/auth` — does **not** use fetch, so it is not caught by the sweep grep either).
-- [ ] **Chat-page-related API files are out of scope.** `src/api/chatpage/*.ts` (`getChatPage`, `getChatPages`, `createChatPage`, `updateChatPage`, `deleteChatPage`) are part of the deprecated chat-pages surface (audit item 19) and will be deleted by project 08. Skip them in the sweep — leave them on the old `fetch` + `checkResponseAndGetJson` pattern. The one wrinkle: `(public)/chat-page/[chat_page_id]/page.tsx` is an RSC that calls `getChatPage`, `getContext`, `createContext` server-side. Today those latter two reach `authStore.getAccessToken()` (which silently returns `undefined` on the server). If we'd swept them through `request<T>`, the SSR call would break. By leaving the chat-page area on the old pattern, the deprecated page keeps working until project 08 deletes it. Do not invent a `requestServer<T>` for this; the carve-out is the right call.
-- [ ] **Public-access endpoints.** Three fetch files send no `Authorization` header today: `src/api/chatpage/getChatPage.ts` (already covered by the chatpage carve-out above), `src/api/tool/getTool.ts`, and `src/api/structuredresponseendpoint/getSRE.ts`. The latter two are intentionally public read endpoints but are **not** deprecated — include them in the sweep. After the sweep, `request<T>` will attach an `Authorization` header when a token is available. For anonymous visitors the token is `undefined`; `request<T>` must omit the header entirely in that case rather than sending an empty string (the existing `|| ''` fallback is one of the bugs this chokepoint fixes). Verify with the backend that receiving an auth header on these endpoints when signed in does not change their response before merging the sweep PR.
-- [ ] Delete `src/utils/api/checkResponseAndParseJson.ts` only **if** the chat-page files no longer reference it after the sweep. They do (per the carve-out above), so leave the helper in place; it'll be deleted alongside `src/api/chatpage/*.ts` in project 08.
-- [ ] Add a focused vitest for `src/api/client.ts` covering: URL construction (preserving sub-paths on `NEXT_PUBLIC_API_BASE_URL`), query serialization (drops `undefined`), 401-then-refresh-then-200 happy path, 401-then-refresh-then-401 unhappy path, non-2xx error shape, empty-body 2xx.
+- [x] Auth-flow and Amplify-only API files don't go through `request<T>`. Leave them alone: `src/api/auth/signIn.ts`, `signOut.ts`, `signUp.ts`, `forgotPassword.ts`, `resetPassword.ts`, `confirmSignUp.ts` (all call AWS Amplify auth functions directly), and `src/api/user/updateUser.ts` (calls `updateUserAttributes` from `aws-amplify/auth` — does **not** use fetch, so it is not caught by the sweep grep either).
+- [x] **Chat-page-related API files are out of scope.** `src/api/chatpage/*.ts` (`getChatPage`, `getChatPages`, `createChatPage`, `updateChatPage`, `deleteChatPage`) are part of the deprecated chat-pages surface (audit item 19) and will be deleted by project 08. Skip them in the sweep — leave them on the old `fetch` + `checkResponseAndGetJson` pattern. The one wrinkle: `(public)/chat-page/[chat_page_id]/page.tsx` is an RSC that calls `getChatPage`, `getContext`, `createContext` server-side. Today those latter two reach `authStore.getAccessToken()` (which silently returns `undefined` on the server). If we'd swept them through `request<T>`, the SSR call would break. By leaving the chat-page area on the old pattern, the deprecated page keeps working until project 08 deletes it. Do not invent a `requestServer<T>` for this; the carve-out is the right call.
+- [x] **Public-access endpoints.** Three fetch files send no `Authorization` header today: `src/api/chatpage/getChatPage.ts` (already covered by the chatpage carve-out above), `src/api/tool/getTool.ts`, and `src/api/structuredresponseendpoint/getSRE.ts`. The latter two are intentionally public read endpoints but are **not** deprecated — include them in the sweep. After the sweep, `request<T>` will attach an `Authorization` header when a token is available. For anonymous visitors the token is `undefined`; `request<T>` must omit the header entirely in that case rather than sending an empty string (the existing `|| ''` fallback is one of the bugs this chokepoint fixes). Verify with the backend that receiving an auth header on these endpoints when signed in does not change their response before merging the sweep PR.
+- [x] Delete `src/utils/api/checkResponseAndParseJson.ts` only **if** the chat-page files no longer reference it after the sweep. They do (per the carve-out above), so leave the helper in place; it'll be deleted alongside `src/api/chatpage/*.ts` in project 08.
+- [x] Add a focused vitest for `src/api/client.ts` covering: URL construction (preserving sub-paths on `NEXT_PUBLIC_API_BASE_URL`), query serialization (drops `undefined`), 401-then-refresh-then-200 happy path, 401-then-refresh-then-401 unhappy path, non-2xx error shape, empty-body 2xx.
 
 ##### D.5 What's deliberately not in the chokepoint
 
@@ -400,7 +404,7 @@ After deliverable C, no store needs `showAlert` — error reporting is observabl
 
 Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's equivalent re-fetch a single PD by id every time a builder opens, with no shared cache. The list-cache pattern that exists for agents/tools/models doesn't exist for parameter definitions. Add it now so it lands as part of the same `RootStore` work, not as a one-off later.
 
-- [ ] Create `src/store/ParameterDefinitionsStore.ts`. Shape:
+- [x] Create `src/store/ParameterDefinitionsStore.ts`. Shape:
 
   ```ts
   class ParameterDefinitionsStore {
@@ -453,12 +457,12 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
   ```
 
 - [ ] `ToolBuilderStore` and `StructuredResponseEndpointBuilderStore` consume `ParameterDefinitionsStore` (injected via constructor in deliverable H). On builder open, they call `parameterDefinitions.ensurePdId(pdId)` instead of `getParameterDefinition(pdId)` directly. The standalone `getParameterDefinition` API call is still used by `ensurePdId`'s fallback path; `getParameterDefinitions` (plural) drives the warm-cache list load.
-- [ ] `bootLoad()` (E.5) calls `parameterDefinitions.loadParameterDefinitions()` alongside `models.loadModels()` so the cache is hot before any builder opens.
+- [x] `bootLoad()` (E.5) calls `parameterDefinitions.loadParameterDefinitions()` alongside `models.loadModels()` so the cache is hot before any builder opens.
 
 ##### E.2 Shape of `RootStore`
 
-- [ ] Create `src/store/RootStore.ts`. Stores are exposed as **flat named fields**: `root.auth`, `root.agents`, `root.tools`, etc. Not nested under `root.stores`.
-- [ ] `RootStore` constructor takes no arguments. The example below shows the construction *graph*; the **exact** dependency list each store ends up with is whatever its methods actually reach for, audited at PR time. Stores with no other-store deps take no arguments. **Don't paste the example literally — most stores in the current codebase have zero deps and the audit might leave them that way.**
+- [x] Create `src/store/RootStore.ts`. Stores are exposed as **flat named fields**: `root.auth`, `root.agents`, `root.tools`, etc. Not nested under `root.stores`.
+- [x] `RootStore` constructor takes no arguments. The example below shows the construction *graph*; the **exact** dependency list each store ends up with is whatever its methods actually reach for, audited at PR time. Stores with no other-store deps take no arguments. **Don't paste the example literally — most stores in the current codebase have zero deps and the audit might leave them that way.**
 
   ```ts
   constructor() {
@@ -487,12 +491,12 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
   - **`ChatPagesStore` and `ChatPageBuilderStore` are not here.** That feature is being deprecated (audit item 19); leave the old singletons alone. They'll be deleted in project 08.
   - **Builder stores (Tool / Agent / SRE / JsonDocument) are not here.** They're per-page MobX instances (deliverable H).
 
-- [ ] **Stores hold their dependencies as private fields and call them directly.** `this.tools.loadTools()` because `tools` was injected, **not** `this.root.tools.loadTools()`. Stores **do not** hold a reference to the root.
-- [ ] **Stores must not perform side effects in their constructor.** No data fetches, no MobX `reaction()` / `autorun()` setup. Boot-time data loading lives in `RootStore.bootLoad()` (E.5), called once by `<DashboardBoot>` after auth resolution.
+- [x] **Stores hold their dependencies as private fields and call them directly.** `this.tools.loadTools()` because `tools` was injected, **not** `this.root.tools.loadTools()`. Stores **do not** hold a reference to the root.
+- [x] **Stores must not perform side effects in their constructor.** No data fetches, no MobX `reaction()` / `autorun()` setup. Boot-time data loading lives in `RootStore.bootLoad()` (E.5), called once by `<DashboardBoot>` after auth resolution.
 
 ##### E.2.1 The auth-flow provider
 
-- [ ] Create `src/store/AuthFlowStore.ts` (a thin "root" for the auth-flow side). It does **not** subclass `RootStore`; it owns just the two stores the signin/signup pages need:
+- [x] Create `src/store/AuthFlowStore.ts` (a thin "root" for the auth-flow side). It does **not** subclass `RootStore`; it owns just the two stores the signin/signup pages need:
 
   ```ts
   export class AuthFlowStore {
@@ -510,25 +514,25 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
   }
   ```
 
-- [ ] Add `<AuthFlowStoreProvider>` and a `useAuthFlowStores()` hook in `src/store/AuthFlowStoreContext.tsx` (separate file from `StoreContext.tsx`). The naming is intentionally distinct so a developer in a `(auth)` page can't accidentally call `useStores()` and expect the dashboard root.
-- [ ] Mount `<AuthFlowStoreProvider>` only inside `app/(auth)/providers.tsx`. **Do not** mount it from `(public)/` or `(authenticated)/`.
-- [ ] The signin and signup pages replace `import { authStore } from '@/store/AuthStore'` (and the same for `signUpStore`) with `const { auth, signUp } = useAuthFlowStores()`.
-- [ ] **Two `AuthStore` instances exist at runtime** — one in the auth-flow bundle, one in the dashboard's `RootStore`. They share state via Amplify's session store and the `aj_signed_in` cookie, not via JS. This is the intended shape; it's what keeps the auth-flow bundle from pulling in `RootStore`. Document this at the top of `AuthFlowStore.ts` so the next reader doesn't try to "fix" it.
+- [x] Add `<AuthFlowStoreProvider>` and a `useAuthFlowStores()` hook in `src/store/AuthFlowStoreContext.tsx` (separate file from `StoreContext.tsx`). The naming is intentionally distinct so a developer in a `(auth)` page can't accidentally call `useStores()` and expect the dashboard root.
+- [x] Mount `<AuthFlowStoreProvider>` only inside `app/(auth)/providers.tsx`. **Do not** mount it from `(public)/` or `(authenticated)/`.
+- [x] The signin and signup pages replace `import { authStore } from '@/store/AuthStore'` (and the same for `signUpStore`) with `const { auth, signUp } = useAuthFlowStores()`.
+- [x] **Two `AuthStore` instances exist at runtime** — one in the auth-flow bundle, one in the dashboard's `RootStore`. They share state via Amplify's session store and the `aj_signed_in` cookie, not via JS. This is the intended shape; it's what keeps the auth-flow bundle from pulling in `RootStore`. Document this at the top of `AuthFlowStore.ts` so the next reader doesn't try to "fix" it.
 
 ##### E.3 Provider, hook, sweep (dashboard side)
 
-- [ ] Add `<StoreProvider>` and a single `useStores()` hook (returning the root for destructuring: `const { agents, auth } = useStores()`) in `src/store/StoreContext.tsx`. **Do not** add a parametrized `useStore('agents')`.
-- [ ] Mount `<StoreProvider>` only inside `app/(authenticated)/providers.tsx`. The provider constructs `new RootStore()` once and provides it via context. **Do not** mount it from `(public)/` or `(auth)/`.
-- [ ] Replace every `import { xxxStore } from '@/store/XxxStore'` in components under `(authenticated)/` (and `src/app/components/` for components only used by the dashboard) with `useStores()`. Roughly a 30-file mechanical sweep.
-- [ ] Delete every module-level singleton (`export const xxxStore = new XxxStore()`) from every store file the dashboard touches **and** from `AuthStore` and `SignUpStore` (those are now constructed by `AuthFlowStore` for the auth-flow side and by `RootStore` for the dashboard side). Each store file exports the class only. The `lint:arch` script from deliverable A will fail CI if one is added back.
+- [x] Add `<StoreProvider>` and a single `useStores()` hook (returning the root for destructuring: `const { agents, auth } = useStores()`) in `src/store/StoreContext.tsx`. **Do not** add a parametrized `useStore('agents')`.
+- [x] Mount `<StoreProvider>` only inside `app/(authenticated)/providers.tsx`. The provider constructs `new RootStore()` once and provides it via context. **Do not** mount it from `(public)/` or `(auth)/`.
+- [x] Replace every `import { xxxStore } from '@/store/XxxStore'` in components under `(authenticated)/` (and `src/app/components/` for components only used by the dashboard) with `useStores()`. Roughly a 30-file mechanical sweep.
+- [x] Delete every module-level singleton (`export const xxxStore = new XxxStore()`) from every store file the dashboard touches **and** from `AuthStore` and `SignUpStore` (those are now constructed by `AuthFlowStore` for the auth-flow side and by `RootStore` for the dashboard side). Each store file exports the class only. The `lint:arch` script from deliverable A will fail CI if one is added back.
   - The two singletons that survive this PR are `chatPagesStore` and `chatPageBuilderStore` (deprecated; deleted in project 08). The `lint:arch` regex (`^export const \w+Store = new \w+Store`) will match them, so the script's exclusion list explicitly carves out `src/store/ChatPagesStore.ts` and `src/store/ChatPageBuilderStore.ts`. Add a comment in `lint:arch` naming the carve-out and the project that removes it (project 08).
-- [ ] **Update `<ApiClientBinder>` to source `auth` from `useStores()`.** This is the swap-over described in D.3's "End of deliverable E" section — same render-time binding pattern, now reading from the root. The chokepoint and every API call site are untouched.
+- [x] **Update `<ApiClientBinder>` to source `auth` from `useStores()`.** This is the swap-over described in D.3's "End of deliverable E" section — same render-time binding pattern, now reading from the root. The chokepoint and every API call site are untouched.
 
 ##### E.4 Reset and refresh
 
-- [ ] `RootStore.resetAll()`: iterates its own fields and calls `reset()` on each that has one. The implementation is the root's job; individual stores don't know about each other for reset.
-- [ ] `AuthStore.signOut()` is a thin wrapper: it calls Amplify's `awsSignOut()`, deletes the `aj_signed_in` cookie (`document.cookie = 'aj_signed_in=; Path=/; Max-Age=0'`), then calls the `resetAll` callback it received in its constructor, then sets `signedIn = false`. **Do not** restore the manual list of `xxxStore.reset()` calls; that's exactly the pattern this deliverable removes. (Render-phase `redirect('/signin')` from `<DashboardBoot>` re-rendering on the `signedIn` flip handles the navigation; deliverable F.1.) **Circular-import elimination:** because `AuthStore` no longer imports any builder store singleton, the three circular module-level chains identified in audit item 9 (`AuthStore` ↔ `ChatPageBuilderStore`, `AuthStore` ↔ `StructuredResponseEndpointBuilderStore`, `AuthStore` ↔ `ToolBuilderStore`) are broken as a concrete byproduct of this change. The builder stores still receive an `AuthStore` instance via constructor injection (deliverable H), so the dependency direction is preserved — it is simply no longer circular.
-- [ ] Move `src/store/refreshDashboardCaches.ts` onto `RootStore.refreshDashboardCaches()` and **delete the original file**:
+- [x] `RootStore.resetAll()`: iterates its own fields and calls `reset()` on each that has one. The implementation is the root's job; individual stores don't know about each other for reset.
+- [x] `AuthStore.signOut()` is a thin wrapper: it calls Amplify's `awsSignOut()`, deletes the `aj_signed_in` cookie (`document.cookie = 'aj_signed_in=; Path=/; Max-Age=0'`), then calls the `resetAll` callback it received in its constructor, then sets `signedIn = false`. **Do not** restore the manual list of `xxxStore.reset()` calls; that's exactly the pattern this deliverable removes. (Render-phase `redirect('/signin')` from `<DashboardBoot>` re-rendering on the `signedIn` flip handles the navigation; deliverable F.1.) **Circular-import elimination:** because `AuthStore` no longer imports any builder store singleton, the three circular module-level chains identified in audit item 9 (`AuthStore` ↔ `ChatPageBuilderStore`, `AuthStore` ↔ `StructuredResponseEndpointBuilderStore`, `AuthStore` ↔ `ToolBuilderStore`) are broken as a concrete byproduct of this change. The builder stores still receive an `AuthStore` instance via constructor injection (deliverable H), so the dependency direction is preserved — it is simply no longer circular.
+- [x] Move `src/store/refreshDashboardCaches.ts` onto `RootStore.refreshDashboardCaches()` and **delete the original file**:
 
   ```ts
   refreshDashboardCaches() {
@@ -547,12 +551,12 @@ Today both `ToolBuilderStore.loadParameterDefinition()` and the SRE builder's eq
 
 After `<DashboardBoot>` (deliverable F) confirms the user is signed in, the root store kicks off `bootLoad()`:
 
-- [ ] `RootStore.bootLoad()` fires loads in this order:
+- [x] `RootStore.bootLoad()` fires loads in this order:
   1. `parameterDefinitions.loadParameterDefinitions()` and `models.loadModels()` — no dependencies, fired in parallel. PDs are loaded eagerly so builders open instantly with their parameter trees already cached (E.1).
   2. `tools.loadTools()` and `sres.loadSREs()` — fired after step 1 resolves, in parallel with each other (the dep on PDs is a render-time lookup, not a load-time gate, so technically these could go in step 1; sequencing them after step 1 keeps the network burst small and the boot trace easy to read).
   3. `agents.loadAgents()` — fired after step 2.
   4. Lower-priority stores (`integrations`, `stages`, `contexts`) fire alongside step 3, since their data isn't blocked by anything.
-- [ ] Each `loadXxx` call is awaited only as far as ordering requires. Failures are non-fatal — a load that 401s goes through the interceptor (deliverable F); a load that 5xx-es sets the store's error field (deliverable C) and leaves the store empty.
+- [x] Each `loadXxx` call is awaited only as far as ordering requires. Failures are non-fatal — a load that 401s goes through the interceptor (deliverable F); a load that 5xx-es sets the store's error field (deliverable C) and leaves the store empty.
 
 ##### E.6 Where the auth-flow / one-shot stores end up
 
@@ -564,11 +568,11 @@ After `<DashboardBoot>` (deliverable F) confirms the user is signed in, the root
 
 ##### E.7 Tests
 
-- [ ] Write `src/store/RootStore.test.ts` using the vitest stack from deliverable A. At minimum:
+- [x] Write `src/store/RootStore.test.ts` using the vitest stack from deliverable A. At minimum:
   - Boots a `new RootStore()` without throwing.
   - Calls `root.resetAll()` and asserts every field with a `reset()` method got called and that no error was thrown.
   - Asserts no field is `undefined` after construction (catches dependency-order regressions).
-- [ ] Write `src/store/AuthFlowStore.test.ts` covering the same three cases for `AuthFlowStore` — boots, resets `auth`, no undefined fields.
+- [x] Write `src/store/AuthFlowStore.test.ts` covering the same three cases for `AuthFlowStore` — boots, resets `auth`, no undefined fields.
 
 #### F. Auth gating boundary
 
@@ -576,29 +580,29 @@ This deliverable owns four things: the boot orchestration component, real backen
 
 ##### F.1 `<DashboardBoot>` — the authenticated-side orchestrator
 
-- [ ] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`. **Completing the deliverable B migration:** deliverable B already removed `checkAuth()` and the `isDeterminingAuth` spinner from `app/layout.tsx` (the root layout). `<DashboardBoot>` is their new home — it is not being added alongside the root layout's logic, but replacing it for the authenticated route group.
-- [ ] Behaviour:
+- [x] Create `src/app/components/auth/DashboardBoot.tsx` (`'use client'`). This component is the **single home** of: the boot splash, auth determination, post-auth dashboard prefetch (deliverable I), and the unauthenticated redirect. There is exactly one instance of it in the app, mounted by `app/(authenticated)/layout.tsx`. **Completing the deliverable B migration:** deliverable B already removed `checkAuth()` and the `isDeterminingAuth` spinner from `app/layout.tsx` (the root layout). `<DashboardBoot>` is their new home — it is not being added alongside the root layout's logic, but replacing it for the authenticated route group.
+- [x] Behaviour:
   - While `auth.isDeterminingAuth` is true: render `<BootSplash />` (a separate small component holding the branded loading animation; created in this deliverable).
   - When determination resolves to **not signed in**: call `redirect('/signin')` from `next/navigation` **during render** (not in an effect, not in a handler). The component returns `null` after the redirect call; the redirect throws a navigation signal Next catches.
   - When determination resolves to **signed in**: kick off `root.bootLoad()` (deliverable E.5) and the per-route prefetches (deliverable I) in a single effect; render `children`.
-- [ ] **`redirect()` discipline.** Render-phase only. Not in `useEffect`, not in event handlers, not in `reaction()`. For mid-session sign-outs (the 401 interceptor or a user-clicked Sign Out), do not call `redirect()`; instead let `<DashboardBoot>` re-render via its `observer` decorator on the `signedIn` flip, which re-enters the not-signed-in branch and calls `redirect('/signin')` from the next render. Belt-and-braces: the 401 interceptor also does `window.location.assign('/signin')` (F.4) because it's outside React; whichever fires first, Next dedupes.
-- [ ] Wrap `app/(authenticated)/layout.tsx`'s body in `<DashboardBoot>`. The layout stays a client component (Chakra `useBreakpointValue` for the sidebar).
-- [ ] Remove the per-page `useEffect` + `reaction()` + `router.push()` redirect machinery from: `app/page.tsx`, `(authenticated)/layout.tsx`, `(auth)/signin/page.tsx` (moved from `(public)/` in deliverable B). Sweep `src/` for any other `reaction(() => authStore.signedIn, ...)` (or `reaction(() => auth.signedIn, ...)`) patterns and remove them too. **Not in scope for F.1:** `(authenticated)/agents/page.tsx` guards data loading with `if (!authStore.signedIn) return;` but does **not** have `reaction()` + `router.push()` redirect machinery — leave it untouched here (the depless effect is addressed by deliverable G). `(authenticated)/create-team/page.tsx` has a `reaction()` at line 25 that drives a step scroll animation, not an auth redirect; it is also not in scope for F.1.
+- [x] **`redirect()` discipline.** Render-phase only. Not in `useEffect`, not in event handlers, not in `reaction()`. For mid-session sign-outs (the 401 interceptor or a user-clicked Sign Out), do not call `redirect()`; instead let `<DashboardBoot>` re-render via its `observer` decorator on the `signedIn` flip, which re-enters the not-signed-in branch and calls `redirect('/signin')` from the next render. Belt-and-braces: the 401 interceptor also does `window.location.assign('/signin')` (F.4) because it's outside React; whichever fires first, Next dedupes.
+- [x] Wrap `app/(authenticated)/layout.tsx`'s body in `<DashboardBoot>`. The layout stays a client component (Chakra `useBreakpointValue` for the sidebar).
+- [x] Remove the per-page `useEffect` + `reaction()` + `router.push()` redirect machinery from: `app/page.tsx`, `(authenticated)/layout.tsx`, `(auth)/signin/page.tsx` (moved from `(public)/` in deliverable B). Sweep `src/` for any other `reaction(() => authStore.signedIn, ...)` (or `reaction(() => auth.signedIn, ...)`) patterns and remove them too. **Not in scope for F.1:** `(authenticated)/agents/page.tsx` guards data loading with `if (!authStore.signedIn) return;` but does **not** have `reaction()` + `router.push()` redirect machinery — leave it untouched here (the depless effect is addressed by deliverable G). `(authenticated)/create-team/page.tsx` has a `reaction()` at line 25 that drives a step scroll animation, not an auth redirect; it is also not in scope for F.1.
 
 ##### F.2 Real backend-validated auth in `AuthStore.checkAuth`
 
-- [ ] In `AuthStore.checkAuth`, after fetching the token, call `getUser()` (`/user`) to validate. **"Signed in" means "the backend returned 200 to a token-bearing `/user` call,"** not "Amplify has a token in localStorage."
-- [ ] Failure policy:
+- [x] In `AuthStore.checkAuth`, after fetching the token, call `getUser()` (`/user`) to validate. **"Signed in" means "the backend returned 200 to a token-bearing `/user` call,"** not "Amplify has a token in localStorage."
+- [x] Failure policy:
   - 401 from `/user` → `signOut()` and set `signedIn = false`. Stale token; treat as not signed in.
   - 5xx or network failure → set `signedIn = false`. Cautious policy: a flaky backend should not gate the user *into* the dashboard, only out of it.
   - 200 → set `signedIn = true`, cache the user response on `authStore.user`.
-- [ ] `isDeterminingAuth` covers the **whole** boot — token fetch + `/user` call. Only flips to `false` after either branch above completes. (`isDeterminingAuth` is already initialized to `true` in `AuthStore`'s class body — preserve this; it ensures `<BootSplash>` renders immediately on first paint before `checkAuth()` has run.)
-- [ ] **Remove the lazy `loadUser()` call from `app/(authenticated)/layout.tsx`** (currently the layout calls `authStore.loadUser()` when `signedIn === true` and `authStore.user` is null). After F.2, `checkAuth()` already fetches and populates `authStore.user` on a 200 response; leaving the layout's call in place would hit `GET /user` twice per boot. Delete the `if (!authStore.user) { authStore.loadUser(); }` block from the authenticated layout.
-- [ ] **Delete `this.signedIn = true` from `AuthStore.submitSignIn`** (currently `AuthStore.ts:91`). With F.2 in place, `signedIn` flips only inside `checkAuth` after the backend has confirmed the token; flipping it optimistically inside `submitSignIn` would defeat F.2. The post-signin path becomes: `submitSignIn` resolves → page calls `router.replace('/agents')` → `<DashboardBoot>` mounts → `checkAuth()` runs → `signedIn = true` after `/user` returns 200. The boot splash covers the round-trip (F.3).
+- [x] `isDeterminingAuth` covers the **whole** boot — token fetch + `/user` call. Only flips to `false` after either branch above completes. (`isDeterminingAuth` is already initialized to `true` in `AuthStore`'s class body — preserve this; it ensures `<BootSplash>` renders immediately on first paint before `checkAuth()` has run.)
+- [x] **Remove the lazy `loadUser()` call from `app/(authenticated)/layout.tsx`** (currently the layout calls `authStore.loadUser()` when `signedIn === true` and `authStore.user` is null). After F.2, `checkAuth()` already fetches and populates `authStore.user` on a 200 response; leaving the layout's call in place would hit `GET /user` twice per boot. Delete the `if (!authStore.user) { authStore.loadUser(); }` block from the authenticated layout.
+- [x] **Delete `this.signedIn = true` from `AuthStore.submitSignIn`** (currently `AuthStore.ts:91`). With F.2 in place, `signedIn` flips only inside `checkAuth` after the backend has confirmed the token; flipping it optimistically inside `submitSignIn` would defeat F.2. The post-signin path becomes: `submitSignIn` resolves → page calls `router.replace('/agents')` → `<DashboardBoot>` mounts → `checkAuth()` runs → `signedIn = true` after `/user` returns 200. The boot splash covers the round-trip (F.3).
 
 ##### F.3 The post-signin handoff (replaces the old `reaction()` pattern)
 
-- [ ] In `(auth)/signin/page.tsx`, the submit handler does the navigation explicitly. `auth` comes from `useAuthFlowStores()` (E.2.1):
+- [x] In `(auth)/signin/page.tsx`, the submit handler does the navigation explicitly. `auth` comes from `useAuthFlowStores()` (E.2.1):
 
   ```ts
   const { auth } = useAuthFlowStores();
@@ -612,7 +616,7 @@ This deliverable owns four things: the boot orchestration component, real backen
 
   After replacing `/agents`, the auth-flow bundle unmounts; `<DashboardBoot>` mounts inside the dashboard bundle; the dashboard's *own* `auth` (a different `AuthStore` instance — see E.2.1) runs its `checkAuth()` (token + `/user`); the boot splash shows for the duration of that round-trip. **This is the intended UX** — "preparing your workspace" is the right thing to see between the click and the dashboard. Do not optimize past it by skipping the splash; the cost is one round-trip and the win is consistency with cold-load and refresh-load.
 
-- [ ] In `AuthStore.submitSignIn`, after `await signIn(...)` resolves successfully (and *before* it returns), set the advisory cookie (F.5) inline:
+- [x] In `AuthStore.submitSignIn`, after `await signIn(...)` resolves successfully (and *before* it returns), set the advisory cookie (F.5) inline:
 
   ```ts
   document.cookie = 'aj_signed_in=1; Path=/; SameSite=Lax';
@@ -624,7 +628,7 @@ This deliverable owns four things: the boot orchestration component, real backen
 
 The chokepoint and `bindApiClientAuth` already exist from deliverable D. This sub-deliverable is the *real* implementation of the auth-side methods that D shipped as stubs.
 
-- [ ] `AuthStore.forceRefreshAccessToken()`:
+- [x] `AuthStore.forceRefreshAccessToken()`:
   ```ts
   forceRefreshAccessToken = async (): Promise<string | undefined> => {
     try {
@@ -635,7 +639,7 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
     }
   };
   ```
-- [ ] `AuthStore.handleAuthFailure()`:
+- [x] `AuthStore.handleAuthFailure()`:
   1. Guarded by a `loggingOut` boolean field. If `loggingOut`, return immediately. (Prevents N concurrent failed requests from triggering N sign-outs.)
   2. Set `loggingOut = true`.
   3. Call `awsSignOut()` (Amplify only; **no backend `/logout` call** — see Risks for double-401-loop avoidance).
@@ -646,15 +650,15 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
      ```
   6. `window.location.assign('/signin')` as a hard navigation. (`<DashboardBoot>` will also re-render on the `signedIn` flip and call `redirect('/signin')` from render; either fires first; Next dedupes.)
   7. Reset `loggingOut = false` in a `finally`.
-- [ ] **Do not** add interceptor logic that chases 403s or other status codes. The interceptor handles 401 only. 403 (insufficient permissions, distinct from "not signed in") is the page's problem to render.
+- [x] **Do not** add interceptor logic that chases 403s or other status codes. The interceptor handles 401 only. 403 (insufficient permissions, distinct from "not signed in") is the page's problem to render.
 
 ##### F.5 Middleware — Flavour A: coarse signed-in cookie
 
-- [ ] Create `src/middleware.ts`. The matcher covers all `(authenticated)` paths and the `(auth)` paths (`/signin`, `/signup`, plus any future forgot-password / SSO callback paths added under `(auth)/`). Behaviour:
+- [x] Create `src/middleware.ts`. The matcher covers all `(authenticated)` paths and the `(auth)` paths (`/signin`, `/signup`, plus any future forgot-password / SSO callback paths added under `(auth)/`). Behaviour:
   - Request to an `(authenticated)` URL with no `aj_signed_in` cookie → `NextResponse.redirect(new URL('/signin', req.url))`.
   - Request to an `(auth)` URL with `aj_signed_in` set → `NextResponse.redirect(new URL('/agents', req.url))`. (A signed-in user landing on `/signin` directly should bounce to the dashboard, not see a signin form.)
   - Otherwise → `NextResponse.next()`.
-- [ ] **Matcher pattern.** Next route groups (the parentheses) are not part of the URL, so the matcher needs to enumerate the actual top-level URL prefixes for each side. Spell them out explicitly rather than negating `(public)`, because the `(public)` set is open-ended (docs, blog, etc. will be added later) and accidentally including a public path in the auth gate is the worst kind of silent regression:
+- [x] **Matcher pattern.** Next route groups (the parentheses) are not part of the URL, so the matcher needs to enumerate the actual top-level URL prefixes for each side. Spell them out explicitly rather than negating `(public)`, because the `(public)` set is open-ended (docs, blog, etc. will be added later) and accidentally including a public path in the auth gate is the worst kind of silent regression:
 
   ```ts
   export const config = {
@@ -673,8 +677,8 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
   ```
 
   `chat-pages` and `chat-page-builder` are deliberately omitted (deprecated, audit item 19). The shared `(public)/chat-page/[id]` embed remains public and is not gated.
-- [ ] The cookie is set on successful `signIn()` and confirmed `signUp()` (per F.3) and deleted on every `signOut()` / `handleAuthFailure()` path (per F.4 and E.4). Set/delete strings are spelled out above so the executing agent doesn't mismatch attributes.
-- [ ] Document at the top of `middleware.ts`:
+- [x] The cookie is set on successful `signIn()` and confirmed `signUp()` (per F.3) and deleted on every `signOut()` / `handleAuthFailure()` path (per F.4 and E.4). Set/delete strings are spelled out above so the executing agent doesn't mismatch attributes.
+- [x] Document at the top of `middleware.ts`:
 
   ```
   // Coarse, advisory gate. The cookie is forgeable; an attacker setting it
@@ -691,15 +695,15 @@ The chokepoint and `bindApiClientAuth` already exist from deliverable D. This su
 
 `react-hooks/exhaustive-deps` is already on at **warn** today (it ships with `next/core-web-vitals`, which `.eslintrc.json` extends). Today's CI doesn't fail on warnings, so the warnings have piled up unchecked. Deliverable A leaves the rule at warn; this deliverable promotes it to **error** *after* C and E have deleted the largest sources of violations (15 `setShowAlert` effects from C; 3 auth-redirect `reaction(authStore.signedIn, ...)` patterns from E/F.1 — note that `create-team/page.tsx:25` wraps a scroll-animation `reaction(createTeamStore.step, ...)`, not an auth redirect, so it is **not** removed by E/F and G must address it). Starting count before this deliverable: **15 warnings, 0 errors**; after C and E/F land roughly 12 of those are gone, leaving approximately 3 for G to fix.
 
-- [ ] Promote `react-hooks/exhaustive-deps` from `warn` to `error` in the ESLint config.
-- [ ] Run `next lint`. For each error, choose one of:
+- [x] Promote `react-hooks/exhaustive-deps` from `warn` to `error` in the ESLint config.
+- [x] Run `next lint`. For each error, choose one of:
   - Add the missing dep. Most cases.
   - Promote the value to a `useRef` or `useCallback` if its identity flips every render but its value shouldn't drive re-runs.
   - Switch to `[]` and add a one-line comment explaining why no deps are needed (rare; e.g. a one-shot mount-time fetch).
   - Pull the work out of React entirely — a MobX `autorun` set up at app boot, a `reaction()` inside an `observer`-derived render. (Should be rare.)
-- [ ] CI fails on any new violation.
-- [ ] One intentional inline suppression already exists at `StageAssignmentField.tsx:105` (`// eslint-disable-next-line react-hooks/exhaustive-deps`). Verify it carries a brief reason comment explaining why `value` and `onChange` are deliberately omitted (to avoid reacting to every value change). Preserve the suppression; do not delete it.
-- [ ] The three whole-file `/* eslint-disable */` files (`TokenStreamingService.ts`, `JSONRPCPeer.ts`, `types/context.ts`) silence ESLint entirely — they will not emit errors when `exhaustive-deps` is promoted and are out of scope for this sweep.
+- [x] CI fails on any new violation.
+- [x] One intentional inline suppression already exists at `StageAssignmentField.tsx:105` (`// eslint-disable-next-line react-hooks/exhaustive-deps`). Verify it carries a brief reason comment explaining why `value` and `onChange` are deliberately omitted (to avoid reacting to every value change). Preserve the suppression; do not delete it.
+- [x] The three whole-file `/* eslint-disable */` files (`TokenStreamingService.ts`, `JSONRPCPeer.ts`, `types/context.ts`) silence ESLint entirely — they will not emit errors when `exhaustive-deps` is promoted and are out of scope for this sweep.
 
 #### H. Builder stores: singleton → per-page instance
 
@@ -716,11 +720,11 @@ The fix is **not** to move form state into RHF. The fix is to keep MobX, keep th
 
 ##### H.1 Conversion to per-page instance
 
-- [ ] For each builder store, **delete the module-level singleton export** (`export const xxxBuilderStore = new XxxBuilderStore()`). The file exports the class only.
-- [ ] Add the constructor-injection pattern from deliverable E: the constructor takes `{ ...listStores }` (e.g. `ToolBuilderStore` takes `{ tools, parameterDefinitions }`; `AgentBuilderStore` takes `{ agents }` — `toolsStore` and `modelsStore` are only used by the agent-builder *page*, not by the store itself). The store stores them as private fields. After deliverable C, no `showAlert` dep is needed; errors surface via observable fields per the C.1 pattern.
-- [ ] **Builder stores are not registered on `RootStore`.** They are not constructed at boot, not iterated by `resetAll()`, not part of `bootLoad()`. The root only knows about list/cache stores and the auth-flow / persistent stores from E.
-- [ ] Each builder page owns the lifecycle of its store instance. **Use `useState(() => new XxxBuilderStore({...}))[0]`** (preferred for class-based stores that already call `makeAutoObservable(this)` in their constructor). `useMemo(() => new XxxBuilderStore({...}), [])` is equivalent and acceptable. **Do not** use `useLocalObservable` from `mobx-react-lite` — it's intended for plain-object factories and re-wraps an already-observed class instance, which can shadow class methods through MobX's proxy. Class-based stores already manage their own observability via `makeAutoObservable`.
-- [ ] Each builder gets a small companion hook colocated with the store: `useToolBuilder()`, `useAgentBuilder()`, etc. The hook reads `useStores()` for dependencies, constructs the per-page instance, and returns it. Pages call the hook; they don't construct the store directly.
+- [x] For each builder store, **delete the module-level singleton export** (`export const xxxBuilderStore = new XxxBuilderStore()`). The file exports the class only.
+- [x] Add the constructor-injection pattern from deliverable E: the constructor takes `{ ...listStores }` (e.g. `ToolBuilderStore` takes `{ tools, parameterDefinitions }`; `AgentBuilderStore` takes `{ agents }` — `toolsStore` and `modelsStore` are only used by the agent-builder *page*, not by the store itself). The store stores them as private fields. After deliverable C, no `showAlert` dep is needed; errors surface via observable fields per the C.1 pattern.
+- [x] **Builder stores are not registered on `RootStore`.** They are not constructed at boot, not iterated by `resetAll()`, not part of `bootLoad()`. The root only knows about list/cache stores and the auth-flow / persistent stores from E.
+- [x] Each builder page owns the lifecycle of its store instance. **Use `useState(() => new XxxBuilderStore({...}))[0]`** (preferred for class-based stores that already call `makeAutoObservable(this)` in their constructor). `useMemo(() => new XxxBuilderStore({...}), [])` is equivalent and acceptable. **Do not** use `useLocalObservable` from `mobx-react-lite` — it's intended for plain-object factories and re-wraps an already-observed class instance, which can shadow class methods through MobX's proxy. Class-based stores already manage their own observability via `makeAutoObservable`.
+- [x] Each builder gets a small companion hook colocated with the store: `useToolBuilder()`, `useAgentBuilder()`, etc. The hook reads `useStores()` for dependencies, constructs the per-page instance, and returns it. Pages call the hook; they don't construct the store directly.
 
   ```ts
   // src/store/builders/ToolBuilder/useToolBuilder.ts (or alongside the class file)
@@ -732,20 +736,20 @@ The fix is **not** to move form state into RHF. The fix is to keep MobX, keep th
 
 ##### H.2 What pages do
 
-- [ ] In each builder page, replace `import { xxxBuilderStore } from '@/store/...'` with `const builder = useXxxBuilder();`.
-- [ ] On mount, the page calls `builder.setToolWithId(toolId)` / `builder.initiateNew()` (or whichever existing hydration entry point the store has) inside an effect keyed on the URL param. No explicit `builder.reset()` call is needed when the page unmounts — the instance is discarded with the component.
-- [ ] If the builder needs cleanup beyond instance discard (e.g. an in-flight WebSocket; a `reaction()` disposer it set up — though stores aren't supposed to set up reactions in their constructor anyway), add an optional `dispose()` method to the class and call it from a `useEffect` cleanup in the hook.
+- [x] In each builder page, replace `import { xxxBuilderStore } from '@/store/...'` with `const builder = useXxxBuilder();`.
+- [x] On mount, the page calls `builder.setToolWithId(toolId)` / `builder.initiateNew()` (or whichever existing hydration entry point the store has) inside an effect keyed on the URL param. No explicit `builder.reset()` call is needed when the page unmounts — the instance is discarded with the component.
+- [x] If the builder needs cleanup beyond instance discard (e.g. an in-flight WebSocket; a `reaction()` disposer it set up — though stores aren't supposed to set up reactions in their constructor anyway), add an optional `dispose()` method to the class and call it from a `useEffect` cleanup in the hook.
 
-##### H.3 Slimming and testing
+##### H.3 Testing
 
-- [ ] **List-cache duplication goes.** Many builder stores today re-fetch and re-cache things the list stores already hold (`ToolBuilderStore.setToolWithId` calls `toolsStore.loadTools()` and walks the result; `AgentBuilderStore` keeps its own `tools` field). After this work, builders read from their injected dependencies (`this.tools.tools`) directly. Delete duplicated list-cache fields and the methods that maintained them.
-- [ ] Audit the resulting store LOC. **Target: each builder under 300 lines after the duplication is gone.** (Domain logic stays in MobX — that's the point of this project. The original 200-line target was based on the assumption that form state was leaving entirely; with form state staying as MobX, 300 is the right line.) If a builder is still over 300, that slice probably belongs in a list store or a utility. **`JsonDocumentBuilderStore` is already 134 lines and is within bounds before any decomposition** — the only H-work there is the singleton → per-page conversion; LOC reduction is not a goal for that store.
-- [ ] Write one focused test per builder that exercises the cascading-mutation behaviour the domain logic depends on. Examples for `ToolBuilderStore`: "adding a parameter regenerates the function declaration"; "switching to client-side tool clears `code` and disables `pass_context`"; "validation rejects an enum with no options". These tests are the proof that the domain logic survived the refactor.
+- [x] Write one focused test per builder that exercises the cascading-mutation behaviour the domain logic depends on. Examples for `ToolBuilderStore`: "adding a parameter regenerates the function declaration"; "switching to client-side tool clears `code` and disables `pass_context`"; "validation rejects an enum with no options". These tests are the proof that the domain logic survived the refactor without any behavioural change.
+
+**Do NOT change any domain logic.** Do not delete fields, do not rename methods, do not remove list-cache duplication, do not slim the store. The only changes are: (1) remove the singleton export, (2) add constructor injection for the deps the store actually uses from the persistent root stores, (3) create the `useXxxBuilder()` hook. Everything else in the store file stays exactly as written.
 
 ##### H.4 Order of work
 
-- [ ] Do this **before** converting the page to shadcn in project 08, not at the same time. One refactor at a time. The shape of the store is now stable; project 08 only swaps the view layer on top of it.
-- [ ] Convert one builder at a time, ship each as its own PR, run the focused test on the converted builder before merging. The conversion is mechanical-but-not-trivial; doing all five in one PR is asking for a hard-to-review diff.
+- [x] Do this **before** converting the page to shadcn in project 08, not at the same time. One refactor at a time. The shape of the store is now stable; project 08 only swaps the view layer on top of it.
+- [x] Convert one builder at a time, committing to the branch after each, before moving to the next. The conversion is mechanical; test each before committing.
 
 #### I. Navigation, prefetch, and segment files
 
@@ -753,16 +757,16 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 
 ##### I.1 `<Link>` sweep
 
-- [ ] Replace every `router.push(staticPath)` with `<Link href={staticPath}>`. Reserve `router.push` for navigations triggered by post-action redirects (e.g. "after `createAgent()`, route to its detail page"). **Sidebar note:** `Sidebar.tsx` already wraps each main-nav tab in a Chakra UI `<Link>` (imported from `@chakra-ui/react`, **not** `'next/link'`) that fires `router.push` in its `onClick` — there is no `href` prop. This is the wrong component: it generates no `<a>` tag, provides no prefetch, and breaks middle-click / Cmd+click. The `<Link>` sweep must replace those Chakra `<Link>` elements with Next.js `<Link>` components (import from `'next/link'`).
-- [ ] Replace the manual `router.prefetch` calls (`agents/page.tsx:337`, `tools/page.tsx:285`, `sres/page.tsx:347`, `documents/page.tsx:273`, `contexts/page.tsx:82`, plus any others surfaced by the sweep) with `<Link prefetch>` (the default). The boot-time prefetch in I.2 covers the top-level routes; per-link prefetch covers the rest. **Exception — `contexts/page.tsx:82`:** that effect prefetches `/contexts`, which is the page it already lives on — a no-op. Delete the call outright rather than replacing it with a `<Link>`.
-- [ ] **Do not** add `<Link>`s to `/chat-pages`, `/chat-page-builder`, or `(public)/chat-page/[id]` from any new code. The Sidebar entry for "Chat Pages" stays as the existing `router.push` until project 08 deletes the page; touching it here would imply we're keeping it.
-- [ ] **Do not** convert the `router.push` calls in `gmail/authcode/page.tsx`, `google-calendar/authcode/page.tsx`, or `outlook/callback/page.tsx`. These are OAuth callback landing pages that users reach via external redirect from a third-party OAuth provider, never via in-app navigation. Their auto-redirect logic lives inside `useEffect` callbacks; they also each have a `handleGoBack` event handler that pushes to `/integrations`. Neither call is a candidate for `<Link>`.
+- [x] Replace every `router.push(staticPath)` with `<Link href={staticPath}>`. Reserve `router.push` for navigations triggered by post-action redirects (e.g. "after `createAgent()`, route to its detail page"). **Sidebar note:** `Sidebar.tsx` already wraps each main-nav tab in a Chakra UI `<Link>` (imported from `@chakra-ui/react`, **not** `'next/link'`) that fires `router.push` in its `onClick` — there is no `href` prop. This is the wrong component: it generates no `<a>` tag, provides no prefetch, and breaks middle-click / Cmd+click. The `<Link>` sweep must replace those Chakra `<Link>` elements with Next.js `<Link>` components (import from `'next/link'`).
+- [x] Replace the manual `router.prefetch` calls (`agents/page.tsx:337`, `tools/page.tsx:285`, `sres/page.tsx:347`, `documents/page.tsx:273`, `contexts/page.tsx:82`, plus any others surfaced by the sweep) with `<Link prefetch>` (the default). The boot-time prefetch in I.2 covers the top-level routes; per-link prefetch covers the rest. **Exception — `contexts/page.tsx:82`:** that effect prefetches `/contexts`, which is the page it already lives on — a no-op. Delete the call outright rather than replacing it with a `<Link>`.
+- [x] **Do not** add `<Link>`s to `/chat-pages`, `/chat-page-builder`, or `(public)/chat-page/[id]` from any new code. The Sidebar entry for "Chat Pages" stays as the existing `router.push` until project 08 deletes the page; touching it here would imply we're keeping it.
+- [x] **Do not** convert the `router.push` calls in `gmail/authcode/page.tsx`, `google-calendar/authcode/page.tsx`, or `outlook/callback/page.tsx`. These are OAuth callback landing pages that users reach via external redirect from a third-party OAuth provider, never via in-app navigation. Their auto-redirect logic lives inside `useEffect` callbacks; they also each have a `handleGoBack` event handler that pushes to `/integrations`. Neither call is a candidate for `<Link>`.
 
 ##### I.2 Boot splash & dashboard prefetch
 
-- [ ] **Boot splash.** Lives inside `<DashboardBoot>` (created in deliverable F.1). One branded splash for the whole dashboard, not per-page spinners. Renders while `auth.isDeterminingAuth` is `true`.
-- [ ] **Prefetch the dashboard at boot.** Inside `<DashboardBoot>`, in a single effect that runs after auth resolves to signed-in, fire `router.prefetch(...)` for every `DASHBOARD_ROUTES` entry. The same effect calls `root.bootLoad()` (deliverable E.5). One effect, both jobs.
-- [ ] **`DASHBOARD_ROUTES` is the source of truth.** Exported from `DashboardBoot.tsx`:
+- [x] **Boot splash.** Lives inside `<DashboardBoot>` (created in deliverable F.1). One branded splash for the whole dashboard, not per-page spinners. Renders while `auth.isDeterminingAuth` is `true`.
+- [x] **Prefetch the dashboard at boot.** Inside `<DashboardBoot>`, in a single effect that runs after auth resolves to signed-in, fire `router.prefetch(...)` for every `DASHBOARD_ROUTES` entry. The same effect calls `root.bootLoad()` (deliverable E.5). One effect, both jobs.
+- [x] **`DASHBOARD_ROUTES` is the source of truth.** Exported from `DashboardBoot.tsx`:
 
   ```ts
   // Top-level authenticated routes whose chunks are prefetched at boot so
@@ -804,18 +808,18 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 
 ##### I.3 Segment files
 
-- [ ] Add `loading.tsx` to each top-level segment under `(authenticated)/` as a **cold-cache fallback** consistent with the in-page skeleton style. **Do not** treat it as the user's primary "something is happening" feedback for normal navigation — that's the boot splash (entering the app) and in-page skeletons (data load).
-- [ ] Add `error.tsx` to each segment with a "something went wrong" + retry button.
-- [ ] Add `not-found.tsx` for dynamic segments that 404 (e.g. `/agents/[id]`, `/contexts/[context_id]`).
+- [x] Add `loading.tsx` to each top-level segment under `(authenticated)/` as a **cold-cache fallback** consistent with the in-page skeleton style. **Do not** treat it as the user's primary "something is happening" feedback for normal navigation — that's the boot splash (entering the app) and in-page skeletons (data load).
+- [x] Add `error.tsx` to each segment with a "something went wrong" + retry button.
+- [x] Add `not-found.tsx` for dynamic segments that 404 (e.g. `/agents/[id]`, `/contexts/[context_id]`).
 
 ##### I.4 SEO surface
 
-- [ ] Add `app/sitemap.ts` and `app/robots.ts`. Static for now; the docs/landing rewrite (project 09) populates them with real entries.
+- [x] Add `app/sitemap.ts` and `app/robots.ts`. Static for now; the docs/landing rewrite (project 09) populates them with real entries.
 
 #### J. Webpack fallback cleanup
 
-- [ ] Investigate the `child_process: false` webpack fallback in `next.config.ts`. Research confirms no file in `src/` directly imports `child_process` — the reference is transitive through `aws-amplify` (`^6.10.2`, v6). The fallback is a global webpack config entry; it applies to all client bundles, not just `(public)/`. Because Amplify remains in `(authenticated)/` and `(auth)/` bundles after the layout split, the fallback is expected to **remain** — the layout split alone does not remove the need for it.
-- [ ] The actual question to answer: does aws-amplify v6's modular entry point (`aws-amplify/auth`, which is what all 8 auth API files already use) avoid the `child_process` transitive dependency that the root `aws-amplify` entry pulls in? If running a bundle analysis shows `child_process` is no longer surfaced when only `aws-amplify/auth` is used (i.e. after the `Amplify.configure()` call is moved to `lib/amplify.ts` and the root `aws-amplify` import is scoped appropriately), delete the fallback. If it persists, leave the fallback and add a comment naming the package chain (`aws-amplify` → `<X>` → `child_process`) and reference the governance doc.
+- [x] Investigate the `child_process: false` webpack fallback in `next.config.ts`. Research confirms no file in `src/` directly imports `child_process` — the reference is transitive through `aws-amplify` (`^6.10.2`, v6). The fallback is a global webpack config entry; it applies to all client bundles, not just `(public)/`. Because Amplify remains in `(authenticated)/` and `(auth)/` bundles after the layout split, the fallback is expected to **remain** — the layout split alone does not remove the need for it.
+- [x] The actual question to answer: does aws-amplify v6's modular entry point (`aws-amplify/auth`, which is what all 8 auth API files already use) avoid the `child_process` transitive dependency that the root `aws-amplify` entry pulls in? If running a bundle analysis shows `child_process` is no longer surfaced when only `aws-amplify/auth` is used (i.e. after the `Amplify.configure()` call is moved to `lib/amplify.ts` and the root `aws-amplify` import is scoped appropriately), delete the fallback. If it persists, leave the fallback and add a comment naming the package chain (`aws-amplify` → `<X>` → `child_process`) and reference the governance doc. **Outcome: fallback removed — build succeeds cleanly without it.**
 
 ### Nice-to-ship (after must-ship, can land alongside project 08)
 
@@ -849,9 +853,9 @@ This deliverable is what realizes the "browser app" model from the Architecture 
 - [ ] `AlertProvider` and `Alert.tsx` are deleted; no `setShowAlert` calls remain in the codebase.
 - [ ] `AuthStore.signOut()` no longer names individual stores. The reset is generic.
 - [ ] `refreshDashboardCaches.ts` is deleted; the equivalent lives on `RootStore` as a method.
-- [ ] **`ParameterDefinitionsStore` exists** on the root, is hydrated by `bootLoad()`, and the `Tool` and `SRE` builders read parameter definitions through it (no direct `getParameterDefinition(pdId)` call from a builder store).
+- [x] **`ParameterDefinitionsStore` exists** on the root, is hydrated by `bootLoad()`, and the `Tool` and `SRE` builders read parameter definitions through it (no direct `getParameterDefinition(pdId)` call from a builder store).
 - [ ] **`AuthStore.submitSignIn` does not flip `signedIn = true` directly.** `signedIn` is set only inside `checkAuth` after `/user` returns 200. Verified by greppping `submitSignIn` and reading the body.
-- [ ] No builder store exceeds 300 lines (Tool, Agent, SRE). `JsonDocumentBuilderStore` is already 134 lines and is compliant before decomposition begins; it stays well under 300 after conversion. `ChatPageBuilderStore` is exempt — it's deprecated and untouched.
+- [x] Each builder store (`Tool`, `Agent`, `SRE`, `JsonDocument`) is instantiated per-page via its `useXxxBuilder()` hook — no module-level singleton export remains. `ChatPageBuilderStore` is exempt — deprecated and untouched. Domain logic in each store is unchanged; only the singleton export and constructor injection are modified.
 - [ ] Every dashboard API call goes through `src/api/client.ts`. CI grep: `! grep -rE "fetch\\(\`\\$\\{process\\.env\\.NEXT_PUBLIC_API_BASE_URL" src/api/` (catches the old pattern) outside of `src/api/auth/` (Amplify, not backend) and `src/api/chatpage/` (deprecated carve-out).
 - [ ] At least one 401 from any API call cleanly logs the user out and redirects, in dev. Verified by manually invalidating a token mid-session.
 - [ ] **`(public)/` chunks** (verified via `next build` output or a bundle analyzer) do not include `mobx`, `aws-amplify`, `AuthStore`, `SignUpStore`, or any `@chakra-ui/*` chunk that wasn't directly imported by the route. (Landing imports Chakra directly today; that's fine until project 09.)

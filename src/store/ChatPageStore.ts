@@ -7,19 +7,21 @@ import { deleteContext } from '@/api/context/deleteContext';
 import { Agent } from '@/types/agent';
 import { Context } from '@/types/context';
 import { ContextHistory } from '@/types/contexthistory';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
 
-class ChatPageStore {
+export class ChatPageStore {
     hasInitiatedLoad: boolean = false;
     agents: Agent[] | undefined = undefined;
     agentsLoading: boolean = true;
+    agentsError: string | null = null;
     currentContext: Context | undefined = undefined;
     currentAgentName: string | undefined = undefined;
     currentContextLoading: boolean = false;
+    currentContextError: string | null = null;
     contextHistory: ContextHistory[] | undefined = undefined;
     contextHistoryLoading: boolean = false;
-
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+    contextHistoryError: string | null = null;
+    deleteContextError: string | null = null;
+    startConversationError: string | null = null;
 
     constructor() {
         makeAutoObservable(this);
@@ -29,22 +31,16 @@ class ChatPageStore {
         this.hasInitiatedLoad = false;
         this.agents = undefined;
         this.agentsLoading = true;
+        this.agentsError = null;
         this.currentContext = undefined;
         this.currentAgentName = undefined;
         this.currentContextLoading = false;
+        this.currentContextError = null;
         this.contextHistory = undefined;
         this.contextHistoryLoading = false;
-    }
-
-    setShowAlert(showAlert: (params: ShowAlertParams) => void) {
-        this.showAlert = showAlert;
-    }
-
-    showAlertMessage(title: string, message: string) {
-        this.showAlert({ 
-            title,
-            message
-        });
+        this.contextHistoryError = null;
+        this.deleteContextError = null;
+        this.startConversationError = null;
     }
 
     async loadData(force = false) {
@@ -61,6 +57,7 @@ class ChatPageStore {
             return;
         }
         try {
+            this.agentsError = null;
             this.agentsLoading = true;
             this.agents = await getAgents();
             if (this.currentAgentName === undefined) {
@@ -71,7 +68,7 @@ class ChatPageStore {
                 }
             }
         } catch (error) {
-            this.showAlertMessage('Failed to load agents', (error as Error).message);
+            this.agentsError = (error as Error).message;
         } finally {
             this.agentsLoading = false;
         }
@@ -82,6 +79,7 @@ class ChatPageStore {
             return;
         }
         try {
+            this.contextHistoryError = null;
             this.contextHistoryLoading = true;
             try {
                 this.contextHistory = await getContextHistory();
@@ -96,7 +94,7 @@ class ChatPageStore {
                 this.currentAgentName = lastContext.agent.agent_name;
             }
         } catch (error) {
-            this.showAlertMessage('Failed to load context history', (error as Error).message);
+            this.contextHistoryError = (error as Error).message;
         } finally {
             this.contextHistoryLoading = false;
         }
@@ -104,10 +102,11 @@ class ChatPageStore {
 
     async loadAndSetCurrentContext(context_id: string) {
         try {
+            this.currentContextError = null;
             this.currentContextLoading = true;
             this.currentContext = await getContext({ context_id });
         } catch (error) {
-            this.showAlertMessage('Failed to load context', (error as Error).message);
+            this.currentContextError = (error as Error).message;
         } finally {
             this.currentContextLoading = false;
         }
@@ -120,13 +119,14 @@ class ChatPageStore {
 
     async startNewConversation(agent: Agent) {
         try {
+            this.startConversationError = null;
             this.currentContextLoading = true;
             const newContext = await createContext({ agent_id: agent.agent_id });
             this.currentAgentName = agent.agent_name;
             this.currentContext = newContext;
             this.loadContextHistory(true);
         } catch (error) {
-            this.showAlertMessage('Failed to start new conversation', (error as Error).message);
+            this.startConversationError = (error as Error).message;
         } finally {
             this.currentContextLoading = false;
         }
@@ -134,6 +134,7 @@ class ChatPageStore {
 
     async deleteContext(context_id: string) {
         try {
+            this.deleteContextError = null;
             this.contextHistoryLoading = true;
             if (this.currentContext?.context_id === context_id) {
                 this.currentContext = undefined;
@@ -148,11 +149,10 @@ class ChatPageStore {
                 }
             }
         } catch (error) {
-            this.showAlertMessage('Failed to delete conversation', (error as Error).message);
+            this.deleteContextError = (error as Error).message;
         } finally {
             this.contextHistoryLoading = false;
         }
     }
 }
 
-export const chatPageStore = new ChatPageStore();

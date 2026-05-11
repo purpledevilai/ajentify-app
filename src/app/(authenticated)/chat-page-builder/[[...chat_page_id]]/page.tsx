@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { agentsStore } from '@/store/AgentsStore';
+import { useStores } from '@/store/StoreContext';
 import {
   Box,
   Flex,
@@ -30,7 +30,6 @@ import { chatPageBuilderStore } from '@/store/ChatPageBuilderStore';
 import ChatPage from '@/app/components/chatpage/ChatPage';
 import { ArrowBackIcon } from '@chakra-ui/icons';
 import { chatPagesStore } from '@/store/ChatPagesStore';
-import { useAlert } from "@/app/components/AlertProvider";
 
 type Params = Promise<{ chat_page_id: string[] }>;
 
@@ -39,21 +38,14 @@ interface ChatBuilderPageProps {
 }
 
 const ChatPageBuilder = ({ params }: ChatBuilderPageProps) => {
+  const { agents: agentsStore } = useStores();
 
   const sectionBackground = useColorModeValue('gray.50', 'gray.800');
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false);
   const isLargeScreen = useBreakpointValue({ base: false, lg: true });
-  const { showAlert } = useAlert();
-
-
   useEffect(() => {
-    setAlertOnStore();
     loadChatPageId();
   });
-
-  const setAlertOnStore = () => {
-    chatPageBuilderStore.setShowAlert(showAlert);
-  }
 
   const loadChatPageId = async () => {
     const paramArray = (await params).chat_page_id ?? undefined;

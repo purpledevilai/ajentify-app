@@ -1,6 +1,5 @@
 import { makeAutoObservable } from 'mobx';
 import { JsonDocument } from '@/types/jsondocument';
-import { ShowAlertParams } from '@/app/components/AlertProvider';
 import { createJsonDocument } from '@/api/jsondocument/createJsonDocument';
 import { updateJsonDocument } from '@/api/jsondocument/updateJsonDocument';
 import { deleteJsonDocument } from '@/api/jsondocument/deleteJsonDocument';
@@ -11,14 +10,18 @@ const defaultDocument: JsonDocument = {
     data: {},
 };
 
-class JsonDocumentBuilderStore {
-    showAlert: (params: ShowAlertParams) => void | undefined = () => undefined;
+export class JsonDocumentBuilderStore {
     document: JsonDocument = { ...defaultDocument };
     dataString = '{}';
     dataError: string | null = null;
     isNewDocument = false;
     saving = false;
     deleting = false;
+
+    // API-action error fields
+    createDocumentError: string | null = null;
+    updateDocumentError: string | null = null;
+    deleteDocumentError: string | null = null;
 
     constructor() {
         makeAutoObservable(this);
@@ -31,10 +34,9 @@ class JsonDocumentBuilderStore {
         this.isNewDocument = false;
         this.saving = false;
         this.deleting = false;
-    }
-
-    setShowAlert = (showAlert: (params: ShowAlertParams) => void) => {
-        this.showAlert = showAlert;
+        this.createDocumentError = null;
+        this.updateDocumentError = null;
+        this.deleteDocumentError = null;
     }
 
     setIsNewDocument(isNew: boolean) {
@@ -70,6 +72,7 @@ class JsonDocumentBuilderStore {
 
     async createDocument() {
         try {
+            this.createDocumentError = null;
             this.saving = true;
             const doc = await createJsonDocument({
                 name: this.document.name,
@@ -77,10 +80,7 @@ class JsonDocumentBuilderStore {
             });
             this.document = doc;
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.createDocumentError = (error as Error).message;
         } finally {
             this.saving = false;
         }
@@ -88,6 +88,7 @@ class JsonDocumentBuilderStore {
 
     async updateDocument() {
         try {
+            this.updateDocumentError = null;
             this.saving = true;
             const doc = await updateJsonDocument({
                 document_id: this.document.document_id,
@@ -98,10 +99,7 @@ class JsonDocumentBuilderStore {
             });
             this.document = doc;
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.updateDocumentError = (error as Error).message;
         } finally {
             this.saving = false;
         }
@@ -109,13 +107,11 @@ class JsonDocumentBuilderStore {
 
     async deleteDocument() {
         try {
+            this.deleteDocumentError = null;
             this.deleting = true;
             await deleteJsonDocument(this.document.document_id);
         } catch (error) {
-            this.showAlert({
-                title: 'Error',
-                message: (error as Error).message,
-            })
+            this.deleteDocumentError = (error as Error).message;
         } finally {
             this.deleting = false;
         }
@@ -131,4 +127,3 @@ class JsonDocumentBuilderStore {
     }
 }
 
-export const jsonDocumentBuilderStore = new JsonDocumentBuilderStore();
