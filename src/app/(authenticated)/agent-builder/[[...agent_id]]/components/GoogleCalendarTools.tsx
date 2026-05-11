@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { agentBuilderStore } from "../../agentBuilderStore";
 import { useStores } from "@/store/StoreContext";
 import { Heading, Text, Button, Flex, Select, FormControl, FormLabel, Alert, AlertIcon, Box } from "@chakra-ui/react";
@@ -31,22 +31,22 @@ export const GoogleCalendarTools = observer(() => {
 
     const hasAnyCalendarTools = hasReadOnly || hasManage || hasDelete;
 
-    useEffect(() => {
-        loadIntegrations();
-    }, []);
-
-    const loadIntegrations = async () => {
+    const loadIntegrations = useCallback(async () => {
         try {
             setIsLoading(true);
             await integrationsStore.loadIntegrations();
             const calendarIntegrations = integrationsStore.getGoogleCalendarIntegrations();
-            if (calendarIntegrations.length > 0 && !selectedIntegrationId) {
-                setSelectedIntegrationId(calendarIntegrations[0].integration_id);
+            if (calendarIntegrations.length > 0) {
+                setSelectedIntegrationId((prev) => prev || calendarIntegrations[0].integration_id);
             }
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [integrationsStore]);
+
+    useEffect(() => {
+        void loadIntegrations();
+    }, [loadIntegrations]);
 
     const toggleToolGroup = (tools: string[], isEnabled: boolean) => {
         if (isEnabled) {

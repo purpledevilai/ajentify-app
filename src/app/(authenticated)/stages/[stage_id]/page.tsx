@@ -131,7 +131,7 @@ const StageDetailPage = observer(() => {
         return () => {
             cancelled = true;
         };
-    }, [stageId]);
+    }, [stageId, authStore.signedIn]);
 
     useEffect(() => {
         if (!stage) return;

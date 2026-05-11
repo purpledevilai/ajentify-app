@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigationGuard } from "next-navigation-guard";
 import {
   Flex, FormControl, Heading, IconButton, Input, Button, Tooltip, Textarea, Box, Switch,
@@ -40,13 +40,26 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
   const deleteRef = useRef<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const loadSREId = useCallback(async () => {
+    const paramArray = (await params).sre_id ?? undefined;
+    const sre_id = paramArray ? paramArray[0] : undefined;
+    if (sre_id) {
+      if (sreBuilderStore.sre.sre_id !== sre_id) {
+        sreBuilderStore.setSREWithId(sre_id);
+      }
+    } else if (!sreBuilderStore.sre.sre_id) {
+      // Direct URL access to /sre-builder with no id — mark as new
+      sreBuilderStore.initiateNew();
+    }
+  }, [params]);
+
   useEffect(() => {
-    loadSREId();
+    void loadSREId();
 
     return () => {
       sreBuilderStore.reset();
     };
-  }, []);
+  }, [loadSREId]);
 
   // Detect page navigation
   useEffect(() => {
@@ -78,19 +91,6 @@ const SREBuilderPage = observer(({ params }: SREBuilderPageProps) => {
       }
     }
   }, [navGuard]);
-
-  const loadSREId = async () => {
-    const paramArray = (await params).sre_id ?? undefined;
-    const sre_id = paramArray ? paramArray[0] : undefined;
-    if (sre_id) {
-      if (sreBuilderStore.sre.sre_id !== sre_id) {
-        sreBuilderStore.setSREWithId(sre_id);
-      }
-    } else if (!sreBuilderStore.sre.sre_id) {
-      // Direct URL access to /sre-builder with no id — mark as new
-      sreBuilderStore.initiateNew();
-    }
-  };
 
   const onSaveSRE = async () => {
     sreBuilderStore.useClickedSave = true;

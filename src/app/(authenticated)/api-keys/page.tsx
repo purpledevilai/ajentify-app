@@ -76,7 +76,7 @@ const APIKeysPage = observer(() => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [auth.signedIn]);
 
     useEffect(() => {
         fetchKeys();

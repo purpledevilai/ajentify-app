@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useCallback, useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { exchangeOutlookCode } from '@/api/integration/exchangeOutlookCode';
 import {
@@ -20,6 +20,21 @@ function OutlookAuthCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const hasExchanged = useRef(false);
+
+  const exchangeCode = useCallback(async (code: string, orgId: string | null) => {
+    try {
+      await exchangeOutlookCode(code, orgId || undefined);
+      setStatus('success');
+
+      // Redirect to integrations page after short delay
+      setTimeout(() => {
+        router.push('/integrations');
+      }, 2000);
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : 'Failed to connect Outlook');
+    }
+  }, [router]);
 
   useEffect(() => {
     // Prevent double execution from React Strict Mode
@@ -44,23 +59,8 @@ function OutlookAuthCallbackContent() {
     }
 
     // Exchange the code for tokens
-    exchangeCode(code, state);
-  }, [searchParams]);
-
-  async function exchangeCode(code: string, orgId: string | null) {
-    try {
-      await exchangeOutlookCode(code, orgId || undefined);
-      setStatus('success');
-
-      // Redirect to integrations page after short delay
-      setTimeout(() => {
-        router.push('/integrations');
-      }, 2000);
-    } catch (err) {
-      setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to connect Outlook');
-    }
-  }
+    void exchangeCode(code, state);
+  }, [searchParams, exchangeCode]);
 
   const handleGoBack = () => {
     router.push('/integrations');

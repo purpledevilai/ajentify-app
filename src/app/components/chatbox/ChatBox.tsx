@@ -69,11 +69,12 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
     const [activeToolCall, setActiveToolCall] = useState<{ name: string, input: string } | null>(null);
 
 
-    const hasInitialized = useRef(false);
-    useEffect(() => {
-        if (hasInitialized.current) return;
-        hasInitialized.current = true;
+    // Keep onEvents in a ref so the WebSocket callback always uses the latest
+    // version without needing to recreate the connection when the prop changes.
+    const onEventsRef = useRef(onEvents);
+    onEventsRef.current = onEvents;
 
+    useEffect(() => {
         if (for_display) return;
 
         const init = async () => {
@@ -109,8 +110,8 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 service.setOnEvents((events, responseId) => {
                     console.log("Received events:", events);
-                    if (onEvents) {
-                        onEvents(events);
+                    if (onEventsRef.current) {
+                        onEventsRef.current(events);
                     }
                 });
 
@@ -132,12 +133,12 @@ export const ChatBox = ({ context, onEvents, style = defaultChatBoxStyle, for_di
             }
         };
 
-        init();
+        void init();
 
         return () => {
             tokenStreamingServiceRef.current?.close();
         };
-    }, []);
+    }, [context.context_id, for_display, toast]);
 
 
     const sendMessage = async (message: string) => {

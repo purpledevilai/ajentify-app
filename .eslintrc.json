@@ -4,6 +4,7 @@
     "project": "./tsconfig.json"
   },
   "rules": {
+    "react-hooks/exhaustive-deps": "error",
     "@typescript-eslint/no-floating-promises": "warn",
     "react/jsx-no-target-blank": "error"
   },

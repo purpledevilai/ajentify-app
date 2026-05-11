@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useRouter } from 'next/navigation';
 import { jsonDocumentBuilderStore } from '../jsonDocumentBuilderStore';
@@ -43,14 +43,7 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
     const cancelRef = useRef<any>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        loadDocumentId();
-        return () => {
-            jsonDocumentBuilderStore.reset();
-        }
-    }, []);
-
-    const loadDocumentId = async () => {
+    const loadDocumentId = useCallback(async () => {
         const paramArray = (await params).document_id ?? undefined;
         const id = paramArray ? paramArray[0] : undefined;
         if (!id) {
@@ -64,7 +57,14 @@ const JsonDocumentBuilderPage = observer(({ params }: PageProps) => {
         } else {
             router.push('/documents');
         }
-    }
+    }, [params, jsonDocumentsStore, router]);
+
+    useEffect(() => {
+        void loadDocumentId();
+        return () => {
+            jsonDocumentBuilderStore.reset();
+        };
+    }, [loadDocumentId]);
 
     const onSaveDocument = async () => {
         await jsonDocumentBuilderStore.onSaveDocumentClick();

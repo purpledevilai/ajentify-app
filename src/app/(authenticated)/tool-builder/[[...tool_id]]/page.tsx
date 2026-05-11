@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Flex, FormControl, Heading, IconButton, Input, Button, Tooltip,
     useColorMode,
@@ -38,15 +38,7 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
     const cancelRef = useRef<any>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        loadToolId(); // Load tool id from URL
-
-        return () => {
-            toolBuilderStore.reset();
-        }
-    }, []);
-
-    const loadToolId = async () => {
+    const loadToolId = useCallback(async () => {
         const paramArray = (await params).tool_id ?? undefined;
         const tool_id = paramArray ? paramArray[0] : undefined;
         if (tool_id) {
@@ -54,7 +46,15 @@ const ToolBuilderPage = observer(({ params }: ToolBuilderPageProps) => {
                 toolBuilderStore.setToolWithId(tool_id);
             }
         }
-    }
+    }, [params]);
+
+    useEffect(() => {
+        void loadToolId(); // Load tool id from URL
+
+        return () => {
+            toolBuilderStore.reset();
+        };
+    }, [loadToolId]);
 
     const onSaveTool = async () => {
         const success = await toolBuilderStore.saveTool();

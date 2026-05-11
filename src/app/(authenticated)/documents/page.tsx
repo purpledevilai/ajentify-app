@@ -271,9 +271,9 @@ const DocumentsPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/json-document-builder');
-    jsonDocumentsStore.loadDocuments();
-    stagesStore.loadStages();
-  }, []);
+    void jsonDocumentsStore.loadDocuments();
+    void stagesStore.loadStages();
+  }, [authStore.signedIn, router, jsonDocumentsStore, stagesStore]);
 
   const showStageColumns = stagesStore.hasAnyStage;
 

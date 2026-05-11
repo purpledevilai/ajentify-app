@@ -67,7 +67,7 @@ const UsagePage = observer(() => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [auth.signedIn]);
 
     useEffect(() => {
         fetchUsage(selectedYear, selectedMonth);

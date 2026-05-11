@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { agentBuilderStore } from "../../agentBuilderStore";
 import { Heading, Text, Button, Flex, Input, Select, FormControl, FormLabel, useToast } from "@chakra-ui/react";
 import { CodeSnippet } from "@/app/components/CodeSnippet";
@@ -26,18 +26,12 @@ export const MemoryTools = observer(() => {
         agentBuilderStore.currentAgent.tools?.some(agentTool => agentTool === tool)
     );
 
-    useEffect(() => {
-        loadDocuments();
-    }, []);
-
-    const loadDocuments = async () => {
+    const loadDocuments = useCallback(async () => {
         try {
             setIsLoading(true);
             const docs = await getJsonDocuments();
             setDocuments(docs);
-            if (docs.length > 0 && !selectedDocumentId) {
-                setSelectedDocumentId(docs[0].document_id);
-            }
+            setSelectedDocumentId((prev) => prev || (docs.length > 0 ? docs[0].document_id : ""));
         } catch (error) {
             console.log(error)
             toast({
@@ -50,7 +44,11 @@ export const MemoryTools = observer(() => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [toast]);
+
+    useEffect(() => {
+        void loadDocuments();
+    }, [loadDocuments]);
 
     const createNewDocument = async () => {
         if (!newDocumentName.trim()) {

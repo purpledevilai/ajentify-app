@@ -67,7 +67,7 @@ const ContextsPage = observer(() => {
         // trigger a refetch.
         contextsStore.loadContexts();
         router.prefetch('/contexts');
-    }, [router]);
+    }, [router, agentsStore, authStore.signedIn, contextsStore]);
 
     const handleApplyFilters = () => {
         contextsStore.setFilters({

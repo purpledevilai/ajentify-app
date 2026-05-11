@@ -283,14 +283,14 @@ const ToolsPage = observer(() => {
   useEffect(() => {
     if (!authStore.signedIn) return;
     router.prefetch('/tool-builder');
-    toolsStore.loadTools();
-    stagesStore.loadStages();
+    void toolsStore.loadTools();
+    void stagesStore.loadStages();
     getParameterDefinitions().then((pds: ParameterDefinition[]) => {
       const map: Record<string, string[]> = {};
       pds.forEach((pd) => { map[pd.pd_id] = schemaParamNames(pd.schema); });
       setPdMap(map);
     }).catch(() => {});
-  }, []);
+  }, [authStore.signedIn, router, toolsStore, stagesStore]);
 
   const showStageColumns = stagesStore.hasAnyStage;
 

@@ -231,7 +231,7 @@ export default function ContextDetailPage() {
         };
         load();
         return () => { cancelled = true; };
-    }, [contextId]);
+    }, [contextId, authStore.signedIn]);
 
     return (
         <Box p={{ base: 4, md: 6 }} h="100%" overflowY="auto">

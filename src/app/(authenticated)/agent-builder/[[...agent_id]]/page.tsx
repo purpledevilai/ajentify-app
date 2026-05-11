@@ -63,23 +63,19 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
     const isMobile = useBreakpointValue({ base: true, md: false });
 
     useEffect(() => {
-        loadAgentId();
-        toolsStore.loadTools();
+        void (async () => {
+            const paramArray = (await params).agent_id ?? undefined;
+            const agent_id = paramArray ? paramArray[0] : undefined;
+            if (agent_id && agentBuilderStore.currentAgent.agent_id !== agent_id) {
+                agentBuilderStore.setCurrentAgentWithId(agent_id);
+            }
+        })();
+        void toolsStore.loadTools();
 
         return () => {
             agentBuilderStore.reset();
-        }
-    }, []);
-
-    const loadAgentId = async () => {
-        const paramArray = (await params).agent_id ?? undefined;
-        const agent_id = paramArray ? paramArray[0] : undefined;
-        if (agent_id) {
-            if (agentBuilderStore.currentAgent.agent_id !== agent_id) {
-                agentBuilderStore.setCurrentAgentWithId(agent_id)
-            }
-        }
-    }
+        };
+    }, [params, toolsStore]);
 
     // Detect page navigation
     useEffect(() => {
@@ -115,7 +111,7 @@ const AgentBuilderPage = observer(({ params }: AgentBuilderPageProps) => {
                 leavePage();
             }
         }
-    }, [navGuard]);
+    }, [navGuard, agentsStore]);
 
     const onOpenPromptEngineerClick = () => {
         agentBuilderStore.createPromptEngineerContext();

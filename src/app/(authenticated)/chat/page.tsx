@@ -36,8 +36,8 @@ const ChatPage = observer(() => {
     } = useDisclosure();
     // Initiate load
     useEffect(() => {
-        chatPageStore.loadData();
-    }, [])
+        void chatPageStore.loadData();
+    }, [chatPageStore])
 
     return (
         <Flex direction="column" height="100%" p={2}>
