@@ -1,5 +1,8 @@
-import { Box, Button, Flex, Text, useClipboard, useColorModeValue } from '@chakra-ui/react';
-import { CheckIcon, CopyIcon } from '@chakra-ui/icons';
+'use client';
+
+import { useState } from 'react';
+import { useTheme } from 'next-themes';
+import { Copy, Check } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -8,29 +11,48 @@ interface CodeSnippetProps {
   language?: string;
 }
 
-export const CodeSnippet = ({ code, language = "javascript" }: CodeSnippetProps) => {
-  const { hasCopied, onCopy } = useClipboard(code);
-  const syntaxStyle = useColorModeValue(oneLight, oneDark);
+export const CodeSnippet = ({ code, language = 'javascript' }: CodeSnippetProps) => {
+  const [hasCopied, setHasCopied] = useState(false);
+  const { resolvedTheme } = useTheme();
+
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setHasCopied(true);
+      setTimeout(() => setHasCopied(false), 2000);
+    } catch {
+      // clipboard write failed silently
+    }
+  };
+
+  const syntaxStyle = resolvedTheme === 'dark' ? oneDark : oneLight;
 
   return (
-    <Box border="1px solid" borderColor="gray.300" borderRadius="md" overflow="hidden">
-      <Flex justify="space-between" align="center" bg={useColorModeValue('gray.200', 'gray.700')} px={4} py={2}>
-        <Text fontSize="sm" fontWeight="bold">{language.toUpperCase()}</Text>
-        <Button
-          size="sm"
+    <div className="border border-gray-300 rounded-md overflow-hidden">
+      <div className="flex justify-between items-center bg-gray-200 dark:bg-gray-700 px-4 py-2">
+        <span className="text-sm font-bold">{language.toUpperCase()}</span>
+        <button
           onClick={onCopy}
-          leftIcon={hasCopied ? <CheckIcon /> : <CopyIcon />}
-          colorScheme={hasCopied ? 'green' : 'blue'}
-          variant="ghost"
+          className={`flex items-center gap-1 text-sm font-medium px-2 py-1 rounded transition-colors ${
+            hasCopied
+              ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+              : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+          }`}
+          aria-label={hasCopied ? 'Copied' : 'Copy code'}
         >
-          {hasCopied ? 'Copied' : 'Copy'}
-        </Button>
-      </Flex>
-      <Box overflowX="auto">
-        <SyntaxHighlighter language={language} style={syntaxStyle} customStyle={{ padding: '1rem' }}>
+          {hasCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          <span>{hasCopied ? 'Copied' : 'Copy'}</span>
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <SyntaxHighlighter
+          language={language}
+          style={syntaxStyle}
+          customStyle={{ padding: '1rem', margin: 0 }}
+        >
           {code}
         </SyntaxHighlighter>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };

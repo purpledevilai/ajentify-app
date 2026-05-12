@@ -1,4 +1,3 @@
-import { Box } from '@chakra-ui/react';
 import Header from './components/Header';
 import HeroSection from './components/HeroSection';
 import SixPrimitivesSection from './components/SixPrimitivesSection';
@@ -8,13 +7,13 @@ import Footer from './components/Footer';
 
 export default function LandingPage() {
     return (
-        <Box>
+        <div>
             <Header />
             <HeroSection />
             <SixPrimitivesSection />
             <ForCodingAgentsSection />
             <WhyAjentifySection />
             <Footer />
-        </Box>
+        </div>
     );
 }
